@@ -39,7 +39,7 @@ export type Schema = InferSchema<typeof schema>;
 
 ```ts
 import { Kineo } from "kineo";
-import { Neo4jAdapter } from "kineo/neo4j";
+import { Neo4jAdapter } from "kineo/adapter/neo4j";
 
 export const db = Kineo(
   Neo4jAdapter({
@@ -82,13 +82,22 @@ const user = await db.users.findFirst({
 
 ## Migrations
 
-Kineo also includes a migration manager by default. You can initialize it by running one of these commands after installation:
+Kineo also includes a migration manager, as a separate package.
 
 ```sh
-npx kineo init
-yarn kineo init
-pnpm kineo init
-bunx kineo init
+npm install kineokit
+yarn add kineokit
+pnpm add kineokit
+bun add kineokit
+```
+
+After installing, run one of these commands to initialize your configuration file.
+
+```sh
+npx kineokit init
+yarn kineokit init
+pnpm kineokit init
+bunx kineokit init
 ```
 
 ### Manual setup

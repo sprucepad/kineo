@@ -1,13 +1,8 @@
 {
   "name": "kineo",
-  "version": "0.9.4",
+  "version": "0.10.0",
   "type": "module",
   "description": "Declarive, TypeScript-first Object-Relation/Graph Mapper (ORM/OGM).",
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
-  "bin": {
-    "kineo": "./dist/main.mjs"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sprucepad/kineo"
@@ -17,28 +12,81 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
+      "development": "./src/index.ts",
+      "default": {
+        "types": "./dist/index.d.mts",
+        "import": "./dist/index.mjs"
+      }
+    },
+    "./error": {
+      "development": "./src/error.ts",
+      "default": {
+        "types": "./dist/error.d.mts",
+        "import": "./dist/error.mjs"
+      }
+    },
+    "./schema": {
+      "development": "./src/schema.ts",
+      "default": {
+        "types": "./dist/schema.d.mts",
+        "import": "./dist/schema.mjs"
+      }
+    },
+    "./model": {
+      "development": "./src/model.ts",
+      "default": {
+        "types": "./dist/model.d.mts",
+        "import": "./dist/model.mjs"
+      }
+    },
+    "./adapter": {
+      "development": "./src/adapter.ts",
+      "default": {
+        "types": "./dist/adapter.d.mts",
+        "import": "./dist/adapter.mjs"
+      }
+    },
+    "./plugin": {
+      "development": "./src/plugin.ts",
+      "default": {
+        "types": "./dist/plugin.d.mts",
+        "import": "./dist/plugin.mjs"
+      }
     },
     "./ir": {
-      "types": "./dist/ir.d.mts",
-      "import": "./dist/ir.mjs"
+      "development": "./src/ir.ts",
+      "default": {
+        "types": "./dist/ir.d.mts",
+        "import": "./dist/import.mjs"
+      }
     },
-    "./kit": {
-      "types": "./dist/kit/index.d.mts",
-      "import": "./dist/kit/index.mjs"
+    "./client": {
+      "development": "./src/client.ts",
+      "default": {
+        "types": "./dist/client.d.mts",
+        "import": "./dist/client.mjs"
+      }
     },
-    "./neo4j": {
-      "types": "./dist/adapters/neo4j.d.mts",
-      "import": "./dist/adapters/neo4j.mjs"
+    "./adapter/neo4j": {
+      "development": "./src/adapters/neo4j.ts",
+      "default": {
+        "types": "./dist/adapters/neo4j.d.mts",
+        "import": "./dist/adapters/neo4j.mjs"
+      }
     },
-    "./cypher": {
-      "types": "./dist/compilers/cypher.d.mts",
-      "import": "./dist/compilers/cypher.mjs"
+    "./compiler/cypher": {
+      "development": "./src/compilers/cypher.ts",
+      "default": {
+        "types": "./dist/compilers/cypher.d.mts",
+        "import": "./dist/compilers/cypher.mjs"
+      }
     },
-    "./sql": {
-      "types": "./dist/compilers/sql.d.mts",
-      "import": "./dist/compilers/sql.mjs"
+    "./compiler/sql": {
+      "development": "./src/compilers/sql.ts",
+      "default": {
+        "types": "./dist/compilers/sql.d.mts",
+        "import": "./dist/compilers/sql.mjs"
+      }
     }
   },
   "files": [
@@ -59,17 +107,7 @@
   ],
   "author": "sprucepad",
   "license": "MIT",
-  "dependencies": {
-    "convoker": "^0.3.4",
-    "jiti": "^2.5.1"
-  },
   "optionalDependencies": {
     "neo4j-driver": "^6.0.0"
-  },
-  "devDependencies": {
-    "@types/node": "~20.19.0",
-    "tsdown": "^0.18.0",
-    "typescript": "^5.9.2",
-    "vitest": "^4.0.15"
   }
 }
