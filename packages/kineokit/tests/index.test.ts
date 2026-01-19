@@ -8,10 +8,11 @@ import {
   getDiff,
   compileEntries,
   decompileEntries,
-} from "@/kit";
-import { KineoKitError, KineoKitErrorKind } from "@/error";
-import { model, defineSchema, field } from "@/schema";
-import type { Adapter, MigrationEntry } from "@/adapter";
+  KineoKitError,
+  KineoKitErrorKind,
+} from "@/index";
+import { model, defineSchema, field } from "kineo/schema";
+import type { Adapter, MigrationEntry } from "kineo/adapter";
 
 // A minimal fake adapter
 function createFakeAdapter(

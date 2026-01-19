@@ -93,7 +93,6 @@
     "dist"
   ],
   "scripts": {
-    "kit": "jiti src/kit/main.ts",
     "check": "tsc",
     "build": "tsdown",
     "test": "vitest",
