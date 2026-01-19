@@ -1,6 +1,11 @@
-// tests/kit/cli.test.ts
 import { describe, expect, test, vi } from "vitest";
-import { defineSchema, field, FieldDef, model, RelationDef } from "@/schema";
+import {
+  defineSchema,
+  field,
+  FieldDef,
+  model,
+  RelationDef,
+} from "kineo/schema";
 
 // --- Mock convoker but keep real Command and parsing ---
 vi.mock("convoker", async () => {
@@ -66,27 +71,26 @@ vi.mock("jiti", () => {
 });
 
 // --- Now import the module under test (after mocks) ---
-import { program } from "@/kit";
-import * as helpers from "@/kit";
+import * as kit from "@/index";
 
 describe("kineo CLI (unit)", () => {
   test("program.run exists and is callable", async () => {
     // program.run is built by convoker.Command; ensure calling with --help doesn't throw
-    await expect(program.run(["--help"])).resolves.not.toThrow();
+    await expect(kit.program.run(["--help"])).resolves.not.toThrow();
   });
 
   // Helper function tests (only if the module exposes them)
   describe("helpers (importPath, ensureImports, generateSchemaSource, serializeFieldOrRelation)", () => {
     test("importPath adds ./ when missing", () => {
-      if (!helpers || !helpers.importPath) return;
-      expect(helpers.importPath("src/file.ts")).toBe('"./src/file.ts"');
-      expect(helpers.importPath("./src/file.ts")).toBe('"./src/file.ts"');
+      if (!kit || !kit.importPath) return;
+      expect(kit.importPath("src/file.ts")).toBe('"./src/file.ts"');
+      expect(kit.importPath("./src/file.ts")).toBe('"./src/file.ts"');
     });
 
     test("ensureImports inserts imports when absent", () => {
-      if (!helpers || !helpers.ensureImports) return;
+      if (!kit || !kit.ensureImports) return;
       const src = "export const schema = defineSchema({})";
-      const res = helpers.ensureImports(src);
+      const res = kit.ensureImports(src);
       expect(res).toContain(
         'import { defineSchema, model, field, relation } from "kineo/schema";',
       );
@@ -94,34 +98,34 @@ describe("kineo CLI (unit)", () => {
     });
 
     test("ensureImports does not duplicate when imports are present", () => {
-      if (!helpers || !helpers.ensureImports) return;
+      if (!kit || !kit.ensureImports) return;
       const src =
         'import { defineSchema, model, field, relation } from "kineo/schema";\nexport const schema = defineSchema({})';
-      const res = helpers.ensureImports(src);
+      const res = kit.ensureImports(src);
       expect(res).toBe(src);
     });
 
     test("generateSchemaSource produces a valid string", () => {
-      if (!helpers || !helpers.generateSchemaSource) return;
+      if (!kit || !kit.generateSchemaSource) return;
       const schemaObj = defineSchema({
         User: model({
           id: field.int().id(),
           name: field.string().required(),
         }),
       });
-      const generated = helpers.generateSchemaSource(schemaObj, "schema");
+      const generated = kit.generateSchemaSource(schemaObj, "schema");
       expect(generated).toContain("export const schema = defineSchema");
       expect(generated).toContain("User");
     });
 
     test("serializeFieldOrRelation serializes FieldDef and RelationDef", async () => {
-      if (!helpers || !helpers.serializeFieldOrRelation) return;
+      if (!kit || !kit.serializeFieldOrRelation) return;
 
       const f = new FieldDef("string").id().required();
       const r = new RelationDef("Author").array().outgoing("HAS_AUTHORS");
 
-      const fs = helpers.serializeFieldOrRelation(f);
-      const rs = helpers.serializeFieldOrRelation(r);
+      const fs = kit.serializeFieldOrRelation(f);
+      const rs = kit.serializeFieldOrRelation(r);
 
       expect(fs).toContain("field.string");
       expect(fs).toContain(".id()");
@@ -145,7 +149,7 @@ describe("kineo CLI (unit)", () => {
       (convoker.prompt.select as any).mockResolvedValueOnce("direct"); // style
 
       // call the CLI with "init" (as if user ran `kineo init`)
-      await expect(program.run(["init"])).resolves.not.toThrow();
+      await expect(kit.program.run(["init"])).resolves.not.toThrow();
 
       // verify fs.writeFile was called (node:fs promises mocked earlier)
       const fsMock = await import("node:fs");

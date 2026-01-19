@@ -6,9 +6,8 @@ import { color, Command, i, log, prompt } from "convoker";
 import { createJiti } from "jiti";
 
 import * as kit from "./utils";
-import type { Kineo } from "@/client";
-import { FieldDef, RelationDef, type Schema } from "@/schema";
-import { KineoKitError, KineoKitErrorKind } from "@/error";
+import type { Kineo } from "kineo/client";
+import { FieldDef, RelationDef, type Schema } from "kineo/schema";
 
 const CONFIG_FILES = [
   "kineo.config.ts",
@@ -280,8 +279,8 @@ module.exports = defineConfig({
         try {
           await kit.push(config.client.$adapter, config.schema, force);
         } catch (e) {
-          if (e instanceof KineoKitError) {
-            const { data } = e as KineoKitError<kit.SchemaDiff>;
+          if (e instanceof kit.KineoKitError) {
+            const { data } = e as kit.KineoKitError<kit.SchemaDiff>;
             if ((data?.breaking.length ?? 0) > 0) {
               await log.info(
                 `Changes:\n${color.bold("- Breaking:")}\n${data?.breaking.map((entry) => `  ${entry}`).join("\n")}
@@ -311,7 +310,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
       })
       .action(async ({ force }) => {
         if (!config.schemaMod)
-          throw new KineoKitError(KineoKitErrorKind.FilePathNecessary);
+          throw new kit.KineoKitError(kit.KineoKitErrorKind.FilePathNecessary);
         if (!force && config.client.$adapter.pull) {
           const confirmed = await prompt.confirm({
             message:

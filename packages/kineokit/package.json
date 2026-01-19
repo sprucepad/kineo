@@ -1,0 +1,32 @@
+{
+  "name": "kineokit",
+  "version": "0.1.0",
+  "description": "Migration manager for Kineo.",
+  "main": "./dist/main.mjs",
+  "bin": {
+    "kineokit": "./dist/main.mjs",
+    "kineo": "./dist/main.mjs"
+  },
+  "scripts": {
+    "kit": "jiti src/main.ts",
+    "check": "tsc",
+    "test": "vitest",
+    "build": "tsdown"
+  },
+  "keywords": [
+    "kineo",
+    "migration",
+    "kit"
+  ],
+  "author": "sprucepad",
+  "license": "MIT",
+  "packageManager": "pnpm@10.28.0",
+  "dependencies": {
+    "convoker": "^0.3.4",
+    "jiti": "^2.6.1",
+    "kineo": "workspace:*"
+  },
+  "devDependencies": {
+    "kineo": "workspace:*"
+  }
+}

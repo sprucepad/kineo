@@ -1,7 +1,7 @@
 import type { Adapter } from "./adapter";
 import type { Direction, InferModelDef, ModelDef, Schema } from "./schema";
 import type { Plugin } from "./plugin";
-import * as ir from "@/ir";
+import * as ir from "./ir";
 
 // ---------- Generic Utility Types ---------- //
 
