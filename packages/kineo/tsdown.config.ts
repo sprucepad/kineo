@@ -1,8 +1,22 @@
 import { defineConfig } from "tsdown";
-import pkg from "./package.json";
 
 export default defineConfig({
-  entry: Object.values(pkg.exports).map((pkgExport) => pkgExport.development),
+  entry: [
+    // modules //
+    "./src/index.ts",
+    "./src/error.ts",
+    "./src/schema/index.ts",
+    "./src/model.ts",
+    "./src/adapter.ts",
+    "./src/plugin.ts",
+    "./src/ir.ts",
+    "./src/client.ts",
+    // adapters //
+    "./src/adapters/neo4j",
+    // compilers //
+    "./src/compilers/cypher.ts",
+    "./src/compilers/sql.ts",
+  ],
   external: ["neo4j-driver"],
   dts: true,
   sourcemap: true,
