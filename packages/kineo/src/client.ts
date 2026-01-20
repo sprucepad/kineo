@@ -1,4 +1,4 @@
-import type { InferSchema, Schema } from "./schema";
+import type { InferSchema, ModelDef, Schema } from "./schema";
 import type { Model, GraphModel } from "./model";
 import type { Adapter } from "./adapter";
 import type { Plugin } from "./plugin";
@@ -10,9 +10,11 @@ type ModelsForSchema<
 > = {
   [Key in keyof TSchema]: Key extends string
     ? TAdapter extends Adapter<infer TModelCtor, any>
-      ? InstanceType<TModelCtor> extends GraphModel<any, any>
-        ? GraphModel<TSchema, TSchema[Key]>
-        : Model<TSchema, TSchema[Key]>
+      ? TSchema[Key] extends ModelDef<infer Shape>
+        ? InstanceType<TModelCtor> extends GraphModel<any, any>
+          ? GraphModel<TSchema, Shape>
+          : Model<TSchema, Shape>
+        : never
       : never
     : never;
 };
@@ -91,7 +93,7 @@ export function Kineo<
   const modelsForSchema: Partial<ModelsForSchema<TSchema, TAdapter>> = {};
   for (const key in schema) {
     modelsForSchema[key] = new adapter.Model(
-      schema[key].$modelName ?? key,
+      schema[key].$name ?? key,
       adapter,
       isPluginArray ? adapterOrPlugins : [],
     );
@@ -107,7 +109,7 @@ export function Kineo<
       for (const key in this.$schema) {
         if (!this[key])
           this[key] = new adapter.Model(
-            this.$schema[key].$modelName ?? key,
+            this.$schema[key].$name ?? key,
             adapter,
             isPluginArray ? adapterOrPlugins : [],
           );

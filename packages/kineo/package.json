@@ -12,81 +12,48 @@
   },
   "exports": {
     ".": {
-      "development": "./src/index.ts",
-      "default": {
-        "types": "./dist/index.d.mts",
-        "import": "./dist/index.mjs"
-      }
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
     },
     "./error": {
-      "development": "./src/error.ts",
-      "default": {
-        "types": "./dist/error.d.mts",
-        "import": "./dist/error.mjs"
-      }
+      "types": "./dist/error.d.mts",
+      "import": "./dist/error.mjs"
     },
     "./schema": {
-      "development": "./src/schema.ts",
-      "default": {
-        "types": "./dist/schema.d.mts",
-        "import": "./dist/schema.mjs"
-      }
+      "types": "./dist/schema.d.mts",
+      "import": "./dist/schema.mjs"
     },
     "./model": {
-      "development": "./src/model.ts",
-      "default": {
-        "types": "./dist/model.d.mts",
-        "import": "./dist/model.mjs"
-      }
+      "types": "./dist/model.d.mts",
+      "import": "./dist/model.mjs"
     },
     "./adapter": {
-      "development": "./src/adapter.ts",
-      "default": {
-        "types": "./dist/adapter.d.mts",
-        "import": "./dist/adapter.mjs"
-      }
+      "types": "./dist/adapter.d.mts",
+      "import": "./dist/adapter.mjs"
     },
     "./plugin": {
-      "development": "./src/plugin.ts",
-      "default": {
-        "types": "./dist/plugin.d.mts",
-        "import": "./dist/plugin.mjs"
-      }
+      "types": "./dist/plugin.d.mts",
+      "import": "./dist/plugin.mjs"
     },
     "./ir": {
-      "development": "./src/ir.ts",
-      "default": {
-        "types": "./dist/ir.d.mts",
-        "import": "./dist/import.mjs"
-      }
+      "types": "./dist/ir.d.mts",
+      "import": "./dist/import.mjs"
     },
     "./client": {
-      "development": "./src/client.ts",
-      "default": {
-        "types": "./dist/client.d.mts",
-        "import": "./dist/client.mjs"
-      }
+      "types": "./dist/client.d.mts",
+      "import": "./dist/client.mjs"
     },
     "./adapter/neo4j": {
-      "development": "./src/adapters/neo4j.ts",
-      "default": {
-        "types": "./dist/adapters/neo4j.d.mts",
-        "import": "./dist/adapters/neo4j.mjs"
-      }
+      "types": "./dist/adapters/neo4j.d.mts",
+      "import": "./dist/adapters/neo4j.mjs"
     },
     "./compiler/cypher": {
-      "development": "./src/compilers/cypher.ts",
-      "default": {
-        "types": "./dist/compilers/cypher.d.mts",
-        "import": "./dist/compilers/cypher.mjs"
-      }
+      "types": "./dist/compilers/cypher.d.mts",
+      "import": "./dist/compilers/cypher.mjs"
     },
     "./compiler/sql": {
-      "development": "./src/compilers/sql.ts",
-      "default": {
-        "types": "./dist/compilers/sql.d.mts",
-        "import": "./dist/compilers/sql.mjs"
-      }
+      "types": "./dist/compilers/sql.d.mts",
+      "import": "./dist/compilers/sql.mjs"
     }
   },
   "files": [

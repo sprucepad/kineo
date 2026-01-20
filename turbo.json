@@ -7,10 +7,10 @@
       "outputs": ["dist/**/*"]
     },
     "check": {
-      "dependsOn": ["^check"],
-      "cache": false
+      "dependsOn": ["^build", "^check"]
     },
     "test": {
+      "dependsOn": ["^build"],
       "persistent": true,
       "cache": false
     }

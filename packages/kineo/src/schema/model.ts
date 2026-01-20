@@ -4,7 +4,7 @@ import type { Schema } from ".";
 export interface ModelShape {
   [key: string]:
     | FieldDef<any, any, any, any, any>
-    | RelationDef<any, any, any, any, any>;
+    | RelationDef<any, any, any, any>;
 }
 
 export class ModelDef<S extends ModelShape> {
@@ -21,31 +21,34 @@ export class ModelDef<S extends ModelShape> {
 
 export type InferField<TField extends FieldDef<any, any, any, any>> =
   TField extends FieldDef<
-    infer K,
-    infer TDefault,
-    infer TRequired,
-    infer TArray
+    infer Type,
+    infer IsId,
+    infer IsRequired,
+    infer IsArray,
+    infer Default
   >
     ? // base value (array or single)
-      (TArray extends true ? TypeOf<K>[] : TypeOf<K>) extends infer Base
-      ? // if required or has a default => definitely Base, otherwise allow undefined
-        TRequired extends true
+      (IsArray extends true ? TypeOf<Type>[] : TypeOf<Type>) extends infer Base
+      ? // if id, required or has a default => definitely Base, otherwise allow undefined
+        IsRequired extends true
         ? Base
-        : TDefault extends undefined
-          ? Base | undefined
-          : Base
+        : IsId extends true
+          ? Base
+          : Default extends undefined
+            ? Base | undefined
+            : Base
       : never
     : never;
 
-export type TypeOf<TKind extends Kind> = TKind extends "string" | "char"
+export type TypeOf<K extends Kind> = K extends "string" | "char"
   ? string
-  : TKind extends "int" | "float"
+  : K extends "int" | "float"
     ? number
-    : TKind extends "date" | "time" | "datetime" | "timestamp"
+    : K extends "date" | "time" | "datetime" | "timestamp"
       ? Date
-      : TKind extends "bool"
+      : K extends "bool"
         ? boolean
-        : TKind extends "blob"
+        : K extends "blob"
           ? Blob
           : never;
 
@@ -66,19 +69,19 @@ export type InferRelationship<
 > =
   TRelation extends RelationDef<
     infer To,
-    infer TDefault,
-    infer TRequired,
-    infer TArray
+    infer IsRequired,
+    infer IsArray,
+    infer Default
   >
     ? TSchema[To] extends ModelDef<infer Shape>
       ? (
-          TArray extends true
+          IsArray extends true
             ? InferModelShape<Shape>[]
             : InferModelShape<Shape>
         ) extends infer Base
-        ? TRequired extends true
+        ? IsRequired extends true
           ? Base
-          : TDefault extends undefined
+          : Default extends undefined
             ? Base | undefined
             : Base
         : never

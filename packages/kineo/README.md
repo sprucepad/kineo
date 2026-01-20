@@ -82,7 +82,7 @@ const user = await db.users.findFirst({
 
 ## Migrations
 
-Kineo also includes a migration manager, as a separate package.
+Kineo also has a migration manager, as a separate package.
 
 ```sh
 npm install kineokit
@@ -105,7 +105,7 @@ bunx kineokit init
 Create a `kineo.config.ts` at the root of your project, and paste these contents:
 
 ```ts
-import { defineConfig } from "kineo/kit";
+import { defineConfig } from "kineokit";
 
 export default defineConfig({
   schema: import("<your schema path>").then((mod) => mod["default"]),

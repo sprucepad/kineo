@@ -3,6 +3,7 @@
     "target": "es2020",
     "module": "es2020",
     "moduleResolution": "bundler",
+    "customConditions": ["development"],
     "noEmit": true,
     "strict": true,
     "esModuleInterop": true,

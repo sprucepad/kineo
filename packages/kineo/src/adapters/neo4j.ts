@@ -5,9 +5,9 @@ import * as neo4j from "neo4j-driver";
 import {
   field,
   FieldDef,
+  ModelDef,
   relation,
   RelationDef,
-  type ModelDef,
   type Schema,
 } from "@/schema";
 
@@ -207,7 +207,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
 
         // Initialize models
         for (const label of labels) {
-          models[label] = { $modelName: label };
+          models[label] = new ModelDef(null as any, label);
         }
 
         // 2. Sample node properties from each label
@@ -272,8 +272,8 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
       }
 
       // Convert schema key or $modelName to label
-      function getLabel(name: string, model: ModelDef): string {
-        return model.$modelName ?? name;
+      function getLabel(name: string, model: ModelDef<any>): string {
+        return model.$name ?? name;
       }
 
       /**
@@ -295,10 +295,10 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         // ------------------------------------------------------------
 
         for (const [propName, field] of fieldEntries) {
-          const neoProp = field.rowName ?? propName;
+          const neoProp = field.$name ?? propName;
 
           // 1a. ID -> unique constraint
-          if (field.isId) {
+          if (field.$id) {
             const cypher = `
           CREATE CONSTRAINT ${label}_${neoProp}_unique
           IF NOT EXISTS
@@ -309,7 +309,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
           }
 
           // 1b. Required -> existence constraint
-          if (field.isRequired) {
+          if (field.$required) {
             const cypher = `
           CREATE CONSTRAINT ${label}_${neoProp}_exists
           IF NOT EXISTS
@@ -320,7 +320,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
           }
 
           // 1c. Optional index (useful for search)
-          if (!field.isId) {
+          if (!field.$id) {
             const cypher = `
           CREATE INDEX ${label}_${neoProp}_index
           IF NOT EXISTS
@@ -336,16 +336,16 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         // ------------------------------------------------------------
 
         for (const [relName, rel] of relationEntries) {
-          const relLabel = rel.relLabel ?? relName;
+          const relLabel = rel.$label ?? relName;
 
           // Directions:
           // outgoing: (a)-[:REL]->(b)
           // incoming: (a)<-[:REL]-(b)
           // both:     (a)-[:REL]-(b)
-          const direction = rel.relDirection;
+          const direction = rel.$direction;
 
           // Required relationship existence constraint
-          if (rel.isRequired) {
+          if (rel.$required) {
             // For required rels we at least enforce presence of the relationship.
             // Neo4j supports relationship property constraints, but required relationships
             // must be enforced through pattern constraints (Neo4j 5+):
@@ -417,12 +417,12 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
       const prevModels = new Set(Object.keys(prev || {}));
       const curModels = new Set(Object.keys(cur || {}));
 
-      function findIdFieldName(modelDef: ModelDef): string | undefined {
+      function findIdFieldName(modelDef: ModelDef<any>): string | undefined {
         for (const k of Object.keys(modelDef)) {
           const v = (modelDef as any)[k];
           if (isFieldDef(v)) {
-            if ((v as FieldDef<any, any, any, any>).isId) {
-              return (v as FieldDef<any, any, any, any>).rowName || k;
+            if ((v as FieldDef<any, any, any, any>).$id) {
+              return (v as FieldDef<any, any, any, any>).$name || k;
             }
           }
         }
@@ -502,13 +502,13 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
 
             if (isFieldDef(val)) {
               const fieldDef = val as FieldDef<any, any, any, any>;
-              const propName = fieldDef.rowName || key;
+              const propName = fieldDef.$name || key;
 
-              if (fieldDef.defaultValue !== undefined) {
+              if (fieldDef.$default !== undefined) {
                 migrations.push({
                   type: "command",
                   description: `Set default for added field ${propName} on ${label}`,
-                  command: `MATCH (n:${label}) WHERE n.${propName} IS NULL OR NOT exists(n.${propName}) SET n.${propName} = ${serializeDefault(fieldDef.defaultValue)};`,
+                  command: `MATCH (n:${label}) WHERE n.${propName} IS NULL OR NOT exists(n.${propName}) SET n.${propName} = ${serializeDefault(fieldDef.$default)};`,
                   reverse: `MATCH (n:${label}) REMOVE n.${propName};`,
                 });
               } else {
@@ -519,7 +519,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
                 });
               }
 
-              if (fieldDef.isId) {
+              if (fieldDef.$id) {
                 migrations.push({
                   type: "command",
                   description: `Create uniqueness constraint for newly-added id field ${propName} on ${label}`,
@@ -532,7 +532,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
               migrations.push({
                 type: "note",
                 description: `Relation ${key} added on ${label}`,
-                note: `Relation '${key}' added on '${label}' pointing to '${rel.pointTo}'.`,
+                note: `Relation '${key}' added on '${label}' pointing to '${rel.$to}'.`,
               });
             } else {
               migrations.push({
@@ -551,7 +551,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
 
             if (isFieldDef(val)) {
               const fieldDef = val as FieldDef<any, any, any, any>;
-              const propName = fieldDef.rowName || key;
+              const propName = fieldDef.$name || key;
 
               migrations.push({
                 type: "command",
@@ -560,7 +560,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
                 reverse: "", // cannot restore old values
               });
 
-              if (fieldDef.isId) {
+              if (fieldDef.$id) {
                 migrations.push({
                   type: "command",
                   description: `Drop uniqueness constraint for removed id field ${propName}`,
@@ -594,17 +594,17 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
           if (isFieldDef(prevVal) && isFieldDef(curVal)) {
             const p = prevVal as FieldDef<any, any, any, any>;
             const c = curVal as FieldDef<any, any, any, any>;
-            const propName = c.rowName || key;
+            const propName = c.$name || key;
 
-            if (p.defaultValue !== c.defaultValue) {
-              if (c.defaultValue !== undefined) {
+            if (p.$default !== c.$default) {
+              if (c.$default !== undefined) {
                 migrations.push({
                   type: "command",
                   description: `Apply new default for ${propName} on ${label}`,
-                  command: `MATCH (n:${label}) WHERE n.${propName} IS NULL OR NOT exists(n.${propName}) SET n.${propName} = ${serializeDefault(c.defaultValue)};`,
+                  command: `MATCH (n:${label}) WHERE n.${propName} IS NULL OR NOT exists(n.${propName}) SET n.${propName} = ${serializeDefault(c.$default)};`,
                   reverse:
-                    p.defaultValue !== undefined
-                      ? `MATCH (n:${label}) WHERE n.${propName} = ${serializeDefault(c.defaultValue)} SET n.${propName} = ${serializeDefault(p.defaultValue)};`
+                    p.$default !== undefined
+                      ? `MATCH (n:${label}) WHERE n.${propName} = ${serializeDefault(c.$default)} SET n.${propName} = ${serializeDefault(p.$default)};`
                       : `MATCH (n:${label}) REMOVE n.${propName};`,
                 });
               } else {
@@ -616,7 +616,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
               }
             }
 
-            if (!p.isId && c.isId) {
+            if (!p.$id && c.$id) {
               migrations.push({
                 type: "command",
                 description: `Create uniqueness constraint for ${propName}`,
@@ -625,7 +625,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
               });
             }
 
-            if (p.isId && !c.isId) {
+            if (p.$id && !c.$id) {
               migrations.push({
                 type: "command",
                 description: `Drop uniqueness constraint for ${propName}`,
@@ -634,15 +634,15 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
               });
             }
 
-            if (p.kind !== c.kind) {
+            if (p.$kind !== c.$kind) {
               migrations.push({
                 type: "note",
                 description: `Type changed for ${propName}`,
-                note: `Type changed from '${p.kind}' to '${c.kind}'.`,
+                note: `Type changed from '${p.$kind}' to '${c.$kind}'.`,
               });
             }
 
-            if (p.isArray !== c.isArray) {
+            if (p.$array !== c.$array) {
               migrations.push({
                 type: "note",
                 description: `Array flag changed for ${propName}`,
@@ -654,9 +654,9 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
             const c = curVal;
 
             if (
-              p.pointTo !== c.pointTo ||
-              p.relLabel !== c.relLabel ||
-              p.relDirection !== c.relDirection
+              p.$to !== c.$to ||
+              p.$label !== c.$label ||
+              p.$direction !== c.$direction
             ) {
               migrations.push({
                 type: "note",
@@ -896,7 +896,7 @@ function mergeRelationship(
   } else {
     // already exists: update direction heuristically
     const rel: RelationDef<any> = model[relType];
-    if (rel.relDirection !== direction) {
+    if (rel.$direction !== direction) {
       rel.both(relType);
     }
   }

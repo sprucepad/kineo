@@ -1,5 +1,5 @@
 import type { Adapter } from "./adapter";
-import type { Direction, InferModelDef, ModelDef, Schema } from "./schema";
+import type { Direction, InferModelShape, ModelShape, Schema } from "./schema";
 import type { Plugin } from "./plugin";
 import * as ir from "./ir";
 
@@ -67,8 +67,8 @@ export type IdOf<M> = {
  */
 export interface QueryOpts<
   S extends Schema,
-  M extends ModelDef,
-  MType = InferModelDef<M, S>,
+  M extends ModelShape,
+  MType = InferModelShape<M, S>,
 > {
   where?: {
     [K in keyof MType]?: FieldFilter<MType[K]>;
@@ -92,8 +92,8 @@ export interface QueryOpts<
  */
 export interface CreateOpts<
   S extends Schema,
-  M extends ModelDef,
-  MType = InferModelDef<M, S>,
+  M extends ModelShape,
+  MType = InferModelShape<M, S>,
 > {
   data: {
     [K in keyof MType]?: MType[K];
@@ -107,8 +107,8 @@ export interface CreateOpts<
  */
 export interface UpdateOpts<
   S extends Schema,
-  M extends ModelDef,
-  MType = InferModelDef<M, S>,
+  M extends ModelShape,
+  MType = InferModelShape<M, S>,
 > {
   where: {
     [K in keyof MType]?: FieldFilter<MType[K]>;
@@ -123,8 +123,8 @@ export interface UpdateOpts<
  */
 export interface DeleteOpts<
   S extends Schema,
-  M extends ModelDef,
-  MType = InferModelDef<M, S>,
+  M extends ModelShape,
+  MType = InferModelShape<M, S>,
 > {
   where: {
     [K in keyof MType]?: FieldFilter<MType[K]>;
@@ -138,8 +138,8 @@ export interface DeleteOpts<
  */
 export interface UpsertOpts<
   S extends Schema,
-  M extends ModelDef,
-  MType = InferModelDef<M, S>,
+  M extends ModelShape,
+  MType = InferModelShape<M, S>,
 > {
   where: {
     [K in keyof MType]?: FieldFilter<MType[K]>;
@@ -157,9 +157,9 @@ export interface UpsertOpts<
  */
 export type ResultPayload<
   S extends Schema,
-  M extends ModelDef,
+  M extends ModelShape,
   O extends QueryOpts<S, M> | undefined,
-  MType = InferModelDef<M, S>,
+  MType = InferModelShape<M, S>,
 > = O extends { select: any }
   ? SelectedFields<S, M, NonNullable<O["select"]>, MType>
   : O extends { include: any }
@@ -172,9 +172,9 @@ export type ResultPayload<
  */
 export type SelectedFields<
   S extends Schema,
-  M extends ModelDef,
+  M extends ModelShape,
   Sel extends Record<string, any>,
-  MType = InferModelDef<M, S>,
+  MType = InferModelShape<M, S>,
 > = {
   [K in keyof Sel & keyof MType]: Sel[K] extends true
     ? MType[K]
@@ -189,9 +189,9 @@ export type SelectedFields<
  */
 export type IncludedFields<
   S extends Schema,
-  M extends ModelDef,
+  M extends ModelShape,
   Inc extends Record<string, any>,
-  MType = InferModelDef<M, S>,
+  MType = InferModelShape<M, S>,
 > = MType & {
   [K in keyof Inc & keyof MType]: Inc[K] extends true
     ? MType[K]
@@ -207,7 +207,7 @@ export type IncludedFields<
  */
 export type FindFirstReturn<
   S extends Schema,
-  M extends ModelDef,
+  M extends ModelShape,
   O extends QueryOpts<S, M> | undefined,
 > = Promise<ResultPayload<S, M, O> | null>;
 
@@ -216,7 +216,7 @@ export type FindFirstReturn<
  */
 export type FindManyReturn<
   S extends Schema,
-  M extends ModelDef,
+  M extends ModelShape,
   O extends QueryOpts<S, M> | undefined,
 > = Promise<ResultPayload<S, M, O>[]>;
 
@@ -230,7 +230,7 @@ export type CountReturn = Promise<number>;
  */
 export type CreateReturn<
   S extends Schema,
-  M extends ModelDef,
+  M extends ModelShape,
   O extends CreateOpts<S, M>,
 > = Promise<ResultPayload<S, M, O>>;
 
@@ -239,7 +239,7 @@ export type CreateReturn<
  */
 export type UpdateReturn<
   S extends Schema,
-  M extends ModelDef,
+  M extends ModelShape,
   O extends UpdateOpts<S, M>,
 > = Promise<ResultPayload<S, M, O>>;
 
@@ -254,7 +254,7 @@ export type UpdateManyReturn = Promise<{ count: number }>;
  */
 export type DeleteReturn<
   S extends Schema,
-  M extends ModelDef,
+  M extends ModelShape,
   O extends DeleteOpts<S, M>,
 > = Promise<ResultPayload<S, M, O>>;
 
@@ -269,7 +269,7 @@ export type DeleteManyReturn = Promise<{ count: number }>;
  */
 export type UpsertReturn<
   S extends Schema,
-  M extends ModelDef,
+  M extends ModelShape,
   O extends UpsertOpts<S, M>,
 > = Promise<ResultPayload<S, M, O>>;
 
@@ -278,14 +278,14 @@ export type UpsertReturn<
  */
 export type UpsertManyReturn<
   S extends Schema,
-  M extends ModelDef,
+  M extends ModelShape,
   O extends UpsertOpts<S, M>,
 > = Promise<ResultPayload<S, M, O>[]>;
 
 /**
  * A model. This is different from a model definition; the definition is just the schema, the class provides the functionality.
  */
-export class Model<S extends Schema, M extends ModelDef> {
+export class Model<S extends Schema, M extends ModelShape> {
   /**
    * The name of the model.
    */
@@ -434,8 +434,8 @@ export class Model<S extends Schema, M extends ModelDef> {
  */
 export interface PathOpts<
   S extends Schema,
-  M extends ModelDef,
-  MType = InferModelDef<M, S>,
+  M extends ModelShape,
+  MType = InferModelShape<M, S>,
 > {
   from: {
     where: { [K in keyof MType]?: FieldFilter<MType[K]> };
@@ -454,8 +454,8 @@ export interface PathOpts<
  */
 export interface ConnectOpts<
   S extends Schema,
-  M extends ModelDef,
-  MType = InferModelDef<M, S>,
+  M extends ModelShape,
+  MType = InferModelShape<M, S>,
 > {
   from: { where: { [K in keyof MType]?: FieldFilter<MType[K]> } };
   to: { where: { [K in keyof MType]?: FieldFilter<MType[K]> } };
@@ -469,8 +469,8 @@ export interface ConnectOpts<
  */
 export interface TraverseOpts<
   S extends Schema,
-  M extends ModelDef,
-  MType = InferModelDef<M, S>,
+  M extends ModelShape,
+  MType = InferModelShape<M, S>,
 > {
   start: { where: { [K in keyof MType]?: FieldFilter<MType[K]> } };
   direction?: Direction;
@@ -486,8 +486,8 @@ export interface TraverseOpts<
 /**
  * The return type for everything related to paths.
  */
-export type PathReturn<S extends Schema, M extends ModelDef> = Promise<{
-  nodes: InferModelDef<M, S>[];
+export type PathReturn<S extends Schema, M extends ModelShape> = Promise<{
+  nodes: InferModelShape<M, S>[];
   edges: Array<{
     type: string;
     direction: "incoming" | "outgoing";
@@ -498,8 +498,8 @@ export type PathReturn<S extends Schema, M extends ModelDef> = Promise<{
 /**
  * The return  type for `findNeighbors`.
  */
-export type NeighborsReturn<S extends Schema, M extends ModelDef> = Promise<
-  InferModelDef<M, S>[]
+export type NeighborsReturn<S extends Schema, M extends ModelShape> = Promise<
+  InferModelShape<M, S>[]
 >;
 
 /**
@@ -515,14 +515,14 @@ export type DisconnectReturn = Promise<{ success: boolean }>;
 /**
  * The return  type for `traverse`.
  */
-export type TraverseReturn<S extends Schema, M extends ModelDef> = Promise<{
-  path: Array<{ node: InferModelDef<M, S>; edge?: any }>;
+export type TraverseReturn<S extends Schema, M extends ModelShape> = Promise<{
+  path: Array<{ node: InferModelShape<M, S>; edge?: any }>;
 }>;
 
 /**
  * Provides utility methods for graph databases on top of the default model.
  */
-export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
+export class GraphModel<S extends Schema, M extends ModelShape> extends Model<
   S,
   M
 > {
@@ -534,7 +534,7 @@ export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
   async findPath(opts: PathOpts<S, M>): PathReturn<S, M> {
     const result = await this.$exec(opts, "findPath");
     return {
-      nodes: result.entries as InferModelDef<M, S>[],
+      nodes: result.entries as InferModelShape<M, S>[],
       edges: result.edges ?? [],
     };
   }
@@ -547,7 +547,7 @@ export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
   async findShortestPath(opts: PathOpts<S, M>): PathReturn<S, M> {
     const result = await this.$exec(opts, "findShortestPath");
     return {
-      nodes: result.entries as InferModelDef<M, S>[],
+      nodes: result.entries as InferModelShape<M, S>[],
       edges: result.edges ?? [],
     };
   }
@@ -560,7 +560,7 @@ export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
   async findAllPaths(opts: PathOpts<S, M>): PathReturn<S, M> {
     const result = await this.$exec(opts, "findAllPaths");
     return {
-      nodes: result.entries as InferModelDef<M, S>[],
+      nodes: result.entries as InferModelShape<M, S>[],
       edges: result.edges ?? [],
     };
   }
@@ -572,7 +572,7 @@ export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
    */
   async findNeighbors(opts: QueryOpts<S, M>): NeighborsReturn<S, M> {
     const result = await this.$exec(opts, "findNeighbors");
-    return result.entries as InferModelDef<M, S>[];
+    return result.entries as InferModelShape<M, S>[];
   }
 
   /**
@@ -605,7 +605,7 @@ export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
 
     return {
       path: (result.entries ?? []).map((node, i) => ({
-        node: node as InferModelDef<M, S>,
+        node: node as InferModelShape<M, S>,
         edge: result.edges?.[i],
       })),
     };
