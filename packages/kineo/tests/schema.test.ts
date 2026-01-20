@@ -11,35 +11,35 @@ import {
 describe("FieldDef", () => {
   test("initialize with correct kind and optional name", () => {
     const f = new FieldDef("string", "username");
-    expect(f.kind).toBe("string");
-    expect(f.rowName).toBe("username");
-    expect(f.isRequired).toBe(false);
-    expect(f.isArray).toBe(false);
-    expect(f.defaultValue).toBeUndefined();
+    expect(f.$kind).toBe("string");
+    expect(f.$name).toBe("username");
+    expect(f.$required).toBe(false);
+    expect(f.$array).toBe(false);
+    expect(f.$default).toBeUndefined();
   });
 
   test("chain methods and update properties", () => {
     const f = field.int("age").required().array().default(0);
-    expect(f.kind).toBe("int");
-    expect(f.rowName).toBe("age");
-    expect(f.isRequired).toBe(true);
-    expect(f.isArray).toBe(true);
-    expect(f.defaultValue).toBe(0);
+    expect(f.$kind).toBe("int");
+    expect(f.$name).toBe("age");
+    expect(f.$required).toBe(true);
+    expect(f.$array).toBe(true);
+    expect(f.$default).toBe(0);
   });
 
   test("allow switching between required/optional and array/single", () => {
     const f = field.string("email").required().optional().single();
-    expect(f.isRequired).toBe(false);
-    expect(f.isArray).toBe(false);
+    expect(f.$required).toBe(false);
+    expect(f.$array).toBe(false);
   });
 });
 
 describe("RelationDef", () => {
   test("initialize with target and optional name", () => {
     const r = new RelationDef("User", "follows");
-    expect(r.pointTo).toBe("User");
-    expect(r.relName).toBe("follows");
-    expect(r.relDirection).toBe("both");
+    expect(r.$to).toBe("User");
+    expect(r.$name).toBe("follows");
+    expect(r.$direction).toBeUndefined();
   });
 
   test("chain methods and update properties", () => {
@@ -49,19 +49,19 @@ describe("RelationDef", () => {
       .required()
       .array()
       .default([]);
-    expect(r.pointTo).toBe("Post");
-    expect(r.relName).toBe("likes");
-    expect(r.relLabel).toBe("LIKES");
-    expect(r.relDirection).toBe("outgoing");
-    expect(r.isRequired).toBe(true);
-    expect(r.isArray).toBe(true);
-    expect(r.defaultValue).toEqual([]);
+    expect(r.$to).toBe("Post");
+    expect(r.$name).toBe("likes");
+    expect(r.$label).toBe("LIKES");
+    expect(r.$direction).toBe("outgoing");
+    expect(r.$required).toBe(true);
+    expect(r.$array).toBe(true);
+    expect(r.$default).toEqual([]);
   });
 
   test("allow changing direction with labels", () => {
     const r = relation.to("Comment").incoming("HAS_COMMENT");
-    expect(r.relDirection).toBe("incoming");
-    expect(r.relLabel).toBe("HAS_COMMENT");
+    expect(r.$direction).toBe("incoming");
+    expect(r.$label).toBe("HAS_COMMENT");
   });
 });
 
@@ -73,8 +73,8 @@ describe("Schema utilities", () => {
         name: field.string("name"),
       }),
     });
-    expect(schema.users.$modelName).toBe("User");
-    expect(schema.users.id.kind).toBe("int");
-    expect(schema.users.name.kind).toBe("string");
+    expect(schema.users.$name).toBe("User");
+    expect(schema.users.$shape.id.$kind).toBe("int");
+    expect(schema.users.$shape.name.$kind).toBe("string");
   });
 });
