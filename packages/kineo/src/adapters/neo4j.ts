@@ -205,13 +205,11 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         const labelsRes = await session.run(`CALL db.labels()`);
         const labels = labelsRes.records.map((r) => r.get("label") as string);
 
-        // Initialize models
-        for (const label of labels) {
-          models[label] = new ModelDef(null as any, label);
-        }
-
         // 2. Sample node properties from each label
         for (const label of labels) {
+          // Initialize models
+          models[label] = new ModelDef({}, label);
+
           const sampleRes = await session.run(
             `MATCH (n:\`${label}\`) RETURN n LIMIT 50`,
           );
@@ -489,16 +487,16 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         const label = modelLabel(m, curDef);
 
         const prevKeys = new Set(
-          Object.keys(prevDef || {}).filter((k) => k !== "$modelName"),
+          Object.keys(prevDef.$shape || {}).filter((k) => k !== "$modelName"),
         );
         const curKeys = new Set(
-          Object.keys(curDef || {}).filter((k) => k !== "$modelName"),
+          Object.keys(curDef.$shape || {}).filter((k) => k !== "$modelName"),
         );
 
         // ---------- Added keys ----------
         for (const key of Array.from(curKeys)) {
           if (!prevKeys.has(key)) {
-            const val = (curDef as any)[key];
+            const val = curDef.$shape[key];
 
             if (isFieldDef(val)) {
               const fieldDef = val as FieldDef<any, any, any, any>;
@@ -547,7 +545,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         // ---------- Removed keys ----------
         for (const key of Array.from(prevKeys)) {
           if (!curKeys.has(key)) {
-            const val = (prevDef as any)[key];
+            const val = prevDef.$shape[key];
 
             if (isFieldDef(val)) {
               const fieldDef = val as FieldDef<any, any, any, any>;
@@ -588,8 +586,8 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         for (const key of Array.from(curKeys)) {
           if (!prevKeys.has(key)) continue;
 
-          const prevVal = (prevDef as any)[key];
-          const curVal = (curDef as any)[key];
+          const prevVal = prevDef.$shape[key];
+          const curVal = curDef.$shape[key];
 
           if (isFieldDef(prevVal) && isFieldDef(curVal)) {
             const p = prevVal as FieldDef<any, any, any, any>;
@@ -871,10 +869,10 @@ function inferKind(value: any): FieldDef<any, any, any, any> {
 /**
  * Merges new inferred fields into a model definition.
  */
-function mergeProperties(model: any, props: Record<string, any>) {
+function mergeProperties(model: ModelDef<any>, props: Record<string, any>) {
   for (const [key, value] of Object.entries(props)) {
-    if (!model[key]) {
-      model[key] = inferKind(value).name(key);
+    if (!model.$shape[key]) {
+      model.$shape[key] = inferKind(value).name(key);
     }
   }
 }
@@ -883,19 +881,19 @@ function mergeProperties(model: any, props: Record<string, any>) {
  * Adds or merges a relationship.
  */
 function mergeRelationship(
-  models: Record<string, any>,
+  models: Schema,
   from: string,
   relType: string,
   to: string,
   direction: "outgoing" | "incoming",
 ) {
-  const model = models[from] ?? (models[from] = { $modelName: from });
+  const model = models[from] ?? (models[from] = new ModelDef({}, from));
 
-  if (!model[relType]) {
-    model[relType] = relation.to(to, relType).direction(direction);
+  if (!model.$shape[relType]) {
+    model.$shape[relType] = relation.to(to, relType).direction(direction);
   } else {
     // already exists: update direction heuristically
-    const rel: RelationDef<any> = model[relType];
+    const rel: RelationDef<any> = model.$shape[relType];
     if (rel.$direction !== direction) {
       rel.both(relType);
     }

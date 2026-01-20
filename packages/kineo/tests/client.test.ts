@@ -71,7 +71,7 @@ describe("Kineo client", () => {
       }),
     });
 
-    expect(client.$schema.users).toHaveProperty("reactions");
+    expect(client.$schema.users.$shape).toHaveProperty("reactions");
     expect(client.$schema).toHaveProperty("reactions");
   });
 });

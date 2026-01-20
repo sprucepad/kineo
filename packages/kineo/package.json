@@ -20,8 +20,8 @@
       "import": "./dist/error.mjs"
     },
     "./schema": {
-      "types": "./dist/schema.d.mts",
-      "import": "./dist/schema.mjs"
+      "types": "./dist/schema/index.d.mts",
+      "import": "./dist/schema/index.mjs"
     },
     "./model": {
       "types": "./dist/model.d.mts",
