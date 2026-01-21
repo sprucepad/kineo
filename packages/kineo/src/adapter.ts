@@ -8,17 +8,17 @@ import type { Schema } from "./schema";
 export type OptPromise<T> = T | Promise<T>;
 
 /**
- * A result from a compiler.
+ * A result from a emitter.
  */
-export interface CompileResult {
+export interface EmitResult {
   command: string;
   params: Record<string, any>;
 }
 
 /**
- * A compiler.
+ * A emitter.
  */
-export type Compiler<T = any> = (ir: IR, preset?: T) => CompileResult;
+export type Emitter<T = any> = (ir: IR, preset?: T) => EmitResult;
 
 /**
  * Result of executing a query.
@@ -54,14 +54,14 @@ export interface Adapter<
   Model: TModelCtor;
 
   /**
-   * Compiles an intermediate representation into a query language.
+   * Emits an intermediate representation into a query language.
    */
-  compile(ir: IR): OptPromise<CompileResult>;
+  emit(ir: IR): OptPromise<EmitResult>;
   /**
    * Runs a compilation result against the database.
-   * @param result The compile result.
+   * @param result The emit result.
    */
-  exec(result: CompileResult): OptPromise<ExecResult<Summary>>;
+  exec(result: EmitResult): OptPromise<ExecResult<Summary>>;
   /**
    * Closes the adapter.
    */

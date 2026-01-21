@@ -315,7 +315,7 @@ export async function status(adapter: AdapterKit, migration: string) {
 
 export type Migration = [string, string];
 
-export function compileEntries(entries: MigrationEntry[]): Migration {
+export function emitEntries(entries: MigrationEntry[]): Migration {
   let up = "";
   let down = "";
 
@@ -332,19 +332,19 @@ export function compileEntries(entries: MigrationEntry[]): Migration {
   return [up, down];
 }
 
-export function decompileEntries([up, down]: Migration): MigrationEntry[] {
+export function deemitEntries([up, down]: Migration): MigrationEntry[] {
   const migrations: MigrationEntry[] = [];
 
   const upSplit = up.split("\n\n");
   const downSplit = down.split("\n\n");
 
-  decompile(upSplit, migrations, "command");
-  decompile(downSplit, migrations, "reverse");
+  deemit(upSplit, migrations, "command");
+  deemit(downSplit, migrations, "reverse");
 
   return migrations;
 }
 
-function decompile(
+function deemit(
   statements: string[],
   migrations: MigrationEntry[],
   key: "command" | "reverse",

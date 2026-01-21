@@ -1,6 +1,6 @@
 {
   "name": "kineokit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Migration manager for Kineo.",
   "bin": {
     "kineokit": "./dist/main.mjs",

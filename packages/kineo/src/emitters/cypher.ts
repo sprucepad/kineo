@@ -1,4 +1,4 @@
-import type { Compiler } from "@/adapter";
+import type { Emitter } from "@/adapter";
 import neo4j from "neo4j-driver";
 import * as IR from "@/ir";
 
@@ -8,39 +8,39 @@ import * as IR from "@/ir";
 type Params = Record<string, any>;
 
 /**
- * Compiles an IR to Cypher.
- * @param ir The IR to compile.
+ * Emits an IR to Cypher.
+ * @param ir The IR to emit.
  * @returns A compilation result.
  */
-export const compile: Compiler = (ir) => {
-  const ctx = createCompileContext();
+export const emit: Emitter = (ir) => {
+  const ctx = createEmitContext();
   const chunks: string[] = [];
 
   for (const stmt of ir.statements) {
     switch (stmt.type) {
       case IR.StatementType.Find:
-        chunks.push(compileFindStatement(ctx, stmt as IR.FindStatement));
+        chunks.push(emitFindStatement(ctx, stmt as IR.FindStatement));
         break;
       case IR.StatementType.Count:
-        chunks.push(compileCountStatement(ctx, stmt as IR.CountStatement));
+        chunks.push(emitCountStatement(ctx, stmt as IR.CountStatement));
         break;
       case IR.StatementType.Create:
-        chunks.push(compileCreateStatement(ctx, stmt as IR.CreateStatement));
+        chunks.push(emitCreateStatement(ctx, stmt as IR.CreateStatement));
         break;
       case IR.StatementType.Upsert:
-        chunks.push(compileUpsertStatement(ctx, stmt as IR.UpdateStatement));
+        chunks.push(emitUpsertStatement(ctx, stmt as IR.UpdateStatement));
         break;
       case IR.StatementType.Delete:
-        chunks.push(compileDeleteStatement(ctx, stmt as IR.DeleteStatement));
+        chunks.push(emitDeleteStatement(ctx, stmt as IR.DeleteStatement));
         break;
       case IR.StatementType.ConnectQuery:
         chunks.push(
-          compileConnectStatement(ctx, stmt as IR.ConnectQueryStatement),
+          emitConnectStatement(ctx, stmt as IR.ConnectQueryStatement),
         );
         break;
       case IR.StatementType.RelationQuery:
         chunks.push(
-          compileRelationStatement(ctx, stmt as IR.RelationQueryStatement),
+          emitRelationStatement(ctx, stmt as IR.RelationQueryStatement),
         );
         break;
       default:
@@ -52,22 +52,22 @@ export const compile: Compiler = (ir) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/*                               Compiler Context                             */
+/*                               Emitter Context                             */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Shared state between compile functions.
+ * Shared state between emit functions.
  */
-interface CompileContext {
+interface EmitContext {
   params: Params;
   nextParamName(base?: string): string;
 }
 
 /**
- * Creates a shared compiler context.
- * @returns A new compiler context.
+ * Creates a shared emitter context.
+ * @returns A new emitter context.
  */
-function createCompileContext(): CompileContext {
+function createEmitContext(): EmitContext {
   let idx = 0;
   const params: Params = {};
   const nextParamName = (base = "p") => `${base}_${++idx}`;
@@ -79,14 +79,14 @@ function createCompileContext(): CompileContext {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Compiles properties to Cypher.
- * @param ctx The compiler context.
+ * Emits properties to Cypher.
+ * @param ctx The emitter context.
  * @param prefix The prefix of the property.
  * @param props The properties to convert.
- * @returns The compiled properties.
+ * @returns The emitd properties.
  */
 function propsToCypher(
-  ctx: CompileContext,
+  ctx: EmitContext,
   prefix: string,
   props: Record<string, any>,
 ): string {
@@ -117,12 +117,12 @@ function normalizeValue(v: any): any {
 
 /**
  * Convert recursive where object into a valid Cypher boolean expression.
- * @param ctx The compiler context.
+ * @param ctx The emitter context.
  * @param alias The result alias.
  * @param where The where object.
  */
 function whereToCypher(
-  ctx: CompileContext,
+  ctx: EmitContext,
   alias: string,
   where?: Record<string, any>,
 ): string {
@@ -228,7 +228,7 @@ function projection(
  * @param parentAlias The return alias.
  * @param include The include object.
  * @param acc Accumulator.
- * @returns Compiled Cypher chunks.
+ * @returns Emitd Cypher chunks.
  */
 function collectIncludeProjections(
   parentAlias: string,
@@ -247,24 +247,21 @@ function collectIncludeProjections(
 }
 
 /* -------------------------------------------------------------------------- */
-/*                            Statement Compilers                             */
+/*                            Statement Emitters                             */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Compiles a Find statement.
- * @param ctx The compiler context.
+ * Emits a Find statement.
+ * @param ctx The emitter context.
  * @param s The statement.
  * @returns A Cypher query.
  */
-function compileFindStatement(
-  ctx: CompileContext,
-  s: IR.FindStatement,
-): string {
+function emitFindStatement(ctx: EmitContext, s: IR.FindStatement): string {
   const alias = s.alias ?? "n";
   const match = `MATCH (${alias}:${s.model})`;
   const where = `WHERE ${whereToCypher(ctx, alias, s.where)}`;
 
-  const includeMatches = compileIncludesRecursive(ctx, alias, s.include);
+  const includeMatches = emitIncludesRecursive(ctx, alias, s.include);
 
   const orderBy =
     s.orderBy && s.orderBy.length
@@ -287,15 +284,15 @@ function compileFindStatement(
 }
 
 /**
- * Compiles includes recursively.
- * @param ctx Compiler context.
+ * Emits includes recursively.
+ * @param ctx Emitter context.
  * @param parentAlias The return alias.
  * @param include The include object.
  * @param depth The current include depth.
  * @returns Cypher queries.
  */
-function compileIncludesRecursive(
-  ctx: CompileContext,
+function emitIncludesRecursive(
+  ctx: EmitContext,
   parentAlias: string,
   include?: Record<string, any>,
   depth = 0,
@@ -321,9 +318,9 @@ function compileIncludesRecursive(
         .join("\n"),
     );
 
-    // Recursively compile nested includes
+    // Recursively emit nested includes
     if (relOpts && typeof relOpts === "object" && "include" in relOpts) {
-      const nested = compileIncludesRecursive(
+      const nested = emitIncludesRecursive(
         ctx,
         relAlias,
         (relOpts as any).include,
@@ -337,15 +334,12 @@ function compileIncludesRecursive(
 }
 
 /**
- * Compiles a Count statement.
+ * Emits a Count statement.
  * @param ctx The context.
  * @param s The statement.
  * @returns A Cypher query.
  */
-function compileCountStatement(
-  ctx: CompileContext,
-  s: IR.CountStatement,
-): string {
+function emitCountStatement(ctx: EmitContext, s: IR.CountStatement): string {
   const alias = s.alias ?? "n";
   return [
     `MATCH (${alias}:${s.model})`,
@@ -355,15 +349,12 @@ function compileCountStatement(
 }
 
 /**
- * Compiles a Create statement.
+ * Emits a Create statement.
  * @param ctx The context.
  * @param s The statement.
  * @returns A Cypher query.
  */
-function compileCreateStatement(
-  ctx: CompileContext,
-  s: IR.CreateStatement,
-): string {
+function emitCreateStatement(ctx: EmitContext, s: IR.CreateStatement): string {
   const alias = s.alias ?? "n";
   const props = propsToCypher(ctx, "create", s.data || {});
   const create = `CREATE (${alias}:${s.model} ${props})`;
@@ -373,15 +364,12 @@ function compileCreateStatement(
 }
 
 /**
- * Compiles an Upsert statement.
+ * Emits an Upsert statement.
  * @param ctx The context.
  * @param s The statement.
  * @returns A Cypher query.
  */
-function compileUpsertStatement(
-  ctx: CompileContext,
-  s: IR.UpdateStatement,
-): string {
+function emitUpsertStatement(ctx: EmitContext, s: IR.UpdateStatement): string {
   const alias = s.alias ?? "n";
 
   // If there are no where keys, fallback to simple create
@@ -428,15 +416,12 @@ function compileUpsertStatement(
 }
 
 /**
- * Compiles a Delete statement.
+ * Emits a Delete statement.
  * @param ctx The context.
  * @param s The statement.
  * @returns A Cypher query.
  */
-function compileDeleteStatement(
-  ctx: CompileContext,
-  s: IR.DeleteStatement,
-): string {
+function emitDeleteStatement(ctx: EmitContext, s: IR.DeleteStatement): string {
   const alias = s.alias ?? "n";
   return [
     `MATCH (${alias}:${s.model})`,
@@ -446,13 +431,13 @@ function compileDeleteStatement(
 }
 
 /**
- * Compiles a Connect query statement.
+ * Emits a Connect query statement.
  * @param ctx The context.
  * @param s The statement.
  * @returns A Cypher query.
  */
-function compileConnectStatement(
-  ctx: CompileContext,
+function emitConnectStatement(
+  ctx: EmitContext,
   s: IR.ConnectQueryStatement,
 ): string {
   const from = "a";
@@ -478,7 +463,7 @@ function compileConnectStatement(
 }
 
 /**
- * Compiles a direction.
+ * Emits a direction.
  * @param min The minimum value.
  * @param max The maximum value.
  * @param direction The direction.
@@ -499,13 +484,13 @@ function directionalRel(
   }
 }
 /**
- * Compiles a Relation query statement.
+ * Emits a Relation query statement.
  * @param ctx The context.
  * @param s The statement.
  * @returns A Cypher query.
  */
-function compileRelationStatement(
-  ctx: CompileContext,
+function emitRelationStatement(
+  ctx: EmitContext,
   s: IR.RelationQueryStatement,
 ): string {
   const from = "a";

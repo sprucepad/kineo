@@ -1,63 +1,63 @@
-import type { Compiler } from "@/adapter";
+import type { Emitter } from "@/adapter";
 import * as IR from "@/ir";
 
 /**
- * A SQL dialect. A mini compiler for specific sections of SQL.
+ * A SQL dialect. A mini emitter for specific sections of SQL.
  */
 export interface Dialect {
   /**
-   * Compiles an identifier.
+   * Emits an identifier.
    * @param name The name of the identifier.
    */
   identifier(name: string): string;
   /**
-   * Compiles a string.
+   * Emits a string.
    * @param value The string value.
    */
   string(value: string): string;
   /**
-   * Compiles an array.
+   * Emits an array.
    * @param values The array entries.
    */
   array(values: unknown[]): string;
   /**
-   * Compiles a limit/offset.
+   * Emits a limit/offset.
    * @param limit The limit.
    * @param offset The offset.
    */
   limitOffset(limit?: number, offset?: number): string;
   /**
-   * Compiles a boolean.
+   * Emits a boolean.
    * @param value The boolean value.
    */
   boolean(value: boolean): string;
   /**
-   * Compiles an upsert command.
+   * Emits an upsert command.
    * @param table The table to upsert to.
    * @param args All necessary arguments for upserting.
    */
   upsert(table: string, ...args: unknown[]): string;
   /**
-   * Compiles an auto-incrementing integer.
+   * Emits an auto-incrementing integer.
    */
   autoIncrement(): string;
   /**
-   * Compiles the way to get the current date.
+   * Emits the way to get the current date.
    */
   now(): string;
   /**
-   * Compiles a JSON extract.
+   * Emits a JSON extract.
    * @param column The column to extract.
    * @param path The path to extract.
    */
   jsonExtract(column: string, path: string): string;
   /**
-   * Compiles a type.
-   * @param type The type to compile.
+   * Emits a type.
+   * @param type The type to emit.
    */
   type(type: string): string;
   /**
-   * Compiles a return.
+   * Emits a return.
    * @param columns The columns to return.
    */
   returning(columns?: string[]): string;
@@ -66,7 +66,7 @@ export interface Dialect {
 // ---------- Context ---------- //
 
 /**
- * Compiler context.
+ * Emitter context.
  */
 interface Ctx {
   dialect: Dialect;
@@ -75,9 +75,9 @@ interface Ctx {
 }
 
 /**
- * Creates a new compiler context.
+ * Creates a new emitter context.
  * @param dialect The dialect.
- * @returns A compiler context.
+ * @returns A emitter context.
  */
 function createCtx(dialect: Dialect): Ctx {
   return {
@@ -92,33 +92,33 @@ function createCtx(dialect: Dialect): Ctx {
 }
 
 /**
- * Compiles an IR into SQL, taking in an IR and a dialect.
+ * Emits an IR into SQL, taking in an IR and a dialect.
  */
-const compile: Compiler<Dialect> = (ir, dialect) => {
+const emit: Emitter<Dialect> = (ir, dialect) => {
   const ctx: Ctx = createCtx(dialect!);
   const sqlStatements: string[] = [];
 
   for (const stmt of ir.statements) {
     switch (stmt.type) {
       case IR.StatementType.Find:
-        sqlStatements.push(compileFind(ctx, stmt as IR.FindStatement));
+        sqlStatements.push(emitFind(ctx, stmt as IR.FindStatement));
         break;
       case IR.StatementType.Count:
-        sqlStatements.push(compileCount(ctx, stmt as IR.CountStatement));
+        sqlStatements.push(emitCount(ctx, stmt as IR.CountStatement));
         break;
       case IR.StatementType.Create:
-        sqlStatements.push(compileCreate(ctx, stmt as IR.CreateStatement));
+        sqlStatements.push(emitCreate(ctx, stmt as IR.CreateStatement));
         break;
       case IR.StatementType.Upsert:
-        sqlStatements.push(compileUpsert(ctx, stmt as IR.UpdateStatement));
+        sqlStatements.push(emitUpsert(ctx, stmt as IR.UpdateStatement));
         break;
       case IR.StatementType.Delete:
-        sqlStatements.push(compileDelete(ctx, stmt as IR.DeleteStatement));
+        sqlStatements.push(emitDelete(ctx, stmt as IR.DeleteStatement));
         break;
       case IR.StatementType.ConnectQuery:
       case IR.StatementType.RelationQuery:
         throw new Error(
-          `${stmt.type} is not supported by the SQL compiler (graph operations).`,
+          `${stmt.type} is not supported by the SQL emitter (graph operations).`,
         );
       default:
         throw new Error(`Unsupported statement type: ${(stmt as any).type}`);
@@ -135,10 +135,10 @@ const compile: Compiler<Dialect> = (ir, dialect) => {
   };
 };
 
-export default compile;
+export default emit;
 
 // column path support: for `user.profile.name` treat as JSON extraction if needed
-function compileColumnOrJson(ctx: Ctx, key: string): string {
+function emitColumnOrJson(ctx: Ctx, key: string): string {
   // simple heuristic: dot means JSON path extraction
   if (key.includes(".")) {
     const [col, ...pathParts] = key.split(".");
@@ -161,12 +161,9 @@ function literalForValue(ctx: Ctx, val: unknown): string {
 }
 
 /**
- * Compiles a simple expression map into SQL.
+ * Emits a simple expression map into SQL.
  */
-function compileWhere(
-  ctx: Ctx,
-  where?: Record<string, any>,
-): string | undefined {
+function emitWhere(ctx: Ctx, where?: Record<string, any>): string | undefined {
   if (!where || Object.keys(where).length === 0) return undefined;
 
   function expr(obj: any): string {
@@ -193,7 +190,7 @@ function compileWhere(
         // operator map
         for (const opKey of Object.keys(v)) {
           const operand = v[opKey];
-          const colExpr = compileColumnOrJson(ctx, k);
+          const colExpr = emitColumnOrJson(ctx, k);
           switch (opKey) {
             case "gt":
               pieces.push(`${colExpr} > ${literalForValue(ctx, operand)}`);
@@ -236,16 +233,12 @@ function compileWhere(
         }
       } else if (Array.isArray(v)) {
         // IN
-        pieces.push(
-          `${compileColumnOrJson(ctx, k)} IN ${ctx.dialect.array(v)}`,
-        );
+        pieces.push(`${emitColumnOrJson(ctx, k)} IN ${ctx.dialect.array(v)}`);
       } else if (v === null) {
-        pieces.push(`${compileColumnOrJson(ctx, k)} IS NULL`);
+        pieces.push(`${emitColumnOrJson(ctx, k)} IS NULL`);
       } else {
         // equality
-        pieces.push(
-          `${compileColumnOrJson(ctx, k)} = ${literalForValue(ctx, v)}`,
-        );
+        pieces.push(`${emitColumnOrJson(ctx, k)} = ${literalForValue(ctx, v)}`);
       }
     }
     return pieces.join(" AND ");
@@ -255,9 +248,9 @@ function compileWhere(
   return whereSql ? `WHERE ${whereSql}` : undefined;
 }
 
-// -- Per-statement compilers -- //
+// -- Per-statement emitters -- //
 
-function compileCreate(ctx: Ctx, s: IR.CreateStatement): string {
+function emitCreate(ctx: Ctx, s: IR.CreateStatement): string {
   const d = ctx.dialect;
   const data = s.data || {};
   const table = d.identifier(s.model);
@@ -277,7 +270,7 @@ function compileCreate(ctx: Ctx, s: IR.CreateStatement): string {
   return `INSERT INTO ${table} (${colList}) VALUES (${placeholders}) ${returning || ""}`.trim();
 }
 
-function compileUpsert(ctx: Ctx, s: IR.UpdateStatement): string {
+function emitUpsert(ctx: Ctx, s: IR.UpdateStatement): string {
   const d = ctx.dialect;
   const table = d.identifier(s.model);
 
@@ -306,13 +299,13 @@ function compileUpsert(ctx: Ctx, s: IR.UpdateStatement): string {
   });
 }
 
-function compileDelete(ctx: Ctx, s: IR.DeleteStatement): string {
+function emitDelete(ctx: Ctx, s: IR.DeleteStatement): string {
   const table = ctx.dialect.identifier(s.model);
-  const whereFrag = compileWhere(ctx, s.where);
+  const whereFrag = emitWhere(ctx, s.where);
   return [`DELETE FROM ${table}`, whereFrag].filter(Boolean).join(" ");
 }
 
-function compileFind(ctx: Ctx, s: IR.FindStatement): string {
+function emitFind(ctx: Ctx, s: IR.FindStatement): string {
   const d = ctx.dialect;
   const table = d.identifier(s.model);
   const selectList =
@@ -322,7 +315,7 @@ function compileFind(ctx: Ctx, s: IR.FindStatement): string {
           .join(", ")
       : "*";
 
-  const whereFrag = compileWhere(ctx, s.where);
+  const whereFrag = emitWhere(ctx, s.where);
   const orderBy = s.orderBy?.length
     ? `ORDER BY ${s.orderBy
         .map((ob) => {
@@ -338,9 +331,9 @@ function compileFind(ctx: Ctx, s: IR.FindStatement): string {
     .join(" ");
 }
 
-function compileCount(ctx: Ctx, s: IR.CountStatement): string {
+function emitCount(ctx: Ctx, s: IR.CountStatement): string {
   const table = ctx.dialect.identifier(s.model);
-  const whereFrag = compileWhere(ctx, s.where);
+  const whereFrag = emitWhere(ctx, s.where);
   return [`SELECT COUNT(*) AS count FROM ${table}`, whereFrag]
     .filter(Boolean)
     .join(" ");

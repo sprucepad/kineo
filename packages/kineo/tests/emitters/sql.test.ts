@@ -1,5 +1,5 @@
 import { describe, test, expect, vi } from "vitest";
-import compile from "@/compilers/sql";
+import emit from "@/emitters/sql";
 import * as IR from "@/ir";
 
 // A minimal mock dialect implementation for testing
@@ -30,8 +30,8 @@ const mockDialect = {
   ),
 };
 
-describe("SQL Compiler", () => {
-  test("compiles a simple Find statement", () => {
+describe("SQL Emitter", () => {
+  test("emits a simple Find statement", () => {
     const ir: IR.IR = {
       statements: [
         {
@@ -43,13 +43,13 @@ describe("SQL Compiler", () => {
       ],
     };
 
-    const result = compile(ir, mockDialect);
+    const result = emit(ir, mockDialect);
     expect(result.command).toContain('SELECT "id", "name" FROM "User"');
     expect(result.command).toContain('WHERE "id" = 1');
     expect(result.params).toEqual({});
   });
 
-  test("compiles a Find with orderBy and pagination", () => {
+  test("emits a Find with orderBy and pagination", () => {
     const ir: IR.IR = {
       statements: [
         {
@@ -62,13 +62,13 @@ describe("SQL Compiler", () => {
       ],
     };
 
-    const result = compile(ir, mockDialect);
+    const result = emit(ir, mockDialect);
     expect(result.command).toContain('SELECT * FROM "Post"');
     expect(result.command).toContain('ORDER BY "createdAt" DESC');
     expect(result.command).toContain("LIMIT 10 OFFSET 5");
   });
 
-  test("compiles a Count statement with WHERE clause", () => {
+  test("emits a Count statement with WHERE clause", () => {
     const ir: IR.IR = {
       statements: [
         {
@@ -79,13 +79,13 @@ describe("SQL Compiler", () => {
       ],
     };
 
-    const result = compile(ir, mockDialect);
+    const result = emit(ir, mockDialect);
     expect(result.command).toBe(
       'SELECT COUNT(*) AS count FROM "User" WHERE "active" = TRUE',
     );
   });
 
-  test("compiles a Create statement with data", () => {
+  test("emits a Create statement with data", () => {
     const ir: IR.IR = {
       statements: [
         {
@@ -97,13 +97,13 @@ describe("SQL Compiler", () => {
       ],
     };
 
-    const result = compile(ir, mockDialect);
+    const result = emit(ir, mockDialect);
     expect(result.command).toBe(
       'INSERT INTO "User" ("name", "age") VALUES (\'Alice\', 30) RETURNING id',
     );
   });
 
-  test("compiles a Create with empty data (DEFAULT VALUES)", () => {
+  test("emits a Create with empty data (DEFAULT VALUES)", () => {
     const ir: IR.IR = {
       statements: [
         {
@@ -114,11 +114,11 @@ describe("SQL Compiler", () => {
       ],
     };
 
-    const result = compile(ir, mockDialect);
+    const result = emit(ir, mockDialect);
     expect(result.command).toContain('INSERT INTO "User" DEFAULT VALUES');
   });
 
-  test("compiles an Upsert statement", () => {
+  test("emits an Upsert statement", () => {
     const ir: IR.IR = {
       statements: [
         {
@@ -134,12 +134,12 @@ describe("SQL Compiler", () => {
       ],
     };
 
-    const result = compile(ir, mockDialect);
+    const result = emit(ir, mockDialect);
     expect(result.command).toContain('UPSERT INTO "User"');
     expect(mockDialect.upsert).toHaveBeenCalled();
   });
 
-  test("compiles a Delete statement with WHERE", () => {
+  test("emits a Delete statement with WHERE", () => {
     const ir: IR.IR = {
       statements: [
         {
@@ -150,7 +150,7 @@ describe("SQL Compiler", () => {
       ],
     };
 
-    const result = compile(ir, mockDialect);
+    const result = emit(ir, mockDialect);
     expect(result.command).toBe('DELETE FROM "User" WHERE "id" = 42');
   });
 
@@ -167,7 +167,7 @@ describe("SQL Compiler", () => {
       ],
     };
 
-    expect(() => compile(ir, mockDialect)).toThrow(/graph operations/);
+    expect(() => emit(ir, mockDialect)).toThrow(/graph operations/);
   });
 
   test("supports JSON path extraction in where clause", () => {
@@ -181,7 +181,7 @@ describe("SQL Compiler", () => {
       ],
     };
 
-    const result = compile(ir, mockDialect);
+    const result = emit(ir, mockDialect);
     expect(result.command).toContain("JSON_EXTRACT");
   });
 });

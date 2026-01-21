@@ -8,7 +8,7 @@ import {
   type Schema,
 } from "kineo";
 import { createAdapterFactory } from "better-auth/adapters";
-import { compile } from "./compiler";
+import { emit } from "./emitter";
 
 export const betterAuthSchema = defineSchema({
   users: model("user", {
@@ -103,7 +103,7 @@ async function exec(
   mode: string,
   props: any,
 ) {
-  const ir = compile(mode, props);
-  const result = await client.$adapter.compile(ir);
+  const ir = emit(mode, props);
+  const result = await client.$adapter.emit(ir);
   return (await client.$adapter.exec(result)) as any;
 }

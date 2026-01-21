@@ -47,13 +47,13 @@
       "types": "./dist/adapters/neo4j.d.mts",
       "import": "./dist/adapters/neo4j.mjs"
     },
-    "./compilers/cypher": {
-      "types": "./dist/compilers/cypher.d.mts",
-      "import": "./dist/compilers/cypher.mjs"
+    "./emitters/cypher": {
+      "types": "./dist/emitters/cypher.d.mts",
+      "import": "./dist/emitters/cypher.mjs"
     },
-    "./compilers/sql": {
-      "types": "./dist/compilers/sql.d.mts",
-      "import": "./dist/compilers/sql.mjs"
+    "./emitters/sql": {
+      "types": "./dist/emitters/sql.d.mts",
+      "import": "./dist/emitters/sql.mjs"
     }
   },
   "files": [

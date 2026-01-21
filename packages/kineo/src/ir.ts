@@ -24,7 +24,7 @@ export interface Statement {
 }
 
 /**
- * IR root — represents a compiled set of model operations
+ * IR root — represents a emitd set of model operations
  */
 export interface IR {
   statements: Statement[];
@@ -108,12 +108,12 @@ export interface RelationQueryStatement extends Statement {
   limit?: number;
 }
 
-// ---------- Parser / Compiler Utilities ---------- //
+// ---------- Parser / Emitter Utilities ---------- //
 
 /**
- * Compiles a `QueryOpts` into a `FindStatement`
+ * Emits a `QueryOpts` into a `FindStatement`
  */
-export function compileFindStatement(
+export function emitFindStatement(
   modelName: string,
   opts: model.QueryOpts<any, any>,
 ): FindStatement {
@@ -131,9 +131,9 @@ export function compileFindStatement(
 }
 
 /**
- * Compiles a `Count` query
+ * Emits a `Count` query
  */
-export function compileCountStatement(
+export function emitCountStatement(
   modelName: string,
   opts: model.QueryOpts<any, any>,
 ): CountStatement {
@@ -145,9 +145,9 @@ export function compileCountStatement(
 }
 
 /**
- * Compiles a `Create` query
+ * Emits a `Create` query
  */
-export function compileCreateStatement(
+export function emitCreateStatement(
   modelName: string,
   opts: model.CreateOpts<any, any>,
 ): CreateStatement {
@@ -161,9 +161,9 @@ export function compileCreateStatement(
 }
 
 /**
- * Compiles an `Update` or `Upsert` query
+ * Emits an `Update` or `Upsert` query
  */
-export function compileUpsertStatement(
+export function emitUpsertStatement(
   modelName: string,
   opts: model.UpsertOpts<any, any>,
 ): UpdateStatement {
@@ -181,9 +181,9 @@ export function compileUpsertStatement(
 }
 
 /**
- * Compiles a `Delete` query
+ * Emits a `Delete` query
  */
-export function compileDeleteStatement(
+export function emitDeleteStatement(
   modelName: string,
   opts: model.DeleteOpts<any, any>,
 ): DeleteStatement {
@@ -195,9 +195,9 @@ export function compileDeleteStatement(
 }
 
 /**
- * Compiles a `Connect` query
+ * Emits a `Connect` query
  */
-export function compileConnectQueryStatement(
+export function emitConnectQueryStatement(
   modelName: string,
   opts: model.ConnectOpts<any, any>,
 ): ConnectQueryStatement {
@@ -213,9 +213,9 @@ export function compileConnectQueryStatement(
 }
 
 /**
- * Compiles a `Path` / Relation traversal query
+ * Emits a `Path` / Relation traversal query
  */
-export function compileRelationQueryStatement(
+export function emitRelationQueryStatement(
   modelName: string,
   opts: model.PathOpts<any, any>,
 ): RelationQueryStatement {
@@ -241,39 +241,39 @@ export function makeIR(...statements: Statement[]): IR {
 }
 
 /**
- * Convenience: compile a generic model operation into IR
+ * Convenience: emit a generic model operation into IR
  */
-export function compileToIR(modelName: string, op: string, opts: any): IR {
+export function emitToIR(modelName: string, op: string, opts: any): IR {
   let stmt: Statement;
 
   switch (op) {
     case "findFirst":
     case "findMany":
-      stmt = compileFindStatement(modelName, opts);
+      stmt = emitFindStatement(modelName, opts);
       break;
     case "count":
-      stmt = compileCountStatement(modelName, opts);
+      stmt = emitCountStatement(modelName, opts);
       break;
     case "create":
     case "createMany":
-      stmt = compileCreateStatement(modelName, opts);
+      stmt = emitCreateStatement(modelName, opts);
       break;
     case "upsert":
     case "upsertMany":
-      stmt = compileUpsertStatement(modelName, opts);
+      stmt = emitUpsertStatement(modelName, opts);
       break;
     case "delete":
     case "deleteMany":
-      stmt = compileDeleteStatement(modelName, opts);
+      stmt = emitDeleteStatement(modelName, opts);
       break;
     case "connect":
     case "disconnect":
-      stmt = compileConnectQueryStatement(modelName, opts);
+      stmt = emitConnectQueryStatement(modelName, opts);
       break;
     case "findPath":
     case "findShortestPath":
     case "findAllPaths":
-      stmt = compileRelationQueryStatement(modelName, opts);
+      stmt = emitRelationQueryStatement(modelName, opts);
       break;
     default:
       throw new Error(`Unknown operation type: ${op}`);

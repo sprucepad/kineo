@@ -6,26 +6,13 @@ import {
   deploy,
   status,
   getDiff,
-  compileEntries,
-  decompileEntries,
+  emitEntries,
+  deemitEntries,
   KineoKitError,
   KineoKitErrorKind,
 } from "@/index";
 import { model, defineSchema, field } from "kineo/schema";
-import type { Adapter, MigrationEntry } from "kineo/adapter";
-
-// A minimal fake adapter
-function createFakeAdapter(
-  overrides: Partial<Adapter<any, any>> = {},
-): Adapter<any, any> {
-  return {
-    Model: class FakeModel {},
-    compile: vi.fn(),
-    exec: vi.fn(),
-    close: vi.fn(),
-    ...overrides,
-  };
-}
+import type { AdapterKit, MigrationEntry } from "kineo/adapter";
 
 const simpleSchema = defineSchema({
   users: model("User", {
@@ -35,14 +22,14 @@ const simpleSchema = defineSchema({
 
 describe("push()", () => {
   test("throws if adapter lacks pull or push", async () => {
-    const adapter = createFakeAdapter({});
+    const adapter: AdapterKit = {};
     await expect(push(adapter, simpleSchema)).rejects.toThrowError(
       KineoKitError,
     );
   });
 
   test("throws on breaking schema diff", async () => {
-    const adapter = createFakeAdapter({
+    const adapter: AdapterKit = {
       pull: vi.fn().mockResolvedValue({
         schema: {
           User: model({
@@ -53,7 +40,7 @@ describe("push()", () => {
         full: true,
       }),
       push: vi.fn(),
-    });
+    };
 
     const newSchema = defineSchema({
       users: model("User", {
@@ -67,20 +54,20 @@ describe("push()", () => {
   });
 
   test("calls push when no breaking changes", async () => {
-    const adapter = createFakeAdapter({
+    const adapter: AdapterKit = {
       pull: vi.fn().mockResolvedValue({ schema: simpleSchema, full: true }),
       push: vi.fn(),
-    });
+    };
 
     await push(adapter, simpleSchema);
     expect(adapter.push).toHaveBeenCalledWith(simpleSchema);
   });
 
   test("skips diff check when force = true", async () => {
-    const adapter = createFakeAdapter({
+    const adapter: AdapterKit = {
       pull: vi.fn().mockRejectedValue(new Error("should not be called")),
       push: vi.fn(),
-    });
+    };
 
     await push(adapter, simpleSchema, true);
     expect(adapter.push).toHaveBeenCalledWith(simpleSchema);
@@ -109,14 +96,14 @@ describe("getDiff()", () => {
 
 describe("pull()", () => {
   test("throws if adapter lacks pull", async () => {
-    const adapter = createFakeAdapter({});
+    const adapter: AdapterKit = {};
     await expect(pull(adapter)).rejects.toThrowError(KineoKitError);
   });
 
   test("returns schema if adapter.pull exists", async () => {
-    const adapter = createFakeAdapter({
+    const adapter: AdapterKit = {
       pull: vi.fn().mockResolvedValue({ schema: simpleSchema, full: true }),
-    });
+    };
 
     const result = await pull(adapter);
     expect(result).toBe(simpleSchema);
@@ -126,16 +113,16 @@ describe("pull()", () => {
 
 describe("generate()", () => {
   test("throws if adapter lacks generate", async () => {
-    const adapter = createFakeAdapter({});
+    const adapter: AdapterKit = {};
     await expect(generate(adapter, simpleSchema, simpleSchema)).rejects.toThrow(
       KineoKitError,
     );
   });
 
   test("calls adapter.generate()", async () => {
-    const adapter = createFakeAdapter({
+    const adapter: AdapterKit = {
       generate: vi.fn().mockResolvedValue(["migration.sql"]),
-    });
+    };
     const result = await generate(adapter, simpleSchema, simpleSchema);
     expect(adapter.generate).toHaveBeenCalled();
     expect(result).toEqual(["migration.sql"]);
@@ -144,14 +131,14 @@ describe("generate()", () => {
 
 describe("deploy()", () => {
   test("throws if adapter lacks deploy", async () => {
-    const adapter = createFakeAdapter({});
+    const adapter: AdapterKit = {};
     await expect(deploy(adapter, "")).rejects.toThrow(KineoKitError);
   });
 
   test("calls deploy with hash", async () => {
-    const adapter = createFakeAdapter({
+    const adapter: AdapterKit = {
       deploy: vi.fn(),
-    });
+    };
 
     await deploy(adapter, "");
     expect(adapter.deploy).toHaveBeenCalled();
@@ -160,14 +147,14 @@ describe("deploy()", () => {
 
 describe("status()", () => {
   test("throws if adapter lacks status", async () => {
-    const adapter = createFakeAdapter({});
+    const adapter: AdapterKit = {};
     await expect(status(adapter, "")).rejects.toThrow(KineoKitError);
   });
 
   test("calls status with hash", async () => {
-    const adapter = createFakeAdapter({
+    const adapter: AdapterKit = {
       status: vi.fn().mockResolvedValue("completed"),
-    });
+    };
 
     vi.mock("node:crypto", () => ({
       default: {
@@ -183,8 +170,8 @@ describe("status()", () => {
   });
 });
 
-describe("compileEntries()", () => {
-  test("compiles command entries with and without descriptions", () => {
+describe("emitEntries()", () => {
+  test("emits command entries with and without descriptions", () => {
     const entries: MigrationEntry[] = [
       {
         type: "command",
@@ -198,7 +185,7 @@ describe("compileEntries()", () => {
       },
     ];
 
-    const [up, down] = compileEntries(entries);
+    const [up, down] = emitEntries(entries);
 
     expect(up).toContain("CREATE TABLE users -- create users table");
     expect(up).toContain("ALTER TABLE users ADD name TEXT");
@@ -208,7 +195,7 @@ describe("compileEntries()", () => {
     expect(down).not.toContain("ALTER TABLE users ADD name TEXT");
   });
 
-  test("compiles note entries with and without description", () => {
+  test("emits note entries with and without description", () => {
     const entries: MigrationEntry[] = [
       {
         type: "note",
@@ -221,7 +208,7 @@ describe("compileEntries()", () => {
       },
     ];
 
-    const [up, down] = compileEntries(entries);
+    const [up, down] = emitEntries(entries);
 
     expect(up).toContain("-- Description");
     expect(up).toContain("-- This is a note");
@@ -232,15 +219,15 @@ describe("compileEntries()", () => {
   });
 });
 
-describe("decompileEntries()", () => {
-  test("decompiles command entries and maintains reverses", () => {
+describe("deemitEntries()", () => {
+  test("deemits command entries and maintains reverses", () => {
     const up =
       "CREATE TABLE users -- create users table\n\n" +
       "ALTER TABLE users ADD name TEXT\n\n";
 
     const down = "DROP TABLE users\n\n";
 
-    const result = decompileEntries([up, down]);
+    const result = deemitEntries([up, down]);
 
     const command = result.find((x) => x.type === "command" && x.command);
     expect(command?.type === "command" && command?.command).toBe(
@@ -254,12 +241,12 @@ describe("decompileEntries()", () => {
     );
   });
 
-  test("decompiles notes with and without descriptions", () => {
+  test("deemits notes with and without descriptions", () => {
     const up = "-- Description\n-- Note1\n" + "\n" + "-- Note2\n";
 
     const down = "-- Revert: -- Description\n\n" + "-- Revert: -- -- Note2\n";
 
-    const result = decompileEntries([up, down]);
+    const result = deemitEntries([up, down]);
 
     const notes = result.filter((x) => x.type === "note");
     expect(notes.length).toBe(2);
@@ -269,7 +256,7 @@ describe("decompileEntries()", () => {
     expect(notes.some((n) => n.note === "-- Note2")).toBe(true);
   });
 
-  test("round-trip: compile -> decompile returns equivalent structure", () => {
+  test("round-trip: emit -> deemit returns equivalent structure", () => {
     const entries: MigrationEntry[] = [
       {
         type: "command",
@@ -283,10 +270,10 @@ describe("decompileEntries()", () => {
       },
     ];
 
-    const compiled = compileEntries(entries);
-    const decompiled = decompileEntries(compiled);
+    const emitd = emitEntries(entries);
+    const deemitd = deemitEntries(emitd);
 
-    expect(decompiled).toEqual(
+    expect(deemitd).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           type: "command",

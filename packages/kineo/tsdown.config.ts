@@ -12,9 +12,9 @@ export default defineConfig({
     "./src/client.ts",
     // adapters //
     "./src/adapters/neo4j.ts",
-    // compilers //
-    "./src/compilers/cypher.ts",
-    "./src/compilers/sql.ts",
+    // emitters //
+    "./src/emitters/cypher.ts",
+    "./src/emitters/sql.ts",
   ],
   external: ["neo4j-driver"],
   dts: true,
