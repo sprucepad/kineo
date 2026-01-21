@@ -13,7 +13,7 @@ pnpm add @kineojs/better-auth
 bun add @kineojs/better-auth
 ```
 
-**Set it as your adapter.** Use Better-Auth's `adapter` property.
+**Set it as your adapter.** Use Better-Auth's `database` property.
 
 ```ts
 import { betterAuth } from "better-auth";
@@ -21,7 +21,7 @@ import { kineoAdapter } from "@kineojs/better-auth";
 import { client } from "<your-database-client>";
 
 export const auth = betterAuth({
-  adapter: kineoAdapter(client),
+  database: kineoAdapter(client),
   emailAndPassword: { enabled: true }, // example
 });
 ```

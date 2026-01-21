@@ -5,7 +5,7 @@ import type { Schema } from "./schema";
 /**
  * Either a Promise or not.
  */
-export type OptPromise<T> = T | Promise<T>;
+type Resolvable<T> = T | Promise<T>;
 
 /**
  * A result from a emitter.
@@ -56,16 +56,16 @@ export interface Adapter<
   /**
    * Emits an intermediate representation into a query language.
    */
-  emit(ir: IR): OptPromise<EmitResult>;
+  emit(ir: IR): Resolvable<EmitResult>;
   /**
    * Runs a compilation result against the database.
    * @param result The emit result.
    */
-  exec(result: EmitResult): OptPromise<ExecResult<Summary>>;
+  exec(result: EmitResult): Resolvable<ExecResult<Summary>>;
   /**
    * Closes the adapter.
    */
-  close(): OptPromise<void>;
+  close(): Resolvable<void>;
 }
 
 /**
@@ -76,27 +76,27 @@ export interface AdapterKit {
    * Push a schema to the database. You don't need to warn the user, Kineo does that for you.
    * @param schema The schema to push.
    */
-  push?(schema: Schema): OptPromise<void>;
+  push?(schema: Schema): Resolvable<void>;
   /**
    * Gets a schema from the database.
    */
-  pull?(): OptPromise<{ schema: Schema; full?: boolean }>;
+  pull?(): Resolvable<{ schema: Schema; full?: boolean }>;
   /**
    * Generates migrations.
    */
-  generate?(prev: Schema, cur: Schema): OptPromise<MigrationEntry[]>;
+  generate?(prev: Schema, cur: Schema): Resolvable<MigrationEntry[]>;
   /**
    * Gets a status for a migration.
    * @param migration The migration to get the status for.
    * @param hash The hash of the migration.
    */
-  status?(migration: string, hash: string): OptPromise<"pending" | "completed">;
+  status?(migration: string, hash: string): Resolvable<"pending" | "completed">;
   /**
    * Deploys a migration.
    * @param migration The migration to deploy.
    * @param hash The hash of the migration.
    */
-  deploy?(migration: string, hash: string): OptPromise<void>;
+  deploy?(migration: string, hash: string): Resolvable<void>;
 }
 
 /**

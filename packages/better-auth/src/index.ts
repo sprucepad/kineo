@@ -10,6 +10,9 @@ import {
 import { createAdapterFactory } from "better-auth/adapters";
 import { emit } from "./emitter";
 
+/**
+ * The schema used by Better-Auth, that you can spread onto your schema.
+ */
 export const betterAuthSchema = defineSchema({
   users: model("user", {
     id: field.string().id(),
@@ -58,6 +61,11 @@ export const betterAuthSchema = defineSchema({
   }),
 });
 
+/**
+ * Creates a Better-Auth adapter from a Kineo client.
+ * @param client The Kineo client.
+ * @returns A Better-Auth adapter.
+ */
 export const kineoAdapter = (client: Kineo<any, any>) =>
   createAdapterFactory({
     config: {
@@ -98,6 +106,13 @@ export const kineoAdapter = (client: Kineo<any, any>) =>
     }),
   });
 
+/**
+ * Executes a query.
+ * @param client The client.
+ * @param mode The type of operation.
+ * @param props The operation's required properties.
+ * @returns Properties from the database.
+ */
 async function exec(
   client: Kineo<Schema, Adapter<any, any>>,
   mode: string,

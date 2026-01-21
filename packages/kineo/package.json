@@ -15,17 +15,13 @@
       "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs"
     },
-    "./error": {
-      "types": "./dist/error.d.mts",
-      "import": "./dist/error.mjs"
-    },
     "./schema": {
       "types": "./dist/schema/index.d.mts",
       "import": "./dist/schema/index.mjs"
     },
     "./model": {
-      "types": "./dist/model.d.mts",
-      "import": "./dist/model.mjs"
+      "types": "./dist/model/index.d.mts",
+      "import": "./dist/model/index.mjs"
     },
     "./adapter": {
       "types": "./dist/adapter.d.mts",

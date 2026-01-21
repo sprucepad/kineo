@@ -11,7 +11,7 @@ export type Auth =
       /**
        * Basic (username and password) authentication.
        */
-      type: "basic";
+      type?: "basic";
       /**
        * The username.
        */
@@ -291,6 +291,7 @@ export function collectEdges(value: any, edges: any[]) {
  */
 export function auth(opts: Auth): neo4j.AuthToken {
   switch (opts.type) {
+    case undefined:
     case "basic":
       return neo4j.auth.basic(opts.username, opts.password, opts.realm);
     case "bearer":
