@@ -89,8 +89,8 @@ describe("push()", () => {
 
 describe("getDiff()", () => {
   test("detects added and removed models", () => {
-    const prev = { User: {} };
-    const cur = { Account: {} };
+    const prev = defineSchema({ User: model({}) });
+    const cur = defineSchema({ Account: model({}) });
     const diff = getDiff(prev, cur);
     expect(diff.breaking).toContain('Model "User" was removed');
     expect(diff.nonBreaking).toContain('Model "Account" was added');

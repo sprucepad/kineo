@@ -561,13 +561,13 @@ export function serializeFieldOrRelation(value: unknown): string {
   // Handle FieldDef
   if (value instanceof FieldDef) {
     const f = value as FieldDef<any, any, any, any>;
-    let expr = `field.${f.kind}(${f.rowName ? `"${f.rowName}"` : ""})`;
+    let expr = `field.${f.$kind}(${f.$name ? `"${f.$name}"` : ""})`;
 
-    if (f.isId) expr += `.id()`;
-    if (f.isRequired) expr += `.required()`;
-    if (f.isArray) expr += `.array()`;
-    if (f.defaultValue !== undefined)
-      expr += `.default(${JSON.stringify(f.defaultValue)})`;
+    if (f.$id) expr += `.id()`;
+    if (f.$required) expr += `.required()`;
+    if (f.$array) expr += `.array()`;
+    if (f.$default !== undefined)
+      expr += `.default(${JSON.stringify(f.$default)})`;
 
     return expr;
   }
@@ -575,9 +575,9 @@ export function serializeFieldOrRelation(value: unknown): string {
   // Handle RelationDef
   if (value instanceof RelationDef) {
     const r = value as RelationDef<any, any, any, any>;
-    let expr = `relation.to("${r.pointTo}"${r.relName ? `, "${r.relName}"` : ""})`;
+    let expr = `relation.to("${r.$to}"${r.$name ? `, "${r.$name}"` : ""})`;
 
-    switch (r.relDirection) {
+    switch (r.$direction) {
       case "incoming":
         expr += `.incoming()`;
         break;
@@ -589,8 +589,8 @@ export function serializeFieldOrRelation(value: unknown): string {
         break;
     }
 
-    if (r.isRequired) expr += `.required()`;
-    if (r.isArray) expr += `.array()`;
+    if (r.$required) expr += `.required()`;
+    if (r.$array) expr += `.array()`;
 
     return expr;
   }
