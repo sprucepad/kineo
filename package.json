@@ -10,7 +10,7 @@
     "format": "prettier --check .",
     "format:fix": "prettier --write ."
   },
-  "packageManager": "pnpm@10.28.0",
+  "packageManager": "pnpm@10.28.1",
   "devDependencies": {
     "@eslint/js": "^9.36.0",
     "@types/node": "~20.19.0",

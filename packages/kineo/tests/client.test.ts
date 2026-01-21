@@ -1,6 +1,6 @@
 import { describe, test, expect, vi } from "vitest";
 import { model, defineSchema, field, relation } from "@/schema";
-import { Kineo, type InferClient } from "@/client";
+import { kineo, type Kineo, type InferClient } from "@/client";
 import { GraphModel, Model } from "@/model";
 import type { Adapter } from "@/adapter";
 
@@ -28,7 +28,7 @@ const schema = defineSchema({
   }),
 });
 describe("Kineo client", () => {
-  const client = Kineo(adapter, schema);
+  const client = kineo(adapter, schema);
 
   test("creates a client with models matching schema keys", () => {
     // every model key should be a Model instance

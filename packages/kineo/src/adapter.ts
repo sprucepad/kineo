@@ -53,7 +53,6 @@ export interface Adapter<
    */
   Model: TModelCtor;
 
-  // Runtime related functions
   /**
    * Compiles an intermediate representation into a query language.
    */
@@ -67,8 +66,12 @@ export interface Adapter<
    * Closes the adapter.
    */
   close(): OptPromise<void>;
+}
 
-  // KineoKit related functions
+/**
+ * An adapter used in KineoKit.
+ */
+export interface AdapterKit {
   /**
    * Push a schema to the database. You don't need to warn the user, Kineo does that for you.
    * @param schema The schema to push.

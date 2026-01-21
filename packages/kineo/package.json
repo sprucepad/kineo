@@ -43,15 +43,15 @@
       "types": "./dist/client.d.mts",
       "import": "./dist/client.mjs"
     },
-    "./adapter/neo4j": {
+    "./adapters/neo4j": {
       "types": "./dist/adapters/neo4j.d.mts",
       "import": "./dist/adapters/neo4j.mjs"
     },
-    "./compiler/cypher": {
+    "./compilers/cypher": {
       "types": "./dist/compilers/cypher.d.mts",
       "import": "./dist/compilers/cypher.mjs"
     },
-    "./compiler/sql": {
+    "./compilers/sql": {
       "types": "./dist/compilers/sql.d.mts",
       "import": "./dist/compilers/sql.mjs"
     }
@@ -73,7 +73,12 @@
   ],
   "author": "sprucepad",
   "license": "MIT",
-  "optionalDependencies": {
+  "peerDependencies": {
     "neo4j-driver": "^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "neo4j-driver": {
+      "optional": true
+    }
   }
 }
