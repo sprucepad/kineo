@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import type { CleanedWhere } from "better-auth/adapters";
-import { compile } from "@/compiler";
+import { emit } from "@/emitter";
 
 /**
  * Mock kineo/ir so we can assert how it's called
@@ -8,27 +8,27 @@ import { compile } from "@/compiler";
 vi.mock("kineo/ir", () => {
   return {
     makeIR: vi.fn((value) => ({ __ir: value })),
-    compileFindStatement: vi.fn((model, args) => ({
+    emitFindStatement: vi.fn((model, args) => ({
       type: "find",
       model,
       args,
     })),
-    compileCountStatement: vi.fn((model, args) => ({
+    emitCountStatement: vi.fn((model, args) => ({
       type: "count",
       model,
       args,
     })),
-    compileCreateStatement: vi.fn((model, args) => ({
+    emitCreateStatement: vi.fn((model, args) => ({
       type: "create",
       model,
       args,
     })),
-    compileUpsertStatement: vi.fn((model, args) => ({
+    emitUpsertStatement: vi.fn((model, args) => ({
       type: "upsert",
       model,
       args,
     })),
-    compileDeleteStatement: vi.fn((model, args) => ({
+    emitDeleteStatement: vi.fn((model, args) => ({
       type: "delete",
       model,
       args,
@@ -38,13 +38,13 @@ vi.mock("kineo/ir", () => {
 
 import * as IR from "kineo/ir";
 
-describe("compile", () => {
-  test("compiles findMany with select, where, sort, limit, and offset", () => {
+describe("emit", () => {
+  test("emits findMany with select, where, sort, limit, and offset", () => {
     const where: CleanedWhere[] = [
       { field: "email", operator: "eq", value: "a@test.com", connector: "AND" },
     ];
 
-    const result = compile("findMany", {
+    const result = emit("findMany", {
       model: "User",
       where,
       select: ["id", "email"],
@@ -53,7 +53,7 @@ describe("compile", () => {
       sortBy: { field: "email", direction: "asc" },
     });
 
-    expect(IR.compileFindStatement).toHaveBeenCalledWith("User", {
+    expect(IR.emitFindStatement).toHaveBeenCalledWith("User", {
       where: { email: "a@test.com" },
       select: { id: true, email: true },
       include: undefined,
@@ -68,18 +68,18 @@ describe("compile", () => {
     });
   });
 
-  test("compiles multiple where clauses using AND", () => {
+  test("emits multiple where clauses using AND", () => {
     const where: CleanedWhere[] = [
       { field: "age", operator: "gte", value: 18, connector: "AND" },
       { field: "age", operator: "lt", value: 65, connector: "AND" },
     ];
 
-    compile("findMany", {
+    emit("findMany", {
       model: "User",
       where,
     });
 
-    expect(IR.compileFindStatement).toHaveBeenCalledWith("User", {
+    expect(IR.emitFindStatement).toHaveBeenCalledWith("User", {
       where: {
         AND: [{ age: { gte: 18 } }, { age: { lt: 65 } }],
       },
@@ -91,8 +91,8 @@ describe("compile", () => {
     });
   });
 
-  test("compiles joins into include", () => {
-    compile("findMany", {
+  test("emits joins into include", () => {
+    emit("findMany", {
       model: "User",
       join: {
         posts: { on: { from: "posts", to: "comments" }, limit: 5 },
@@ -100,7 +100,7 @@ describe("compile", () => {
       },
     });
 
-    expect(IR.compileFindStatement).toHaveBeenCalledWith("User", {
+    expect(IR.emitFindStatement).toHaveBeenCalledWith("User", {
       where: undefined,
       select: undefined,
       include: {
@@ -113,64 +113,64 @@ describe("compile", () => {
     });
   });
 
-  test("compiles count", () => {
-    compile("count", {
+  test("emits count", () => {
+    emit("count", {
       model: "User",
       where: [
         { field: "active", connector: "AND", operator: "eq", value: true },
       ],
     });
 
-    expect(IR.compileCountStatement).toHaveBeenCalledWith("User", {
+    expect(IR.emitCountStatement).toHaveBeenCalledWith("User", {
       where: { active: true },
     });
   });
 
-  test("compiles create", () => {
-    compile("create", {
+  test("emits create", () => {
+    emit("create", {
       model: "User",
       data: { email: "a@test.com" },
     });
 
-    expect(IR.compileCreateStatement).toHaveBeenCalledWith("User", {
+    expect(IR.emitCreateStatement).toHaveBeenCalledWith("User", {
       data: { email: "a@test.com" },
     });
   });
 
-  test("compiles update as upsert", () => {
-    compile("update", {
+  test("emits update as upsert", () => {
+    emit("update", {
       model: "User",
       where: [{ field: "id", connector: "AND", operator: "eq", value: "1" }],
       data: { email: "b@test.com" },
     });
 
-    expect(IR.compileUpsertStatement).toHaveBeenCalledWith("User", {
+    expect(IR.emitUpsertStatement).toHaveBeenCalledWith("User", {
       where: { id: "1" },
       create: { email: "b@test.com" },
       update: { email: "b@test.com" },
     });
   });
 
-  test("compiles delete", () => {
-    compile("delete", {
+  test("emits delete", () => {
+    emit("delete", {
       model: "User",
       where: [{ field: "id", connector: "AND", operator: "eq", value: "1" }],
     });
 
-    expect(IR.compileDeleteStatement).toHaveBeenCalledWith("User", {
+    expect(IR.emitDeleteStatement).toHaveBeenCalledWith("User", {
       where: { id: "1" },
     });
   });
 
   test("throws on unsupported mode", () => {
-    expect(() => compile("unknown", { model: "User" })).toThrow(
+    expect(() => emit("unknown", { model: "User" })).toThrow(
       "Unsupported adapter mode",
     );
   });
 
   test("throws on unsupported where operator", () => {
     expect(() =>
-      compile("findMany", {
+      emit("findMany", {
         model: "User",
         where: [
           // @ts-expect-error – intentional invalid operator

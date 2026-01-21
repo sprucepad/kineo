@@ -1,9 +1,9 @@
 import { describe, test, expect, beforeEach, vi } from "vitest";
 import { Model, GraphModel } from "@/model";
 
-// ---------- Mock IR compiler ---------- //
+// ---------- Mock IR emitter ---------- //
 vi.mock("@/ir", () => ({
-  compileToIR: vi.fn((name: string, op: string, opts: any) => ({
+  emitToIR: vi.fn((name: string, op: string, opts: any) => ({
     name,
     op,
     opts,
@@ -17,7 +17,7 @@ function makeFakeAdapter() {
   const adapter = {
     Model: Model as any,
 
-    async compile(ir: any) {
+    async emit(ir: any) {
       return {
         command: ir.op,
         params: ir.opts,

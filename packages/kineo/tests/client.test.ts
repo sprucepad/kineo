@@ -10,7 +10,7 @@ const adapter: Adapter<typeof GraphModel, any> = {
   Model: GraphModel,
 
   close: vi.fn(),
-  compile: vi.fn().mockReturnValue({ command: "", params: {} }),
+  emit: vi.fn().mockReturnValue({ command: "", params: {} }),
   exec: vi.fn().mockReturnValue([]),
 };
 
@@ -45,7 +45,7 @@ describe("Kineo client", () => {
     expect(client.users).not.toBe(client.posts);
   });
 
-  test("InferClient type inference works (compile-time)", () => {
+  test("InferClient type inference works (emit-time)", () => {
     // purely type-level, but we can runtime-check shape loosely
     type ClientType = InferClient<Kineo<typeof schema, typeof adapter>>;
 

@@ -1,15 +1,15 @@
 import { describe, test, expect } from "vitest";
 import {
   StatementType,
-  compileFindStatement,
-  compileCountStatement,
-  compileCreateStatement,
-  compileUpsertStatement,
-  compileDeleteStatement,
-  compileConnectQueryStatement,
-  compileRelationQueryStatement,
+  emitFindStatement,
+  emitCountStatement,
+  emitCreateStatement,
+  emitUpsertStatement,
+  emitDeleteStatement,
+  emitConnectQueryStatement,
+  emitRelationQueryStatement,
   makeIR,
-  compileToIR,
+  emitToIR,
 } from "@/ir";
 
 // Mock model types — just need to shape opts as expected
@@ -23,9 +23,9 @@ const baseOpts = {
   take: 10,
 };
 
-describe("compileFindStatement", () => {
+describe("emitFindStatement", () => {
   test("creates a valid FindStatement", () => {
-    const stmt = compileFindStatement("User", baseOpts);
+    const stmt = emitFindStatement("User", baseOpts);
     expect(stmt).toEqual({
       type: StatementType.Find,
       model: "User",
@@ -40,15 +40,15 @@ describe("compileFindStatement", () => {
   });
 
   test("handles undefined optional fields", () => {
-    const stmt = compileFindStatement("User", {});
+    const stmt = emitFindStatement("User", {});
     expect(stmt.type).toBe(StatementType.Find);
     expect(stmt.model).toBe("User");
   });
 });
 
-describe("compileCountStatement", () => {
+describe("emitCountStatement", () => {
   test("creates a valid CountStatement", () => {
-    const stmt = compileCountStatement("Post", { where: { published: true } });
+    const stmt = emitCountStatement("Post", { where: { published: true } });
     expect(stmt).toEqual({
       type: StatementType.Count,
       model: "Post",
@@ -57,9 +57,9 @@ describe("compileCountStatement", () => {
   });
 });
 
-describe("compileCreateStatement", () => {
+describe("emitCreateStatement", () => {
   test("creates a valid CreateStatement", () => {
-    const stmt = compileCreateStatement("User", {
+    const stmt = emitCreateStatement("User", {
       data: { name: "Alice" },
       select: { id: true },
       include: { posts: true },
@@ -74,9 +74,9 @@ describe("compileCreateStatement", () => {
   });
 });
 
-describe("compileUpsertStatement", () => {
+describe("emitUpsertStatement", () => {
   test("creates a valid UpsertStatement", () => {
-    const stmt = compileUpsertStatement("User", {
+    const stmt = emitUpsertStatement("User", {
       where: { id: 1 },
       create: { name: "Alice" },
       update: { name: "Bob" },
@@ -97,9 +97,9 @@ describe("compileUpsertStatement", () => {
   });
 });
 
-describe("compileDeleteStatement", () => {
+describe("emitDeleteStatement", () => {
   test("creates a valid DeleteStatement", () => {
-    const stmt = compileDeleteStatement("User", { where: { id: 2 } });
+    const stmt = emitDeleteStatement("User", { where: { id: 2 } });
     expect(stmt).toEqual({
       type: StatementType.Delete,
       model: "User",
@@ -108,9 +108,9 @@ describe("compileDeleteStatement", () => {
   });
 });
 
-describe("compileConnectQueryStatement", () => {
+describe("emitConnectQueryStatement", () => {
   test("creates a valid ConnectQueryStatement", () => {
-    const stmt = compileConnectQueryStatement("User", {
+    const stmt = emitConnectQueryStatement("User", {
       from: { where: { id: 1 } },
       to: { where: { id: 2 } },
       relation: "FRIEND_OF",
@@ -129,9 +129,9 @@ describe("compileConnectQueryStatement", () => {
   });
 });
 
-describe("compileRelationQueryStatement", () => {
+describe("emitRelationQueryStatement", () => {
   test("creates a valid RelationQueryStatement", () => {
-    const stmt = compileRelationQueryStatement("User", {
+    const stmt = emitRelationQueryStatement("User", {
       from: { where: { id: 1 } },
       to: { where: { id: 3 } },
       maxDepth: 5,
@@ -160,24 +160,24 @@ describe("makeIR", () => {
   });
 });
 
-describe("compileToIR", () => {
+describe("emitToIR", () => {
   test("handles findFirst/findMany", () => {
-    const ir = compileToIR("User", "findFirst", baseOpts);
+    const ir = emitToIR("User", "findFirst", baseOpts);
     expect(ir.statements[0].type).toBe(StatementType.Find);
   });
 
   test("handles count", () => {
-    const ir = compileToIR("Post", "count", { where: { active: true } });
+    const ir = emitToIR("Post", "count", { where: { active: true } });
     expect(ir.statements[0].type).toBe(StatementType.Count);
   });
 
   test("handles create", () => {
-    const ir = compileToIR("User", "create", { data: { name: "A" } });
+    const ir = emitToIR("User", "create", { data: { name: "A" } });
     expect(ir.statements[0].type).toBe(StatementType.Create);
   });
 
   test("handles upsert", () => {
-    const ir = compileToIR("User", "upsert", {
+    const ir = emitToIR("User", "upsert", {
       where: { id: 1 },
       create: { name: "A" },
       update: { name: "B" },
@@ -186,12 +186,12 @@ describe("compileToIR", () => {
   });
 
   test("handles delete", () => {
-    const ir = compileToIR("User", "delete", { where: { id: 3 } });
+    const ir = emitToIR("User", "delete", { where: { id: 3 } });
     expect(ir.statements[0].type).toBe(StatementType.Delete);
   });
 
   test("handles connect", () => {
-    const ir = compileToIR("User", "connect", {
+    const ir = emitToIR("User", "connect", {
       from: { where: { id: 1 } },
       to: { where: { id: 2 } },
       relation: "FRIEND_OF",
@@ -200,7 +200,7 @@ describe("compileToIR", () => {
   });
 
   test("handles findPath", () => {
-    const ir = compileToIR("User", "findPath", {
+    const ir = emitToIR("User", "findPath", {
       from: { where: { id: 1 } },
       to: { where: { id: 2 } },
     });
@@ -208,7 +208,7 @@ describe("compileToIR", () => {
   });
 
   test("throws on unknown operation", () => {
-    expect(() => compileToIR("User", "invalidOp", {})).toThrowError(
+    expect(() => emitToIR("User", "invalidOp", {})).toThrowError(
       /Unknown operation type: invalidOp/,
     );
   });

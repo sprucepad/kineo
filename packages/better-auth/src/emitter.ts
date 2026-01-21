@@ -1,7 +1,7 @@
 import type { CleanedWhere, JoinConfig } from "better-auth/adapters";
 import * as IR from "kineo/ir";
 
-export interface CompileOpts {
+export interface EmitOpts {
   model: string;
   where?: CleanedWhere[];
   select?: string[];
@@ -15,7 +15,7 @@ export interface CompileOpts {
   join?: JoinConfig;
 }
 
-function compileWhere(where?: CleanedWhere[]): Record<string, any> | undefined {
+function emitWhere(where?: CleanedWhere[]): Record<string, any> | undefined {
   if (!where || where.length === 0) return undefined;
 
   const clauses = where.map((w) => {
@@ -46,7 +46,7 @@ function compileWhere(where?: CleanedWhere[]): Record<string, any> | undefined {
   return clauses.length === 1 ? clauses[0] : { AND: clauses };
 }
 
-function compileJoin(join?: JoinConfig): Record<string, any> | undefined {
+function emitJoin(join?: JoinConfig): Record<string, any> | undefined {
   if (!join) return undefined;
 
   const include: Record<string, any> = {};
@@ -60,15 +60,15 @@ function compileJoin(join?: JoinConfig): Record<string, any> | undefined {
   return include;
 }
 
-export function compile(mode: string, opts: CompileOpts): IR.IR {
-  const where = compileWhere(opts.where);
-  const include = compileJoin(opts.join);
+export function emit(mode: string, opts: EmitOpts): IR.IR {
+  const where = emitWhere(opts.where);
+  const include = emitJoin(opts.join);
 
   switch (mode) {
     case "findOne":
     case "findMany": {
       return IR.makeIR(
-        IR.compileFindStatement(opts.model, {
+        IR.emitFindStatement(opts.model, {
           where,
           select: opts.select
             ? Object.fromEntries(opts.select.map((f) => [f, true]))
@@ -84,12 +84,12 @@ export function compile(mode: string, opts: CompileOpts): IR.IR {
     }
 
     case "count": {
-      return IR.makeIR(IR.compileCountStatement(opts.model, { where }));
+      return IR.makeIR(IR.emitCountStatement(opts.model, { where }));
     }
 
     case "create": {
       return IR.makeIR(
-        IR.compileCreateStatement(opts.model, {
+        IR.emitCreateStatement(opts.model, {
           data: opts.data ?? {},
         }),
       );
@@ -98,7 +98,7 @@ export function compile(mode: string, opts: CompileOpts): IR.IR {
     case "update":
     case "upsert": {
       return IR.makeIR(
-        IR.compileUpsertStatement(opts.model, {
+        IR.emitUpsertStatement(opts.model, {
           where: where ?? {},
           create: opts.data ?? {},
           update: opts.data ?? {},
@@ -108,7 +108,7 @@ export function compile(mode: string, opts: CompileOpts): IR.IR {
 
     case "delete": {
       return IR.makeIR(
-        IR.compileDeleteStatement(opts.model, {
+        IR.emitDeleteStatement(opts.model, {
           where: where ?? {},
         }),
       );

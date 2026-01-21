@@ -1,6 +1,6 @@
 import type { Adapter } from "@/adapter";
 import { GraphModel } from "@/model";
-import { compile } from "@/compilers/cypher";
+import { emit } from "@/emitters/cypher";
 import * as neo4j from "neo4j-driver";
 
 /**
@@ -135,8 +135,8 @@ export function neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
       await driver.close();
     },
 
-    compile(ir) {
-      return compile(ir);
+    emit(ir) {
+      return emit(ir);
     },
 
     async exec(result) {

@@ -365,7 +365,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
           config.schema,
         );
 
-        const contents = JSON.stringify(kit.compileEntries(entries));
+        const contents = JSON.stringify(kit.emitEntries(entries));
         await fs.writeFile(
           path.join(CWD, config.migrations, `${currentDate()}_migration.json`),
           contents,
@@ -380,7 +380,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
 
       const statuses = await Promise.all(
         entries.map(async (entry) => {
-          const migration = kit.decompileEntries(
+          const migration = kit.deemitEntries(
             JSON.parse(
               await fs.readFile(
                 path.join(CWD, config.migrations, entry),
@@ -433,7 +433,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
 
       await Promise.all(
         entries.map(async (entry) => {
-          const migration = kit.decompileEntries(
+          const migration = kit.deemitEntries(
             JSON.parse(
               await fs.readFile(
                 path.join(CWD, config.migrations, entry),
@@ -475,12 +475,12 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
           sortedEntries.slice(0, n).map(async (entry) => {
             const contents = JSON.parse(await fs.readFile(entry, "utf-8"));
             const migration = kit
-              .decompileEntries(contents)
+              .deemitEntries(contents)
               .filter((entry) => entry.type === "command" && !!entry.reverse);
 
             await fs.writeFile(
               `${currentDate()}_rollback.json`,
-              JSON.stringify(kit.compileEntries(migration)),
+              JSON.stringify(kit.emitEntries(migration)),
             );
 
             if (!noPush)

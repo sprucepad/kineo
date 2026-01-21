@@ -12,7 +12,7 @@ export { KineoError, KineoErrorKind } from "./error";
 export { Model, GraphModel } from "./model";
 export type {
   Adapter,
-  Compiler,
+  Emitter,
   MigrationEntry,
   MigrationCommand,
   MigrationNote,

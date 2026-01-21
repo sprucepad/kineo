@@ -305,9 +305,9 @@ export class Model<S extends Schema, M extends ModelShape> {
   }
 
   protected async $exec(opts: any, op: string) {
-    const tree = ir.compileToIR(this.$name, op, opts);
-    const compiled = await this.$adapter.compile(tree);
-    const result = await this.$adapter.exec(compiled);
+    const tree = ir.emitToIR(this.$name, op, opts);
+    const emitd = await this.$adapter.emit(tree);
+    const result = await this.$adapter.exec(emitd);
 
     return result;
   }

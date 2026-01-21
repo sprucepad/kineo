@@ -1,16 +1,16 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { kineoAdapter } from "@/index";
 
-// mock compiler and schema
-vi.mock("@/compiler", () => ({
-  compile: vi.fn(),
+// mock emitter and schema
+vi.mock("@/emitter", () => ({
+  emit: vi.fn(),
 }));
 
 vi.mock("@/schema", () => ({
   createSchema: vi.fn(),
 }));
 
-import { compile } from "@/compiler";
+import { emit } from "@/emitter";
 
 describe("kineoAdapter", () => {
   let client: any;
@@ -24,12 +24,12 @@ describe("kineoAdapter", () => {
 
     client = {
       $adapter: {
-        compile: vi.fn().mockResolvedValue("compiled-ir"),
+        emit: vi.fn().mockResolvedValue("emitd-ir"),
         exec: vi.fn().mockResolvedValue(execResult),
       },
     };
 
-    (compile as any).mockReturnValue("ir");
+    (emit as any).mockReturnValue("ir");
   });
 
   test("creates adapter with correct adapterId", () => {
@@ -41,13 +41,13 @@ describe("kineoAdapter", () => {
     const adapter = kineoAdapter(client)({});
     const result = await adapter.count({ where: [], model: "user" });
 
-    expect(compile).toHaveBeenCalledWith("count", {
+    expect(emit).toHaveBeenCalledWith("count", {
       model: "user",
       where: [],
     });
 
-    expect(client.$adapter.compile).toHaveBeenCalledWith("ir");
-    expect(client.$adapter.exec).toHaveBeenCalledWith("compiled-ir");
+    expect(client.$adapter.emit).toHaveBeenCalledWith("ir");
+    expect(client.$adapter.exec).toHaveBeenCalledWith("emitd-ir");
     expect(result).toBe(5);
   });
 
@@ -55,7 +55,7 @@ describe("kineoAdapter", () => {
     const adapter = kineoAdapter(client)({});
     const result = await adapter.create({ model: "user", data: {} });
 
-    expect(compile).toHaveBeenCalledWith(
+    expect(emit).toHaveBeenCalledWith(
       "create",
       expect.objectContaining({
         model: "user",
@@ -82,7 +82,7 @@ describe("kineoAdapter", () => {
       where: [{ field: "id", value: 1 }],
     });
 
-    expect(compile).toHaveBeenLastCalledWith("delete", {
+    expect(emit).toHaveBeenLastCalledWith("delete", {
       model: "user",
       where: [
         {
@@ -103,7 +103,7 @@ describe("kineoAdapter", () => {
       where: [],
     });
 
-    expect(compile).toHaveBeenLastCalledWith("deleteMany", {
+    expect(emit).toHaveBeenLastCalledWith("deleteMany", {
       model: "user",
       where: [],
     });
@@ -119,7 +119,7 @@ describe("kineoAdapter", () => {
       where: [{ field: "id", value: 1 }],
     });
 
-    expect(compile).toHaveBeenLastCalledWith("findOne", {
+    expect(emit).toHaveBeenLastCalledWith("findOne", {
       model: "user",
       where: [
         {
@@ -144,7 +144,7 @@ describe("kineoAdapter", () => {
       where: [],
     });
 
-    expect(compile).toHaveBeenLastCalledWith("findMany", {
+    expect(emit).toHaveBeenLastCalledWith("findMany", {
       model: "user",
       where: [],
       limit: 100,
@@ -168,7 +168,7 @@ describe("kineoAdapter", () => {
       update: {},
     });
 
-    expect(compile).toHaveBeenLastCalledWith(
+    expect(emit).toHaveBeenLastCalledWith(
       "update",
       expect.objectContaining({
         model: "user",
@@ -197,7 +197,7 @@ describe("kineoAdapter", () => {
       update: {},
     });
 
-    expect(compile).toHaveBeenLastCalledWith(
+    expect(emit).toHaveBeenLastCalledWith(
       "updateMany",
       expect.objectContaining({
         model: "user",
