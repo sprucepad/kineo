@@ -277,7 +277,7 @@ module.exports = defineConfig({
       })
       .action(async ({ force }) => {
         try {
-          await kit.push(config.client.$adapter, config.schema, force);
+          await kit.push(config.adapter, config.schema, force);
         } catch (e) {
           if (e instanceof kit.KineoKitError) {
             const { data } = e as kit.KineoKitError<kit.SchemaDiff>;
@@ -292,7 +292,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
               });
 
               if (confirmed)
-                await kit.push(config.client.$adapter, config.schema, true);
+                await kit.push(config.adapter, config.schema, true);
             }
           }
 
@@ -311,7 +311,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
       .action(async ({ force }) => {
         if (!config.schemaMod)
           throw new kit.KineoKitError(kit.KineoKitErrorKind.FilePathNecessary);
-        if (!force && config.client.$adapter.pull) {
+        if (!force && config.adapter.pull) {
           const confirmed = await prompt.confirm({
             message:
               "This will delete your current schema. Not all adapters support full schema introspection features. THIS MAY CAUSE LOSS. Make sure you can revert this action.",
@@ -319,7 +319,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
           if (!confirmed) return;
         }
 
-        const schema = await kit.pull(config.client.$adapter);
+        const schema = await kit.pull(config.adapter);
         const contents = ensureImports(
           await fs.readFile(config.schemaMod.file, "utf-8"),
         );
@@ -358,7 +358,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
         "Generates migrations based on the current database state and the current schema.",
       )
       .action(async ({ noPush }) => {
-        const adapter = config.client.$adapter;
+        const adapter = config.adapter;
         const entries = await kit.generate(
           adapter,
           await kit.pull(adapter),
@@ -391,7 +391,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
           return {
             entry,
             status: await kit.status(
-              config.client.$adapter,
+              config.adapter,
               kit.filterEntries(migration, "command"),
             ),
           };
@@ -413,7 +413,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
         const filePath = path.join(
           CWD,
           config.migrations,
-          `${name ?? Date.now()}.${config.client.$adapter.fileExt}`,
+          `${name ?? Date.now()}.json`,
         );
         await log.trace("creating migration", filePath);
 
@@ -442,10 +442,10 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
             ),
           );
           const command = kit.filterEntries(migration, "command");
-          const status = await kit.status(config.client.$adapter, command);
+          const status = await kit.status(config.adapter, command);
           if (status === "completed") return;
 
-          await kit.deploy(config.client.$adapter, command);
+          await kit.deploy(config.adapter, command);
         }),
       );
     }),
@@ -485,7 +485,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
 
             if (!noPush)
               await kit.deploy(
-                config.client.$adapter,
+                config.adapter,
                 kit.filterEntries(migration, "reverse"),
               );
           }),
