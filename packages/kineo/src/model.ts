@@ -1,6 +1,5 @@
 import type { Adapter } from "./adapter";
 import type { Direction, InferModelShape, ModelShape, Schema } from "./schema";
-import type { Plugin } from "./plugin";
 import * as ir from "./ir";
 
 // ---------- Generic Utility Types ---------- //
@@ -294,30 +293,21 @@ export class Model<S extends Schema, M extends ModelShape> {
    * The adapter.
    */
   protected $adapter: Adapter<any, any>;
-  /**
-   * The plugins applied to the client.
-   */
-  $plugins: Plugin[];
 
   /**
    * Creates a new model. This is usually done by Kineo -- it is not recommended to create a model manually like this.
    * @param name The name of the model.
    * @param adapter The adapter.
-   * @param plugins The plugins applied to the client.
    */
-  constructor(name: string, adapter: Adapter<any, any>, plugins: Plugin[]) {
+  constructor(name: string, adapter: Adapter<any, any>) {
     this.$name = name;
     this.$adapter = adapter;
-    this.$plugins = plugins;
   }
 
   protected async $exec(opts: any, op: string) {
     const tree = ir.compileToIR(this.$name, op, opts);
     const compiled = await this.$adapter.compile(tree);
     const result = await this.$adapter.exec(compiled);
-    for (const plugin of this.$plugins) {
-      plugin.onExec?.(this, op);
-    }
 
     return result;
   }
