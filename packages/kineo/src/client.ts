@@ -47,7 +47,7 @@ export type InferClient<T> =
  * @param schema The schema.
  * @returns A Kineo client.
  */
-export function Kineo<
+export function kineo<
   TAdapter extends Adapter<any, any>,
   TSchema extends Schema,
 >(adapter: TAdapter, schema: TSchema): Kineo<TSchema, TAdapter> {

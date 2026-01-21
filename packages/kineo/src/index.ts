@@ -1,4 +1,4 @@
-export { Kineo, type InferClient } from "./client";
+export { kineo, type Kineo, type InferClient } from "./client";
 export {
   defineSchema,
   model,

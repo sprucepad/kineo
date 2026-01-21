@@ -11,7 +11,7 @@ export default defineConfig({
     "./src/ir.ts",
     "./src/client.ts",
     // adapters //
-    "./src/adapters/neo4j",
+    "./src/adapters/neo4j.ts",
     // compilers //
     "./src/compilers/cypher.ts",
     "./src/compilers/sql.ts",
