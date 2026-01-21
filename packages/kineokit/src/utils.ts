@@ -6,6 +6,8 @@ import { FieldDef, RelationDef, type Schema } from "kineo/schema";
 
 import type { Jiti } from "jiti";
 
+// TODO update this (it expects the wrong shape, therefore it thinks $shape is a property in models)
+
 export const enum KineoKitErrorKind {
   MissingSchema = "MissingSchema",
   MissingClient = "MissingClient",
@@ -173,8 +175,8 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
   for (const model of prevModels) {
     if (!cur[model]) {
       breaking.push(`Model "${model}" was removed`);
-    } else if (cur[model].$modelName !== prev[model].$modelName) {
-      breaking.push(`Model "${model}" was renamed to ${cur[model].$modelName}`);
+    } else if (cur[model].$name !== prev[model].$name) {
+      breaking.push(`Model "${model}" was renamed to ${cur[model].$name}`);
     }
   }
 
@@ -190,26 +192,26 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
     const curDef = cur[model];
     if (!curDef) continue;
 
-    const prevKeys = Object.keys(prevDef);
-    const curKeys = Object.keys(curDef);
+    const prevKeys = Object.keys(prevDef.$shape);
+    const curKeys = Object.keys(curDef.$shape);
 
     // Detect removed or new fields/relations
     for (const key of prevKeys) {
-      if (!curDef[key]) {
+      if (!curDef.$shape[key]) {
         breaking.push(`In model "${model}", property "${key}" was removed`);
       }
     }
 
     for (const key of curKeys) {
-      if (!prevDef[key]) {
+      if (!prevDef.$shape[key]) {
         nonBreaking.push(`In model "${model}", property "${key}" was added`);
       }
     }
 
     // Compare existing fields/relations
     for (const key of prevKeys) {
-      const prevField = prevDef[key] as any;
-      const curField = curDef[key] as any;
+      const prevField = prevDef.$shape[key] as any;
+      const curField = curDef.$shape[key] as any;
       if (!curField) continue;
 
       const bothFields =
@@ -218,51 +220,51 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
         prevField instanceof RelationDef && curField instanceof RelationDef;
 
       if (bothFields) {
-        if (prevField.kind !== curField.kind) {
+        if (prevField.$kind !== curField.$kind) {
           breaking.push(
-            `In model "${model}", field "${key}" changed kind from "${prevField.kind}" to "${curField.kind}"`,
+            `In model "${model}", field "${key}" changed kind from "${prevField.$kind}" to "${curField.$kind}"`,
           );
         }
 
-        if (prevField.isArray !== curField.isArray) {
+        if (prevField.$array !== curField.$array) {
           breaking.push(
-            `In model "${model}", field "${key}" changed array flag (${prevField.isArray} -> ${curField.isArray})`,
+            `In model "${model}", field "${key}" changed array flag (${prevField.$array} -> ${curField.$array})`,
           );
         }
 
-        if (!prevField.isRequired && curField.isRequired) {
+        if (!prevField.$required && curField.$required) {
           breaking.push(`In model "${model}", field "${key}" became required`);
-        } else if (prevField.isRequired && !curField.isRequired) {
+        } else if (prevField.$required && !curField.$required) {
           nonBreaking.push(
             `In model "${model}", field "${key}" became optional`,
           );
         }
       } else if (bothRelations) {
-        if (prevField.pointTo !== curField.pointTo) {
+        if (prevField.$to !== curField.$to) {
           breaking.push(
-            `In model "${model}", relation "${key}" now points to "${curField.pointTo}" instead of "${prevField.pointTo}"`,
+            `In model "${model}", relation "${key}" now points to "${curField.$to}" instead of "${prevField.$to}"`,
           );
         }
 
-        if (prevField.isArray !== curField.isArray) {
+        if (prevField.$array !== curField.$array) {
           breaking.push(
-            `In model "${model}", relation "${key}" changed array flag (${prevField.isArray} -> ${curField.isArray})`,
+            `In model "${model}", relation "${key}" changed array flag (${prevField.$array} -> ${curField.$array})`,
           );
         }
 
-        if (!prevField.isRequired && curField.isRequired) {
+        if (!prevField.$required && curField.$required) {
           breaking.push(
             `In model "${model}", relation "${key}" became required`,
           );
-        } else if (prevField.isRequired && !curField.isRequired) {
+        } else if (prevField.$required && !curField.$required) {
           nonBreaking.push(
             `In model "${model}", relation "${key}" became optional`,
           );
         }
 
-        if (prevField.relDirection !== curField.relDirection) {
+        if (prevField.$direction !== curField.$direction) {
           nonBreaking.push(
-            `In model "${model}", relation "${key}" changed direction (${prevField.relDirection} -> ${curField.relDirection})`,
+            `In model "${model}", relation "${key}" changed direction (${prevField.$direction} -> ${curField.$direction})`,
           );
         }
       } else if (prevField.constructor !== curField.constructor) {
