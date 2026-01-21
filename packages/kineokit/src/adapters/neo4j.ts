@@ -1,4 +1,4 @@
-import neo4j, { Session, type Driver } from "neo4j-driver";
+import neo4j, { Session, type Driver, type SessionConfig } from "neo4j-driver";
 import { auth, type Neo4jAdapter, type Neo4jOpts } from "kineo/adapters/neo4j";
 import type { AdapterKit, MigrationEntry } from "kineo/adapter";
 import {
@@ -9,6 +9,7 @@ import {
   RelationDef,
   type Schema,
 } from "kineo/schema";
+import type { Kineo } from "kineo";
 
 const META_LABEL = "`__MIGRATION$META__`";
 
@@ -17,7 +18,9 @@ export interface Neo4jKit extends AdapterKit {
   session: Session;
 }
 
-export function neo4jKit(opts: Neo4jOpts | Neo4jAdapter): Neo4jKit {
+export function neo4jKit(
+  opts: Neo4jOpts | Neo4jAdapter | Kineo<any, any>,
+): Neo4jKit {
   const { driver, session } = getDriverSession(opts);
 
   return {
@@ -512,14 +515,18 @@ export function neo4jKit(opts: Neo4jOpts | Neo4jAdapter): Neo4jKit {
   };
 }
 
-function getDriverSession(opts: Neo4jOpts | Neo4jAdapter) {
+function getDriverSession(opts: Neo4jOpts | Neo4jAdapter | Kineo<any, any>) {
   const driver: Driver =
-    "driver" in opts ? opts.driver : neo4j.driver(opts.url, auth(opts.auth));
+    "$adapter" in opts
+      ? (opts.$adapter as Neo4jAdapter).driver
+      : "driver" in opts
+        ? opts.driver
+        : neo4j.driver(opts.url, auth(opts.auth));
 
   let session: Session;
   if ("session" in opts) {
     if (opts.session instanceof Session) session = opts.session;
-    else session = driver.session(opts.session);
+    else session = driver.session(opts.session as SessionConfig);
   } else {
     session = driver.session();
   }

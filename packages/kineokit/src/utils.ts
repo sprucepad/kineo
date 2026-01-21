@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 import type { Kineo } from "kineo/client";
-import type { Adapter, MigrationEntry } from "kineo/adapter";
+import type { AdapterKit, MigrationEntry } from "kineo/adapter";
 import { FieldDef, RelationDef, type Schema } from "kineo/schema";
 
 import type { Jiti } from "jiti";
@@ -140,7 +140,7 @@ function isFileExport(ref: Reference<any>): ref is FileExport {
 }
 
 export async function push(
-  adapter: Adapter<any, any>,
+  adapter: AdapterKit,
   newSchema: Schema,
   force?: boolean,
 ) {
@@ -278,7 +278,7 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
   return { breaking, nonBreaking };
 }
 
-export async function pull(adapter: Adapter<any, any>) {
+export async function pull(adapter: AdapterKit) {
   if (!adapter.pull) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   const { schema, full } = await adapter.pull();
   if (!full) throw new KineoKitError(KineoKitErrorKind.NoSupport);
@@ -286,7 +286,7 @@ export async function pull(adapter: Adapter<any, any>) {
 }
 
 export async function generate(
-  adapter: Adapter<any, any>,
+  adapter: AdapterKit,
   prevSchema: Schema,
   newSchema: Schema,
 ) {
@@ -294,7 +294,7 @@ export async function generate(
   return await adapter.generate(prevSchema, newSchema);
 }
 
-export async function deploy(adapter: Adapter<any, any>, migration: string) {
+export async function deploy(adapter: AdapterKit, migration: string) {
   if (!adapter.deploy) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   return await adapter.deploy(
     migration,
@@ -302,7 +302,7 @@ export async function deploy(adapter: Adapter<any, any>, migration: string) {
   );
 }
 
-export async function status(adapter: Adapter<any, any>, migration: string) {
+export async function status(adapter: AdapterKit, migration: string) {
   if (!adapter.status) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   return await adapter.status(
     migration,
