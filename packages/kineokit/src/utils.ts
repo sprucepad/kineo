@@ -57,6 +57,7 @@ export type Reference<T> =
   | ReferenceFn<T>;
 
 export interface KineoConfig {
+  adapter: AdapterKit;
   schema: Reference<Schema>;
   client: Reference<Kineo<any, any>>;
   migrations: string;
@@ -67,6 +68,7 @@ export function defineConfig(config: KineoConfig) {
 }
 
 export interface ParsedConfig {
+  adapter: AdapterKit;
   schema: Schema;
   schemaMod?: FileExport;
   client: Kineo<any, any>;
@@ -96,6 +98,7 @@ export async function parseConfig(
   }
 
   return {
+    adapter: module.adapter,
     client,
     clientMod,
     schema,
