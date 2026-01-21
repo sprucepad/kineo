@@ -8,7 +8,6 @@ export default defineConfig({
     "./src/schema/index.ts",
     "./src/model.ts",
     "./src/adapter.ts",
-    "./src/plugin.ts",
     "./src/ir.ts",
     "./src/client.ts",
     // adapters //

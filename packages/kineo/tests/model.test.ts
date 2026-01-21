@@ -155,7 +155,7 @@ describe("Model (with fake adapter)", () => {
       { id: 1, name: "Alice" },
       { id: 2, name: "Bob" },
     ];
-    model = new Model("User", adapter, []);
+    model = new Model("User", adapter);
   });
 
   test("findFirst returns first record", async () => {
@@ -239,7 +239,7 @@ describe("GraphModel (with fake adapter)", () => {
       { id: 1, name: "Root" },
       { id: 2, name: "Child" },
     ];
-    graph = new GraphModel("User", adapter, []);
+    graph = new GraphModel("User", adapter);
   });
 
   test("findPath returns nodes and edges", async () => {

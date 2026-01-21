@@ -17,4 +17,3 @@ export type {
   MigrationCommand,
   MigrationNote,
 } from "./adapter";
-export type { Plugin } from "./plugin";

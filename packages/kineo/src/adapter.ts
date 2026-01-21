@@ -1,7 +1,6 @@
 import type { IR } from "./ir";
 import type { Model } from "./model";
 import type { Schema } from "./schema";
-import type { Plugin } from "./plugin";
 
 /**
  * Either a Promise or not.
@@ -45,11 +44,7 @@ export interface ExecResult<T = any> {
  */
 export interface Adapter<
   TModelCtor extends {
-    new (
-      name: string,
-      adapter: Adapter<any, any>,
-      plugins: Plugin[],
-    ): Model<any, any>;
+    new (name: string, adapter: Adapter<any, any>): Model<any, any>;
   },
   Summary = any,
 > {
@@ -57,10 +52,6 @@ export interface Adapter<
    * What extension of the model class you're using. This can be just the default model or `GraphModel`. Right now, this can't be a custom class.
    */
   Model: TModelCtor;
-  /**
-   * What plugins to apply together with this adapter.
-   */
-  plugins?: Plugin[];
 
   // Runtime related functions
   /**
