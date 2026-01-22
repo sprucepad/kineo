@@ -1,3 +1,6 @@
+/**
+ * All supported field types.
+ */
 export type Kind =
   | "string"
   | "char"
@@ -10,6 +13,9 @@ export type Kind =
   | "bool"
   | "blob";
 
+/**
+ * A field definition.
+ */
 export class FieldDef<
   TKind extends Kind,
   TId extends boolean = false,
@@ -17,59 +23,117 @@ export class FieldDef<
   TArray extends boolean = false,
   TDefault = undefined,
 > {
+  /**
+   * If this field is the identifier (or primary key).
+   */
   $id: TId = false as any;
+  /**
+   * If this field is required.
+   */
   $required: TRequired = false as any;
+  /**
+   * If this field is an array.
+   */
   $array: TArray = false as any;
+  /**
+   * The default value of the field.
+   */
   $default: TDefault = undefined as any;
 
+  /**
+   * Creates a new field definition
+   * @param $kind The row type.
+   * @param $name The row name.
+   */
   constructor(
     public $kind: TKind,
     public $name?: string,
   ) {}
 
+  /**
+   * Changes the type of the field.
+   * @param kind The new type.
+   * @returns `this`.
+   */
   type<T extends Kind>(kind: T): FieldDef<T, TId, TRequired, TArray, T> {
     this.$kind = kind as any;
     return this as any;
   }
 
+  /**
+   * Changes the name of the field.
+   * @param name The new name.
+   * @returns `this`.
+   */
   name(name?: string): this {
     this.$name = name;
     return this;
   }
 
+  /**
+   * Makes this field the identifier (or primary key).
+   * @returns `this`.
+   */
   id(): FieldDef<TKind, true, true, TArray, TDefault> {
     this.$id = true as any;
     return this as any;
   }
 
+  /**
+   * Makes this field required.
+   * @returns `this`.
+   */
   required(): FieldDef<TKind, TId, true, TArray, TDefault> {
     this.$required = true as any;
     return this as any;
   }
 
+  /**
+   * Makes this field optional.
+   * @returns `this`.
+   */
   optional(): FieldDef<TKind, TId, false, TArray, TDefault> {
     this.$required = false as any;
     return this as any;
   }
 
+  /**
+   * Makes this field an array.
+   * @returns `this`.
+   */
   array(): FieldDef<TKind, TId, TRequired, true, TDefault> {
     this.$array = true as any;
     return this as any;
   }
 
+  /**
+   * Makes this field not an array.
+   * @returns `this`.
+   */
   single(): FieldDef<TKind, TId, TRequired, false, TDefault> {
     this.$array = false as any;
     return this as any;
   }
 
+  /**
+   * Changes the default value of the field.
+   * @param kind The new default value.
+   * @returns `this`.
+   */
   default<T>(value: T): FieldDef<TKind, TId, TRequired, TArray, T> {
     this.$default = value as any;
     return this as any;
   }
 }
 
+/**
+ * Relationship direction (for graph databases).
+ */
 export type Direction = "incoming" | "outgoing" | "both";
 
+/**
+ * A relationship definition.
+ */
 export class RelationDef<
   To extends string,
   TRequired extends boolean = false,
@@ -82,69 +146,130 @@ export class RelationDef<
   $direction?: Direction;
   $label?: string;
 
+  /**
+   * Creates a new relationship definition
+   * @param $to Where this relationship is pointing to.
+   * @param $name The relationship name.
+   */
   constructor(
     public $to: To,
     public $name?: string,
   ) {}
 
+  /**
+   * Changes where this relationship is pointing to.
+   * @param pointTo Where this relationship is pointing to.
+   * @returns `this`.
+   */
   to<T extends string>(to: T): RelationDef<T, TRequired, TArray, TDefault> {
     this.$to = to as any;
     return this as any;
   }
 
+  /**
+   * Changes the name of the relationship.
+   * @param relName The new name.
+   * @returns `this`.
+   */
   name(name?: string): this {
     this.$name = name;
     return this;
   }
 
+  /**
+   * Changes the label of the relationship.
+   * @param relLabel The new label.
+   * @returns `this`.
+   */
   label(label: string): this {
     this.$label = label;
     return this;
   }
 
+  /**
+   * Changes the direction of the relationship.
+   * @param relDirection The new direction.
+   * @returns `this`.
+   */
   direction(direction: Direction): this {
     this.$direction = direction;
     return this;
   }
 
+  /**
+   * Makes relationship outgoing and optionally sets a label.
+   * @param label _optional_ The new label.
+   * @returns `this`.
+   */
   outgoing(label?: string): this {
     this.$direction = "outgoing";
     if (label) this.$label = label;
     return this;
   }
 
+  /**
+   * Makes the relationship incoming and optionally sets a label.
+   * @param label _optional_ The new label.
+   * @returns `this`.
+   */
   incoming(label?: string): this {
     this.$direction = "incoming";
     if (label) this.$label = label;
     return this;
   }
 
+  /**
+   * Makes the relationship go both directions and optionally sets a label.
+   * @param label _optional_ The new label.
+   * @returns `this`.
+   */
   both(label?: string): this {
     this.$direction = "both";
     if (label) this.$label = label;
     return this;
   }
 
+  /**
+   * Changes the default value.
+   * @param defaultValue The new default value.
+   * @returns `this`.
+   */
   default<T>(value: T): RelationDef<To, TRequired, TArray, T> {
     this.$default = value as any;
     return this as any;
   }
 
+  /**
+   * Makes this relationship required.
+   * @returns `this`.
+   */
   required(): RelationDef<To, true, TArray, TDefault> {
     this.$required = true as any;
     return this as any;
   }
 
+  /**
+   * Makes this relationship optional.
+   * @returns `this`.
+   */
   optional(): RelationDef<To, false, TArray, TDefault> {
     this.$required = false as any;
     return this as any;
   }
 
+  /**
+   * Makes this relationship an array.
+   * @returns `this`.
+   */
   array(): RelationDef<To, TRequired, true, TDefault> {
     this.$array = true as any;
     return this as any;
   }
 
+  /**
+   * Makes this relationship a single element.
+   * @returns `this`.
+   */
   single(): RelationDef<To, TRequired, false, TDefault> {
     this.$array = false as any;
     return this as any;

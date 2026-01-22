@@ -4,12 +4,11 @@ export default defineConfig({
   entry: [
     // modules //
     "./src/index.ts",
-    "./src/error.ts",
     "./src/schema/index.ts",
-    "./src/model.ts",
+    "./src/model/index.ts",
     "./src/adapter.ts",
-    "./src/ir.ts",
     "./src/client.ts",
+    "./src/ir.ts",
     // adapters //
     "./src/adapters/neo4j.ts",
     // emitters //

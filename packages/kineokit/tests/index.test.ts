@@ -6,8 +6,8 @@ import {
   deploy,
   status,
   getDiff,
-  emitEntries,
-  deemitEntries,
+  toMigration,
+  toEntries,
   KineoKitError,
   KineoKitErrorKind,
 } from "@/index";
@@ -185,7 +185,7 @@ describe("emitEntries()", () => {
       },
     ];
 
-    const [up, down] = emitEntries(entries);
+    const [up, down] = toMigration(entries);
 
     expect(up).toContain("CREATE TABLE users -- create users table");
     expect(up).toContain("ALTER TABLE users ADD name TEXT");
@@ -208,7 +208,7 @@ describe("emitEntries()", () => {
       },
     ];
 
-    const [up, down] = emitEntries(entries);
+    const [up, down] = toMigration(entries);
 
     expect(up).toContain("-- Description");
     expect(up).toContain("-- This is a note");
@@ -227,7 +227,7 @@ describe("deemitEntries()", () => {
 
     const down = "DROP TABLE users\n\n";
 
-    const result = deemitEntries([up, down]);
+    const result = toEntries([up, down]);
 
     const command = result.find((x) => x.type === "command" && x.command);
     expect(command?.type === "command" && command?.command).toBe(
@@ -246,7 +246,7 @@ describe("deemitEntries()", () => {
 
     const down = "-- Revert: -- Description\n\n" + "-- Revert: -- -- Note2\n";
 
-    const result = deemitEntries([up, down]);
+    const result = toEntries([up, down]);
 
     const notes = result.filter((x) => x.type === "note");
     expect(notes.length).toBe(2);
@@ -270,8 +270,8 @@ describe("deemitEntries()", () => {
       },
     ];
 
-    const emitd = emitEntries(entries);
-    const deemitd = deemitEntries(emitd);
+    const emitd = toMigration(entries);
+    const deemitd = toEntries(emitd);
 
     expect(deemitd).toEqual(
       expect.arrayContaining([

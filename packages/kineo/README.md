@@ -106,15 +106,20 @@ Create a `kineo.config.ts` at the root of your project, and paste these contents
 
 ```ts
 import { defineConfig } from "kineokit";
+import { neo4jKit } from "kineokit/adapters/neo4j"; // replace this with the adapter you're using
+
+import { schema } from "<your schema path>";
+import { client } from "<your client path>";
 
 export default defineConfig({
-  schema: import("<your schema path>").then((mod) => mod["default"]),
-  client: import("<your client path>").then((mod) => mod["default"]),
+  adapter: neo4jKit(client),
+  schema: schema,
+  client: client,
   migrations: "./migrations",
 });
 ```
 
-Replace `<your schema path>` and `default` with your schema file path and export name, and do the same for the client.
+Replace `<your schema path>` and `{ schema }` with your schema file path and export name, and do the same for the client.
 
 # License information
 

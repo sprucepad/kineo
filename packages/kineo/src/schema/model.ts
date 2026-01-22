@@ -1,25 +1,44 @@
 import { FieldDef, RelationDef, type Kind } from "./field";
 import type { Schema } from ".";
 
+/**
+ * The shape of a model.
+ */
 export interface ModelShape {
   [key: string]:
     | FieldDef<any, any, any, any, any>
     | RelationDef<any, any, any, any>;
 }
 
+/**
+ * A model definition.
+ */
 export class ModelDef<S extends ModelShape> {
+  /**
+   * Creates a new model def
+   * @param $shape The model shape.
+   * @param $name The internal model name.
+   */
   constructor(
     public $shape: S,
     public $name?: string,
   ) {}
 
+  /**
+   * Sets the model name.
+   * @param name The new model name.
+   * @returns `this`
+   */
   name(name?: string): this {
     this.$name = name;
     return this;
   }
 }
 
-export type InferField<TField extends FieldDef<any, any, any, any>> =
+/**
+ * Infers a type from a field definition.
+ */
+export type InferField<TField extends FieldDef<any, any, any, any, any>> =
   TField extends FieldDef<
     infer Type,
     infer IsId,
@@ -40,6 +59,9 @@ export type InferField<TField extends FieldDef<any, any, any, any>> =
       : never
     : never;
 
+/**
+ * Converts a `Kind` string into a TypeScript type.
+ */
 export type TypeOf<K extends Kind> = K extends "string" | "char"
   ? string
   : K extends "int" | "float"
@@ -52,6 +74,9 @@ export type TypeOf<K extends Kind> = K extends "string" | "char"
           ? Blob
           : never;
 
+/**
+ * Infer a single model's properties.
+ */
 export type InferModelShape<
   TDef extends ModelShape,
   TSchema extends Schema = Schema,
@@ -63,6 +88,9 @@ export type InferModelShape<
       : never;
 };
 
+/**
+ * Infers a type from a relationship definition.
+ */
 export type InferRelationship<
   TRelation extends RelationDef<any, any, any, any>,
   TSchema extends Schema,
@@ -88,13 +116,27 @@ export type InferRelationship<
       : never
     : never;
 
+/**
+ * Infers types from a model definition.
+ */
 export type InferModelDef<T, TSchema extends Schema> =
   T extends ModelDef<infer Shape> ? InferModelShape<Shape, TSchema> : never;
 
+/**
+ * Creates a new model.
+ * @param name The model name in the database. This does not change the model name in your schema.
+ * @param model The model definition.
+ * @returns The created model;
+ */
 export function model<S extends ModelShape>(
   name: string,
   shape: S,
 ): ModelDef<S>;
+/**
+ * Creates a new model.
+ * @param model The model definition.
+ * @returns The created model.
+ */
 export function model<S extends ModelShape>(shape: S): ModelDef<S>;
 
 export function model(shapeOrName: ModelShape | string, shape?: ModelShape) {

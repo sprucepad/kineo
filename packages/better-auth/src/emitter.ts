@@ -1,20 +1,58 @@
 import type { CleanedWhere, JoinConfig } from "better-auth/adapters";
 import * as IR from "kineo/ir";
 
+/**
+ * Options for emitting the Kineo IR.
+ */
 export interface EmitOpts {
+  /**
+   * The model to query.
+   */
   model: string;
+  /**
+   * Filters.
+   */
   where?: CleanedWhere[];
+  /**
+   * What to select.
+   */
   select?: string[];
+  /**
+   * Maximum amount of rows to select.
+   */
   limit?: number;
+  /**
+   * What to sort rows by.
+   */
   sortBy?: {
+    /**
+     * The field to sort by.
+     */
     field: string;
+    /**
+     * The direction to sort by.
+     */
     direction: "asc" | "desc";
   };
+  /**
+   * The amount of rows to skip.
+   */
   offset?: number;
+  /**
+   * The data to insert.
+   */
   data?: Record<string, any>;
+  /**
+   * Table joins.
+   */
   join?: JoinConfig;
 }
 
+/**
+ * Emits a usable Where statement.
+ * @param where The `CleanedWhere[]`s from Better-Auth.
+ * @returns Where IR usable by Kineo.
+ */
 function emitWhere(where?: CleanedWhere[]): Record<string, any> | undefined {
   if (!where || where.length === 0) return undefined;
 
@@ -46,6 +84,11 @@ function emitWhere(where?: CleanedWhere[]): Record<string, any> | undefined {
   return clauses.length === 1 ? clauses[0] : { AND: clauses };
 }
 
+/**
+ * Emits a usable Join/Include statement.
+ * @param join The join config.
+ * @returns Join/Include IR usable by Kineo.
+ */
 function emitJoin(join?: JoinConfig): Record<string, any> | undefined {
   if (!join) return undefined;
 
@@ -60,6 +103,12 @@ function emitJoin(join?: JoinConfig): Record<string, any> | undefined {
   return include;
 }
 
+/**
+ * Emits a Kineo IR from a Better-Auth IR.
+ * @param mode The query type.
+ * @param opts The query options.
+ * @returns A Kineo IR.
+ */
 export function emit(mode: string, opts: EmitOpts): IR.IR {
   const where = emitWhere(opts.where);
   const include = emitJoin(opts.join);
