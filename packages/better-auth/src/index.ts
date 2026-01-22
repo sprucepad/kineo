@@ -3,10 +3,10 @@ import {
   field,
   model,
   relation,
-  type Adapter,
-  type Kineo,
   type Schema,
-} from "kineo";
+} from "kineo/schema";
+import type { Adapter } from "kineo/adapter";
+import type { Kineo } from "kineo/client";
 import { createAdapterFactory } from "better-auth/adapters";
 import { emit } from "./emitter";
 

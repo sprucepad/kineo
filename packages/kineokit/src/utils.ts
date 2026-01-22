@@ -6,8 +6,9 @@ import { FieldDef, RelationDef, type Schema } from "kineo/schema";
 
 import type { Jiti } from "jiti";
 
-// TODO update this (it expects the wrong shape, therefore it thinks $shape is a property in models)
-
+/**
+ * Types of KineoKit errors.
+ */
 export const enum KineoKitErrorKind {
   MissingSchema = "MissingSchema",
   MissingClient = "MissingClient",
@@ -16,16 +17,29 @@ export const enum KineoKitErrorKind {
   FilePathNecessary = "FilePathNecessary",
 }
 
+/**
+ * A KineoKit error.
+ */
 export class KineoKitError<T> extends Error {
-  kind: KineoKitErrorKind;
-  data?: T;
-
-  constructor(kind: KineoKitErrorKind, data?: T, message?: string) {
+  /**
+   * Creates a new KineoKit error.
+   * @param kind The type of error.
+   * @param data Optional data.
+   * @param message The error message.
+   */
+  constructor(
+    public kind: KineoKitErrorKind,
+    public data?: T,
+    message?: string,
+  ) {
     super(message ?? KineoKitError.getMessageFromKind(kind));
-    this.kind = kind;
-    this.data = data;
   }
 
+  /**
+   * Gets a default message for an error type.
+   * @param kind The type of error.
+   * @returns The error message.
+   */
   static getMessageFromKind(kind: KineoKitErrorKind) {
     switch (kind) {
       case KineoKitErrorKind.NoSupport:
@@ -43,12 +57,22 @@ export class KineoKitError<T> extends Error {
   }
 }
 
+/**
+ * The shape of a file export.
+ */
 export interface FileExport {
   file: string;
   export: string;
 }
 
+/**
+ * A reference function to an export.
+ */
 export type ReferenceFn<T> = () => Promise<T> | T;
+
+/**
+ * A reference to a file.
+ */
 export type Reference<T> =
   | string
   | FileExport
@@ -56,26 +80,73 @@ export type Reference<T> =
   | Promise<T>
   | ReferenceFn<T>;
 
+/**
+ * KineoKit configuration.
+ */
 export interface KineoConfig {
+  /**
+   * The adapter for KineoKit.
+   */
   adapter: AdapterKit;
+  /**
+   * A reference to the schema.
+   */
   schema: Reference<Schema>;
+  /**
+   * A reference to the client.
+   */
   client: Reference<Kineo<any, any>>;
+  /**
+   * Directory containing migrations.
+   */
   migrations: string;
 }
 
-export function defineConfig(config: KineoConfig) {
+/**
+ * Adds type definitions of Kineo configuration to an object.
+ * @param config The configuration.
+ * @returns The same configuration.
+ */
+export function defineConfig(config: KineoConfig): KineoConfig {
   return config;
 }
 
+/**
+ * Parsed Kineo config, used internally by KineoKit.
+ */
 export interface ParsedConfig {
+  /**
+   * The adapter.
+   */
   adapter: AdapterKit;
+  /**
+   * The schema.
+   */
   schema: Schema;
+  /**
+   * The module of the schema.
+   */
   schemaMod?: FileExport;
+  /**
+   * The client.
+   */
   client: Kineo<any, any>;
+  /**
+   * The module of the client.
+   */
   clientMod?: FileExport;
+  /**
+   * Migration directory.
+   */
   migrations: string;
 }
 
+/**
+ * Parses a high-level Kineo config to a lower-level representation.
+ * @param jiti The Jiti instance to import references with.
+ * @param module The Kineo configuration module.
+ * @returns Parsed configuration.
+ */
 export async function parseConfig(
   jiti: Jiti,
   module: KineoConfig,
@@ -107,6 +178,12 @@ export async function parseConfig(
   };
 }
 
+/**
+ * Extracts the module and the exported value from a reference.
+ * @param jiti The Jiti module to import the reference with.
+ * @param ref The reference.
+ * @returns A module and its exported value.
+ */
 async function extract<T>(
   jiti: Jiti,
   ref: Reference<T>,
@@ -134,14 +211,22 @@ async function extract<T>(
   return { exported: ref as T };
 }
 
+// Guard for if the reference is a function.
 function isReferenceFn<T>(ref: Reference<T>): ref is ReferenceFn<T> {
   return typeof ref === "function";
 }
 
+// Guard for if the reference is an object.
 function isFileExport(ref: Reference<any>): ref is FileExport {
   return typeof ref === "object" && "file" in ref && "export" in ref;
 }
 
+/**
+ * Pushes a schema to the database.
+ * @param adapter The adapter to push to.
+ * @param newSchema The new schema.
+ * @param force If the push should be forced, even if there are breaking changes.
+ */
 export async function push(
   adapter: AdapterKit,
   newSchema: Schema,
@@ -162,11 +247,26 @@ export async function push(
   await adapter.push(newSchema);
 }
 
+/**
+ * Difference between two schemas.
+ */
 export interface SchemaDiff {
+  /**
+   * Breaking changes between two schemas (e.g. removing a model, renaming a required field)
+   */
   breaking: string[];
+  /**
+   * Non-breaking changes between two schemas (e.g. adding a model, adding an optional field)
+   */
   nonBreaking: string[];
 }
 
+/**
+ * Calculates the difference between two schemas.
+ * @param prev The previous schema.
+ * @param cur The current schema.
+ * @returns The diff between both schemas.
+ */
 export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
   const breaking: string[] = [];
   const nonBreaking: string[] = [];
@@ -281,6 +381,11 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
   return { breaking, nonBreaking };
 }
 
+/**
+ * Gets a schema from a database.
+ * @param adapter The adapter to pull from.
+ * @returns The schema.
+ */
 export async function pull(adapter: AdapterKit) {
   if (!adapter.pull) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   const { schema, full } = await adapter.pull();
@@ -288,34 +393,60 @@ export async function pull(adapter: AdapterKit) {
   return schema;
 }
 
+/**
+ * Generates migrations.
+ * @param adapter The adapter to generate from.
+ * @param prevSchema The previous schema.
+ * @param newSchema The new schema.
+ * @returns The generated migrations.
+ */
 export async function generate(
   adapter: AdapterKit,
   prevSchema: Schema,
   newSchema: Schema,
 ) {
   if (!adapter.generate) throw new KineoKitError(KineoKitErrorKind.NoSupport);
-  return await adapter.generate(prevSchema, newSchema);
+  return adapter.generate(prevSchema, newSchema);
 }
 
+/**
+ * Deploys a migration.
+ * @param adapter The adapter.
+ * @param migration The migration to deploy.
+ */
 export async function deploy(adapter: AdapterKit, migration: string) {
   if (!adapter.deploy) throw new KineoKitError(KineoKitErrorKind.NoSupport);
-  return await adapter.deploy(
+  await adapter.deploy(
     migration,
     crypto.createHash("sha512").update(JSON.stringify(migration)).digest("hex"),
   );
 }
 
+/**
+ * Gets the status of a migration.
+ * @param adapter The adapter.
+ * @param migration The migration.
+ * @returns The migration's status.
+ */
 export async function status(adapter: AdapterKit, migration: string) {
   if (!adapter.status) throw new KineoKitError(KineoKitErrorKind.NoSupport);
-  return await adapter.status(
+  return adapter.status(
     migration,
     crypto.createHash("sha512").update(JSON.stringify(migration)).digest("hex"),
   );
 }
 
+/**
+ * An [up, down] migration.
+ */
 export type Migration = [string, string];
 
-export function emitEntries(entries: MigrationEntry[]): Migration {
+/**
+ * Generates a single migration from a list of entries.
+ * @param entries A list of migration entries.
+ * @returns A single migration.
+ */
+export function toMigration(entries: MigrationEntry[]): Migration {
   let up = "";
   let down = "";
 
@@ -332,19 +463,30 @@ export function emitEntries(entries: MigrationEntry[]): Migration {
   return [up, down];
 }
 
-export function deemitEntries([up, down]: Migration): MigrationEntry[] {
+/**
+ * Converts a migration to a list of migration entries.
+ * @param migration The [up, down] migration.
+ * @returns A list of migration entries.
+ */
+export function toEntries([up, down]: Migration): MigrationEntry[] {
   const migrations: MigrationEntry[] = [];
 
   const upSplit = up.split("\n\n");
   const downSplit = down.split("\n\n");
 
-  deemit(upSplit, migrations, "command");
-  deemit(downSplit, migrations, "reverse");
+  toEntriesSplit(upSplit, migrations, "command");
+  toEntriesSplit(downSplit, migrations, "reverse");
 
   return migrations;
 }
 
-function deemit(
+/**
+ * Converts a split migration into migration entries.
+ * @param statements The split.
+ * @param migrations The list to append to.
+ * @param key The type of the spçlit.
+ */
+function toEntriesSplit(
   statements: string[],
   migrations: MigrationEntry[],
   key: "command" | "reverse",
@@ -385,6 +527,12 @@ function deemit(
   }
 }
 
+/**
+ * Filters and maps through enrries.
+ * @param entries The entries to filter.
+ * @param key The key to map into.
+ * @returns Filtered entries.
+ */
 export function filterEntries(
   entries: MigrationEntry[],
   key: "command" | "reverse",

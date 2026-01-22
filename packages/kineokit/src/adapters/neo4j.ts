@@ -9,15 +9,24 @@ import {
   RelationDef,
   type Schema,
 } from "kineo/schema";
-import type { Kineo } from "kineo";
+import type { Kineo } from "kineo/client";
 
+// Where migration metadata is stored in the database.
 const META_LABEL = "`__MIGRATION$META__`";
 
+/**
+ * KineoKit adapter for Neo4j.
+ */
 export interface Neo4jKit extends AdapterKit {
   driver: Driver;
   session: Session;
 }
 
+/**
+ * Creates a new KineoKit adapter.
+ * @param opts Runtime adapter, client or options for creating the adapter.
+ * @returns A Neo4j KineoKit adapter.
+ */
 export function neo4jKit(
   opts: Neo4jOpts | Neo4jAdapter | Kineo<any, any>,
 ): Neo4jKit {
@@ -515,6 +524,11 @@ export function neo4jKit(
   };
 }
 
+/**
+ * Extracts a driver and a session from options, a runtime adapter or a client.
+ * @param opts The options/runtime adapter/client.
+ * @returns A driver and a session.
+ */
 function getDriverSession(opts: Neo4jOpts | Neo4jAdapter | Kineo<any, any>) {
   const driver: Driver =
     "$adapter" in opts

@@ -22,8 +22,11 @@ const jiti = createJiti(CWD);
 
 let config: kit.ParsedConfig;
 
+/**
+ * The program KineoKit runs.
+ */
 export const program = new Command("kineo")
-  .version("0.6.0")
+  .version("0.10.0")
   .description("Manages migrations and schema.")
   .input({
     clientExport: i.option("string", "--client-export", "-x").optional(),
@@ -365,7 +368,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
           config.schema,
         );
 
-        const contents = JSON.stringify(kit.emitEntries(entries));
+        const contents = JSON.stringify(kit.toMigration(entries));
         await fs.writeFile(
           path.join(CWD, config.migrations, `${currentDate()}_migration.json`),
           contents,
@@ -380,7 +383,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
 
       const statuses = await Promise.all(
         entries.map(async (entry) => {
-          const migration = kit.deemitEntries(
+          const migration = kit.toEntries(
             JSON.parse(
               await fs.readFile(
                 path.join(CWD, config.migrations, entry),
@@ -433,7 +436,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
 
       await Promise.all(
         entries.map(async (entry) => {
-          const migration = kit.deemitEntries(
+          const migration = kit.toEntries(
             JSON.parse(
               await fs.readFile(
                 path.join(CWD, config.migrations, entry),
@@ -475,12 +478,12 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
           sortedEntries.slice(0, n).map(async (entry) => {
             const contents = JSON.parse(await fs.readFile(entry, "utf-8"));
             const migration = kit
-              .deemitEntries(contents)
+              .toEntries(contents)
               .filter((entry) => entry.type === "command" && !!entry.reverse);
 
             await fs.writeFile(
               `${currentDate()}_rollback.json`,
-              JSON.stringify(kit.emitEntries(migration)),
+              JSON.stringify(kit.toMigration(migration)),
             );
 
             if (!noPush)
@@ -493,6 +496,10 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
       }),
   );
 
+/**
+ * Formats the current date.
+ * @returns A formatted date.
+ */
 export function currentDate(): string {
   const now = new Date();
 
@@ -510,10 +517,20 @@ export function currentDate(): string {
   return `${year}${month}${day}_${hours}${minutes}${seconds}`;
 }
 
+/**
+ * Gets the import path of a file, wrapped in quotes.
+ * @param file The file path.
+ * @returns The import path.
+ */
 export function importPath(file: string) {
   return `"${file.startsWith(".") ? file : `./${file}`}"`;
 }
 
+/**
+ * Ensures source code has the correct imports.
+ * @param source The source code.
+ * @returns The source code, with imports included if not already.
+ */
 export function ensureImports(source: string): string {
   const hasImports =
     source.includes("defineSchema") &&
@@ -533,6 +550,12 @@ export function ensureImports(source: string): string {
   return importLine + source;
 }
 
+/**
+ * Generates schema source code.
+ * @param schemaObj The schema to generate source code for.
+ * @param exportName The name of the export.
+ * @returns Schema source.
+ */
 export function generateSchemaSource(
   schemaObj: Schema,
   exportName: string,
@@ -557,6 +580,11 @@ export function generateSchemaSource(
   return `export const ${exportName} = defineSchema({\n${models}\n});`;
 }
 
+/**
+ * Serializes a field or relation.
+ * @param value The field or relation.
+ * @returns A serialized field/relation.
+ */
 export function serializeFieldOrRelation(value: unknown): string {
   // Handle FieldDef
   if (value instanceof FieldDef) {
