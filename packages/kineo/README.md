@@ -38,11 +38,11 @@ export type Schema = InferSchema<typeof schema>;
 **Create a client.** Use an adapter, which is the set of functions that converts Kineo's representation to your database's query language. Here, we use the Neo4j adapter, which requires you to install `neo4j-driver` as a dependency.
 
 ```ts
-import { Kineo } from "kineo";
-import { Neo4jAdapter } from "kineo/adapter/neo4j";
+import { kineo } from "kineo";
+import { neo4jAdapter } from "kineo/adapters/neo4j";
 
-export const db = Kineo(
-  Neo4jAdapter({
+export const db = kineo(
+  neo4jAdapter({
     url: "bolt://localhost:7687",
     auth: {
       username: "neo4j",
