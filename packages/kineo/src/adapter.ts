@@ -52,6 +52,10 @@ export interface Adapter<
    * What extension of the model class you're using. This can be just the default model or `GraphModel`. Right now, this can't be a custom class.
    */
   Model: TModelCtor;
+  /**
+   * Where the KineoKit adapter is located.
+   */
+  kit?: string;
 
   /**
    * Emits an intermediate representation into a query language.

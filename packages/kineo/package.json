@@ -1,6 +1,6 @@
 {
   "name": "kineo",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "type": "module",
   "description": "Declarive, TypeScript-first Object-Relation/Graph Mapper (ORM/OGM).",
   "repository": {

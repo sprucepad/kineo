@@ -71,7 +71,7 @@ vi.mock("jiti", () => {
 });
 
 // --- Now import the module under test (after mocks) ---
-import * as kit from "@/index";
+import * as kit from "@/cli/index";
 
 describe("kineo CLI (unit)", () => {
   test("program.run exists and is callable", async () => {

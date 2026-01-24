@@ -1,22 +1,28 @@
 {
   "name": "kineokit",
-  "version": "0.1.1",
+  "type": "module",
+  "version": "0.1.2",
   "description": "Migration manager for Kineo.",
   "bin": {
     "kineokit": "./dist/main.mjs",
     "kineo": "./dist/main.mjs"
   },
   "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
     "./adapters/neo4j": {
-      "types": "./dist/neo4j.d.mts",
-      "import": "./dist/neo4j.mjs"
+      "types": "./dist/adapters/neo4j.d.mts",
+      "import": "./dist/adapters/neo4j.mjs"
     }
   },
   "scripts": {
     "kit": "jiti src/main.ts",
     "check": "tsc",
     "test": "vitest",
-    "build": "tsdown"
+    "build": "tsdown",
+    "prepare": "pnpm build"
   },
   "keywords": [
     "kineo",
@@ -27,7 +33,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.28.0",
   "dependencies": {
-    "convoker": "^0.3.4",
+    "convoker": "^0.4.1",
     "jiti": "^2.6.1"
   },
   "peerDependencies": {

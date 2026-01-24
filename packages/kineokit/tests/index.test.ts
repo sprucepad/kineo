@@ -1,16 +1,8 @@
+import { push, pull, generate, deploy, status, getDiff } from "@/kit";
+import { toMigration, toEntries } from "@/migration";
+import { KineoKitError, KineoKitErrorKind } from "@/error";
+
 import { describe, test, expect, vi } from "vitest";
-import {
-  push,
-  pull,
-  generate,
-  deploy,
-  status,
-  getDiff,
-  toMigration,
-  toEntries,
-  KineoKitError,
-  KineoKitErrorKind,
-} from "@/index";
 import { model, defineSchema, field } from "kineo/schema";
 import type { AdapterKit, MigrationEntry } from "kineo/adapter";
 
