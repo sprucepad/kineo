@@ -106,3 +106,24 @@ export function filterEntries(
     .map((entry) => entry[key])
     .join("\n");
 }
+
+/**
+ * Formats the current date.
+ * @returns A formatted date.
+ */
+export function currentDate(): string {
+  const now = new Date();
+
+  // date components
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+
+  // time components
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+
+  // convert to string
+  return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+}
