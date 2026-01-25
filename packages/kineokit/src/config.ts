@@ -1,4 +1,4 @@
-import type { AdapterKit } from "kineo/adapter";
+import type { AdapterKit } from "./adapter";
 import { KineoKitError, KineoKitErrorKind } from "./error";
 import type { Schema } from "kineo/schema";
 import type { FileExport, KineoConfig, Reference, ReferenceFn } from ".";

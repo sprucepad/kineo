@@ -1,4 +1,4 @@
-import type { MigrationEntry } from "kineo/adapter";
+import type { MigrationEntry } from "@/adapter";
 
 /**
  * An [up, down] migration.

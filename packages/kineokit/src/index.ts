@@ -1,5 +1,5 @@
 import type { Kineo } from "kineo/client";
-import type { AdapterKit } from "kineo/adapter";
+import type { AdapterKit } from "./adapter";
 import type { Schema } from "kineo/schema";
 
 /**

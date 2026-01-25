@@ -9,10 +9,4 @@ export {
   type ModelDef,
 } from "./schema";
 export { Model, GraphModel } from "./model";
-export type {
-  Adapter,
-  Emitter,
-  MigrationEntry,
-  MigrationCommand,
-  MigrationNote,
-} from "./adapter";
+export type { Adapter, Emitter } from "./adapter";
