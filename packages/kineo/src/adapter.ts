@@ -39,14 +39,16 @@ export interface ExecResult<T = any> {
 }
 
 /**
+ * A model constructor, for any inheritors of `Model`.
+ */
+export type ModelCtor = {
+  new (name: string, adapter: Adapter<any, any>): Model<any, any>;
+};
+
+/**
  * An adapter. Contains functions necessary to interact with the database of choice.
  */
-export interface Adapter<
-  TModelCtor extends {
-    new (name: string, adapter: Adapter<any, any>): Model<any, any>;
-  },
-  Summary = any,
-> {
+export interface Adapter<TModelCtor extends ModelCtor, Summary = any> {
   /**
    * What extension of the model class you're using. This can be just the default model or `GraphModel`. Right now, this can't be a custom class.
    */
@@ -69,4 +71,124 @@ export interface Adapter<
    * Closes the adapter.
    */
   close(): Resolvable<void>;
+}
+
+/**
+ * Defines an emitter.
+ * @param fn The emitter function.
+ * @returns The same function.
+ */
+export function defineEmitter<T>(fn: Emitter<T>): Emitter<T> {
+  return fn;
+}
+
+/**
+ * Defines an adapter.
+ * @param fn Async factory.
+ */
+export function defineAdapter<
+  C extends ModelCtor,
+  S = any,
+  P extends any[] = any[],
+>(
+  fn: (...args: P) => Promise<Adapter<C, S>>,
+): (...args: P) => Asyncify<Adapter<C, S>>;
+
+/**
+ * Defines an adapter.
+ * @param a Sync adapter factory.
+ */
+export function defineAdapter<
+  A extends Adapter<any, any>,
+  P extends any[] = any[],
+>(fn: (...args: P) => A): (...args: P) => A;
+
+/**
+ * Defines an adapter.
+ * @param a Async adapter factory.
+ */
+export function defineAdapter<
+  A extends Adapter<any, any>,
+  P extends any[] = any[],
+>(fn: (...args: P) => Promise<A>): (...args: P) => Asyncify<A>;
+
+/**
+ * Defines an adapter.
+ * @param fn Sync adapter.
+ */
+export function defineAdapter<
+  A extends Adapter<any, any>,
+  P extends any[] = any[],
+>(a: A): (...args: P) => A;
+
+/**
+ * Defines an adapter.
+ * @param fn Async adapter.
+ */
+export function defineAdapter<
+  A extends Adapter<any, any>,
+  P extends any[] = any[],
+>(a: Promise<A>): (...args: P) => Asyncify<A>;
+
+export function defineAdapter<A extends Adapter<any, any>>(a: unknown) {
+  // if the parameter is...
+  if (typeof a === "function") {
+    // an async function?
+    if ((a as any)[Symbol.toStringTag] === "AsyncFunction") {
+      return defineAsyncAdapter<A>(a as any); // safe
+    }
+
+    // a standard function
+    return a;
+  } else {
+    const factory = () => a;
+
+    if (a instanceof Promise) {
+      return defineAsyncAdapter<A>(factory as any); // safe
+    }
+
+    return factory;
+  }
+}
+
+/**
+ * Turns every property into a `Promise`, and every function to return a `Promise`.
+ */
+type Asyncify<T> = {
+  [K in keyof T]: T[K] extends (...args: infer A) => infer R
+    ? (...args: A) => Promise<R>
+    : Promise<T[K]>;
+};
+
+/**
+ * Handles an async adapter factory.
+ * @param factory The factory.
+ */
+function defineAsyncAdapter<A extends Adapter<any, any>>(
+  adapterPromise: Promise<A>,
+): Asyncify<A> {
+  return new Proxy({} as Asyncify<A>, {
+    get(_target, prop) {
+      // Special case: allow awaiting the whole adapter
+      if (prop === "then") {
+        return undefined;
+      }
+
+      return async (...args: any[]) => {
+        const adapter = await adapterPromise;
+        const value = (adapter as any)[prop];
+
+        if (typeof value === "function") {
+          return value.apply(adapter, args);
+        }
+
+        // property access -> Promise<property>
+        if (args.length === 0) {
+          return value;
+        }
+
+        throw new TypeError(`${String(prop)} is not a function`);
+      };
+    },
+  });
 }

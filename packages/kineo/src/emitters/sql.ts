@@ -1,4 +1,4 @@
-import type { Emitter } from "@/adapter";
+import { defineEmitter } from "@/adapter";
 import * as IR from "@/ir";
 
 /**
@@ -94,7 +94,7 @@ function createCtx(dialect: Dialect): Ctx {
 /**
  * Emits an IR into SQL, taking in an IR and a dialect.
  */
-const emit: Emitter<Dialect> = (ir, dialect) => {
+const emit = defineEmitter<Dialect>((ir, dialect) => {
   const ctx: Ctx = createCtx(dialect!);
   const sqlStatements: string[] = [];
 
@@ -133,7 +133,7 @@ const emit: Emitter<Dialect> = (ir, dialect) => {
       {} as Record<string, any>,
     ),
   };
-};
+});
 
 export default emit;
 
