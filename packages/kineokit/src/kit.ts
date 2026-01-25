@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 
-import type { AdapterKit } from "kineo/adapter";
+import type { AdapterKit } from "./adapter";
 import { FieldDef, RelationDef, type Schema } from "kineo/schema";
 import { KineoKitError, KineoKitErrorKind } from "./error";
 

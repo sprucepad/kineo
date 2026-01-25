@@ -12,6 +12,10 @@
       "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs"
     },
+    "./adapter": {
+      "types": "./dist/adapter.d.mts",
+      "import": "./dist/adapter.mjs"
+    },
     "./adapters/neo4j": {
       "types": "./dist/adapters/neo4j.d.mts",
       "import": "./dist/adapters/neo4j.mjs"

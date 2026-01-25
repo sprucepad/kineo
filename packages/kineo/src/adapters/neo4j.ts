@@ -1,4 +1,4 @@
-import type { Adapter } from "@/adapter";
+import { defineAdapter, type Adapter } from "@/adapter";
 import { GraphModel } from "@/model";
 import { emit } from "@/emitters/cypher";
 import * as neo4j from "neo4j-driver";
@@ -118,7 +118,7 @@ export interface Neo4jAdapter
  * @param opts Options for creating the adapter.
  * @returns A Neo4j adapter.
  */
-export function neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
+export const neo4jAdapter = defineAdapter<Neo4jAdapter, [Neo4jOpts]>((opts) => {
   const driver =
     "driver" in opts ? opts.driver : neo4j.driver(opts.url, auth(opts.auth));
   const session =
@@ -129,6 +129,8 @@ export function neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         : driver.session(opts.session);
   return {
     Model: GraphModel,
+    driver,
+    session,
 
     async close() {
       await session.close();
@@ -181,13 +183,8 @@ export function neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         raw: records,
       };
     },
-
-    driver,
-    session,
-
-    // KineoKitin
   };
-}
+});
 
 /**
  * Converts a Neo4j value to a vanilla JavaScript type.

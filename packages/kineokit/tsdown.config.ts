@@ -2,7 +2,7 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig([
   {
-    entry: ["./src/index.ts", "./src/adapters/neo4j.ts"],
+    entry: ["./src/index.ts", "./src/adapter.ts", "./src/adapters/neo4j.ts"],
     external: ["neo4j-driver"],
     dts: true,
     minify: true,

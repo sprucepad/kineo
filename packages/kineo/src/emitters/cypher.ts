@@ -1,4 +1,4 @@
-import type { Emitter } from "@/adapter";
+import { defineEmitter } from "@/adapter";
 import neo4j from "neo4j-driver";
 import * as IR from "@/ir";
 
@@ -12,7 +12,7 @@ type Params = Record<string, any>;
  * @param ir The IR to emit.
  * @returns A compilation result.
  */
-export const emit: Emitter = (ir) => {
+export const emit = defineEmitter((ir) => {
   const ctx = createEmitContext();
   const chunks: string[] = [];
 
@@ -49,7 +49,7 @@ export const emit: Emitter = (ir) => {
   }
 
   return { command: chunks.join("\n\n"), params: ctx.params };
-};
+});
 
 /* -------------------------------------------------------------------------- */
 /*                               Emitter Context                             */

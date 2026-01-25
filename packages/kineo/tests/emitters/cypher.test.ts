@@ -9,7 +9,7 @@ describe("emit()", () => {
     expect(() => emit(ir as any)).toThrow(/Unsupported statement type/);
   });
 
-  test("emits a Find statement with where, orderBy, skip, take, and include", () => {
+  test("emits a Find statement with where, orderBy, skip, take, and include", async () => {
     const ir = {
       statements: [
         {
@@ -32,7 +32,7 @@ describe("emit()", () => {
       ],
     } as any;
 
-    const { command, params } = emit(ir);
+    const { command, params } = await emit(ir);
 
     expect(command).toContain("MATCH (u:User)");
     expect(command).toContain("WHERE");
@@ -48,7 +48,7 @@ describe("emit()", () => {
     });
   });
 
-  test("emits a Count statement", () => {
+  test("emits a Count statement", async () => {
     const ir = {
       statements: [
         {
@@ -60,13 +60,13 @@ describe("emit()", () => {
       ],
     } as any;
 
-    const { command, params } = emit(ir);
+    const { command, params } = await emit(ir);
     expect(command).toContain("MATCH (u:User)");
     expect(command).toContain("RETURN count(u) AS count");
     expect(Object.keys(params)).toContain("active_1");
   });
 
-  test("emits a Create statement with props and select", () => {
+  test("emits a Create statement with props and select", async () => {
     const ir = {
       statements: [
         {
@@ -79,7 +79,7 @@ describe("emit()", () => {
       ],
     } as any;
 
-    const { command, params } = emit(ir);
+    const { command, params } = await emit(ir);
     expect(command).toContain("CREATE (u:User");
     expect(command).toContain("RETURN u.name AS name");
     expect(params).toMatchObject({
@@ -88,7 +88,7 @@ describe("emit()", () => {
     });
   });
 
-  test("emits an Upsert with both create and update data", () => {
+  test("emits an Upsert with both create and update data", async () => {
     const ir = {
       statements: [
         {
@@ -104,7 +104,7 @@ describe("emit()", () => {
       ],
     } as any;
 
-    const { command, params } = emit(ir);
+    const { command, params } = await emit(ir);
     expect(command).toContain("MERGE (u:User");
     expect(command).toContain("ON CREATE SET");
     expect(command).toContain("ON MATCH SET");
@@ -118,7 +118,7 @@ describe("emit()", () => {
     );
   });
 
-  test("emits an Upsert fallback to simple create when no where keys", () => {
+  test("emits an Upsert fallback to simple create when no where keys", async () => {
     const ir = {
       statements: [
         {
@@ -131,12 +131,12 @@ describe("emit()", () => {
       ],
     } as any;
 
-    const { command } = emit(ir);
+    const { command } = await emit(ir);
     expect(command).toContain("CREATE (u:User");
     expect(command).toContain("RETURN properties(u) AS u");
   });
 
-  test("emits a Delete statement", () => {
+  test("emits a Delete statement", async () => {
     const ir = {
       statements: [
         {
@@ -148,12 +148,12 @@ describe("emit()", () => {
       ],
     } as any;
 
-    const { command, params } = emit(ir);
+    const { command, params } = await emit(ir);
     expect(command).toContain("DELETE u");
     expect(params).toMatchObject({ id_1: 123 });
   });
 
-  test("emits a ConnectQuery statement (OUT direction)", () => {
+  test("emits a ConnectQuery statement (OUT direction)", async () => {
     const ir = {
       statements: [
         {
@@ -168,7 +168,7 @@ describe("emit()", () => {
       ],
     } as any;
 
-    const { command, params } = emit(ir);
+    const { command, params } = await emit(ir);
     expect(command).toContain("MERGE (a)-[r:FRIENDS_WITH");
     expect(command).toContain("RETURN properties(r) AS relation");
     expect(params).toMatchObject({
@@ -178,7 +178,7 @@ describe("emit()", () => {
     });
   });
 
-  test("emits a ConnectQuery with IN and BOTH directions", () => {
+  test("emits a ConnectQuery with IN and BOTH directions", async () => {
     const inIR = {
       statements: [
         {
@@ -204,11 +204,11 @@ describe("emit()", () => {
       ],
     } as any;
 
-    expect(emit(inIR).command).toContain("<-[r:KNOWS");
-    expect(emit(bothIR).command).toContain("-[r:KNOWS");
+    expect((await emit(inIR)).command).toContain("<-[r:KNOWS");
+    expect((await emit(bothIR)).command).toContain("-[r:KNOWS");
   });
 
-  test("emits a RelationQuery statement with min/max/limit/direction", () => {
+  test("emits a RelationQuery statement with min/max/limit/direction", async () => {
     const ir = {
       statements: [
         {
@@ -224,14 +224,14 @@ describe("emit()", () => {
       ],
     } as any;
 
-    const { command } = emit(ir);
+    const { command } = await emit(ir);
     expect(command).toContain("MATCH (a:User)");
     expect(command).toContain("<-[:*1..3]->");
     expect(command).toContain("RETURN p");
     expect(command).toContain("LIMIT 2");
   });
 
-  test("normalizes dates into neo4j date time", () => {
+  test("normalizes dates into neo4j date time", async () => {
     const ir = {
       statements: [
         {
@@ -242,7 +242,7 @@ describe("emit()", () => {
         },
       ],
     } as any;
-    const { params } = emit(ir);
+    const { params } = await emit(ir);
     expect(params["create_hello_1"]).toBeInstanceOf(DateTime);
   });
 });

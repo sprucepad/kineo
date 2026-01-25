@@ -31,7 +31,7 @@ const mockDialect = {
 };
 
 describe("SQL Emitter", () => {
-  test("emits a simple Find statement", () => {
+  test("emits a simple Find statement", async () => {
     const ir: IR.IR = {
       statements: [
         {
@@ -43,13 +43,13 @@ describe("SQL Emitter", () => {
       ],
     };
 
-    const result = emit(ir, mockDialect);
+    const result = await emit(ir, mockDialect);
     expect(result.command).toContain('SELECT "id", "name" FROM "User"');
     expect(result.command).toContain('WHERE "id" = 1');
     expect(result.params).toEqual({});
   });
 
-  test("emits a Find with orderBy and pagination", () => {
+  test("emits a Find with orderBy and pagination", async () => {
     const ir: IR.IR = {
       statements: [
         {
@@ -62,13 +62,13 @@ describe("SQL Emitter", () => {
       ],
     };
 
-    const result = emit(ir, mockDialect);
+    const result = await emit(ir, mockDialect);
     expect(result.command).toContain('SELECT * FROM "Post"');
     expect(result.command).toContain('ORDER BY "createdAt" DESC');
     expect(result.command).toContain("LIMIT 10 OFFSET 5");
   });
 
-  test("emits a Count statement with WHERE clause", () => {
+  test("emits a Count statement with WHERE clause", async () => {
     const ir: IR.IR = {
       statements: [
         {
@@ -79,13 +79,13 @@ describe("SQL Emitter", () => {
       ],
     };
 
-    const result = emit(ir, mockDialect);
+    const result = await emit(ir, mockDialect);
     expect(result.command).toBe(
       'SELECT COUNT(*) AS count FROM "User" WHERE "active" = TRUE',
     );
   });
 
-  test("emits a Create statement with data", () => {
+  test("emits a Create statement with data", async () => {
     const ir: IR.IR = {
       statements: [
         {
@@ -97,13 +97,13 @@ describe("SQL Emitter", () => {
       ],
     };
 
-    const result = emit(ir, mockDialect);
+    const result = await emit(ir, mockDialect);
     expect(result.command).toBe(
       'INSERT INTO "User" ("name", "age") VALUES (\'Alice\', 30) RETURNING id',
     );
   });
 
-  test("emits a Create with empty data (DEFAULT VALUES)", () => {
+  test("emits a Create with empty data (DEFAULT VALUES)", async () => {
     const ir: IR.IR = {
       statements: [
         {
@@ -114,11 +114,11 @@ describe("SQL Emitter", () => {
       ],
     };
 
-    const result = emit(ir, mockDialect);
+    const result = await emit(ir, mockDialect);
     expect(result.command).toContain('INSERT INTO "User" DEFAULT VALUES');
   });
 
-  test("emits an Upsert statement", () => {
+  test("emits an Upsert statement", async () => {
     const ir: IR.IR = {
       statements: [
         {
@@ -134,12 +134,12 @@ describe("SQL Emitter", () => {
       ],
     };
 
-    const result = emit(ir, mockDialect);
+    const result = await emit(ir, mockDialect);
     expect(result.command).toContain('UPSERT INTO "User"');
     expect(mockDialect.upsert).toHaveBeenCalled();
   });
 
-  test("emits a Delete statement with WHERE", () => {
+  test("emits a Delete statement with WHERE", async () => {
     const ir: IR.IR = {
       statements: [
         {
@@ -150,7 +150,7 @@ describe("SQL Emitter", () => {
       ],
     };
 
-    const result = emit(ir, mockDialect);
+    const result = await emit(ir, mockDialect);
     expect(result.command).toBe('DELETE FROM "User" WHERE "id" = 42');
   });
 
@@ -170,7 +170,7 @@ describe("SQL Emitter", () => {
     expect(() => emit(ir, mockDialect)).toThrow(/graph operations/);
   });
 
-  test("supports JSON path extraction in where clause", () => {
+  test("supports JSON path extraction in where clause", async () => {
     const ir: IR.IR = {
       statements: [
         {
@@ -181,7 +181,7 @@ describe("SQL Emitter", () => {
       ],
     };
 
-    const result = emit(ir, mockDialect);
+    const result = await emit(ir, mockDialect);
     expect(result.command).toContain("JSON_EXTRACT");
   });
 });

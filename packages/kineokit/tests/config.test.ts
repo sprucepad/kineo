@@ -1,9 +1,10 @@
 import { parseConfig } from "@/config";
 import type { KineoConfig } from "@/index";
+import type { AdapterKit } from "@/adapter";
 
 import { kineo } from "kineo/client";
 import { defineSchema } from "kineo/schema";
-import type { Adapter, AdapterKit } from "kineo/adapter";
+import type { Adapter } from "kineo/adapter";
 import { GraphModel } from "kineo/model";
 
 import { describe, expect, test, vi } from "vitest";

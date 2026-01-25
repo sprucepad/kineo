@@ -1,6 +1,5 @@
 import type { IR } from "./ir";
 import type { Model } from "./model";
-import type { Schema } from "./schema";
 
 /**
  * Either a Promise or not.
@@ -18,7 +17,7 @@ export interface EmitResult {
 /**
  * A emitter.
  */
-export type Emitter<T = any> = (ir: IR, preset?: T) => EmitResult;
+export type Emitter<T = any> = (ir: IR, preset?: T) => Resolvable<EmitResult>;
 
 /**
  * Result of executing a query.
@@ -40,14 +39,16 @@ export interface ExecResult<T = any> {
 }
 
 /**
+ * A model constructor, for any inheritors of `Model`.
+ */
+export type ModelCtor = {
+  new (name: string, adapter: Adapter<any, any>): Model<any, any>;
+};
+
+/**
  * An adapter. Contains functions necessary to interact with the database of choice.
  */
-export interface Adapter<
-  TModelCtor extends {
-    new (name: string, adapter: Adapter<any, any>): Model<any, any>;
-  },
-  Summary = any,
-> {
+export interface Adapter<TModelCtor extends ModelCtor, Summary = any> {
   /**
    * What extension of the model class you're using. This can be just the default model or `GraphModel`. Right now, this can't be a custom class.
    */
@@ -73,62 +74,107 @@ export interface Adapter<
 }
 
 /**
- * An adapter used in KineoKit.
+ * Defines an emitter.
+ * @param fn The emitter function.
+ * @returns The same function.
  */
-export interface AdapterKit {
-  /**
-   * Push a schema to the database. You don't need to warn the user, Kineo does that for you.
-   * @param schema The schema to push.
-   */
-  push?(schema: Schema): Resolvable<void>;
-  /**
-   * Gets a schema from the database.
-   */
-  pull?(): Resolvable<{ schema: Schema; full?: boolean }>;
-  /**
-   * Generates migrations.
-   */
-  generate?(prev: Schema, cur: Schema): Resolvable<MigrationEntry[]>;
-  /**
-   * Gets a status for a migration.
-   * @param migration The migration to get the status for.
-   * @param hash The hash of the migration.
-   */
-  status?(migration: string, hash: string): Resolvable<"pending" | "completed">;
-  /**
-   * Deploys a migration.
-   * @param migration The migration to deploy.
-   * @param hash The hash of the migration.
-   */
-  deploy?(migration: string, hash: string): Resolvable<void>;
+export function defineEmitter<T>(fn: Emitter<T>): Emitter<T> {
+  return fn;
 }
 
 /**
- * A migration entry. Can either be a note or comment, or a command.
+ * Defines an adapter.
+ * @param a Sync adapter factory.
  */
-export type MigrationEntry = MigrationCommand | MigrationNote;
+export function defineAdapter<
+  A extends Adapter<any, any>,
+  P extends any[] = any[],
+>(fn: (...args: P) => A): (...args: P) => A;
 
 /**
- * A migration note.
+ * Defines an adapter.
+ * @param a Async adapter factory.
  */
-export interface MigrationNote {
-  type: "note";
-  note: string;
-  description?: string;
+export function defineAdapter<
+  A extends Adapter<any, any>,
+  P extends any[] = any[],
+>(fn: (...args: P) => Promise<A>): (...args: P) => Asyncify<A>;
+
+/**
+ * Defines an adapter.
+ * @param fn Sync adapter.
+ */
+export function defineAdapter<
+  A extends Adapter<any, any>,
+  P extends any[] = any[],
+>(a: A): (...args: P) => A;
+
+/**
+ * Defines an adapter.
+ * @param fn Async adapter.
+ */
+export function defineAdapter<
+  A extends Adapter<any, any>,
+  P extends any[] = any[],
+>(a: Promise<A>): (...args: P) => Asyncify<A>;
+
+export function defineAdapter<A extends Adapter<any, any>>(a: unknown) {
+  // if the parameter is...
+  if (typeof a === "function") {
+    // an async function?
+    if ((a as any)[Symbol.toStringTag] === "AsyncFunction") {
+      return asyncify<A>(a as any); // safe
+    }
+
+    // a standard function
+    return a;
+  } else {
+    const factory = () => a;
+
+    if (a instanceof Promise) {
+      return asyncify<A>(factory as any); // safe
+    }
+
+    return factory;
+  }
 }
 
 /**
- * A migration command.
+ * Turns every property into a `Promise`, and every function to return a `Promise`.
  */
-export interface MigrationCommand {
-  type: "command";
-  /**
-   * The command to run;
-   */
-  command: string;
-  /**
-   * The reverse of the command to run, in case of rollbacks.
-   */
-  reverse?: string;
-  description?: string;
+export type Asyncify<T> = {
+  [K in keyof T]: T[K] extends (...args: infer A) => infer R
+    ? (...args: A) => Promise<R>
+    : Promise<T[K]>;
+};
+
+/**
+ * Handles an async adapter factory.
+ * @param factory The factory.
+ */
+export function asyncify<A>(promise: Promise<A>): Asyncify<A> {
+  return new Proxy({} as Asyncify<A>, {
+    get(_target, prop) {
+      // Special case: allow awaiting the whole adapter
+      if (prop === "then") {
+        return undefined;
+      }
+
+      return async (...args: any[]) => {
+        const adapter = await promise;
+        const value = (adapter as any)[prop];
+
+        if (typeof value === "function") {
+          return value.apply(adapter, args);
+        }
+
+        // property access -> Promise<property>
+        if (args.length === 0) {
+          return value;
+        }
+
+        throw new TypeError(`${String(prop)} is not a function`);
+      };
+    },
+  });
 }
