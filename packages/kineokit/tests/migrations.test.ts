@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import type { MigrationEntry } from "kineo/adapter";
+import type { MigrationEntry } from "@/adapter";
 
 import { toMigration, toEntries } from "@/migration";
 
