@@ -1,3 +1,4 @@
+import { asyncify, type Asyncify } from "kineo/adapter";
 import type { Schema } from "kineo/schema";
 
 /**
@@ -67,4 +68,57 @@ export interface MigrationCommand {
    * A description of the migration command.
    */
   description?: string;
+}
+
+/**
+ * Defines an adapter.
+ * @param a Sync adapter factory.
+ */
+export function defineAdapterKit<A extends AdapterKit, P extends any[] = any[]>(
+  fn: (...args: P) => A,
+): (...args: P) => A;
+
+/**
+ * Defines an adapter.
+ * @param a Async adapter factory.
+ */
+export function defineAdapterKit<A extends AdapterKit, P extends any[] = any[]>(
+  fn: (...args: P) => Promise<A>,
+): (...args: P) => Asyncify<A>;
+
+/**
+ * Defines an adapter.
+ * @param fn Sync adapter.
+ */
+export function defineAdapterKit<A extends AdapterKit, P extends any[] = any[]>(
+  a: A,
+): (...args: P) => A;
+
+/**
+ * Defines an adapter.
+ * @param fn Async adapter.
+ */
+export function defineAdapterKit<A extends AdapterKit, P extends any[] = any[]>(
+  a: Promise<A>,
+): (...args: P) => Asyncify<A>;
+
+export function defineAdapterKit<A extends AdapterKit>(a: unknown) {
+  // if the parameter is...
+  if (typeof a === "function") {
+    // an async function?
+    if ((a as any)[Symbol.toStringTag] === "AsyncFunction") {
+      return asyncify<A>(a as any); // safe
+    }
+
+    // a standard function
+    return a;
+  } else {
+    const factory = () => a;
+
+    if (a instanceof Promise) {
+      return asyncify<A>(factory as any); // safe
+    }
+
+    return factory;
+  }
 }

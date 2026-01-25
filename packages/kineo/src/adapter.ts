@@ -17,7 +17,7 @@ export interface EmitResult {
 /**
  * A emitter.
  */
-export type Emitter<T = any> = (ir: IR, preset?: T) => EmitResult;
+export type Emitter<T = any> = (ir: IR, preset?: T) => Resolvable<EmitResult>;
 
 /**
  * Result of executing a query.
@@ -84,18 +84,6 @@ export function defineEmitter<T>(fn: Emitter<T>): Emitter<T> {
 
 /**
  * Defines an adapter.
- * @param fn Async factory.
- */
-export function defineAdapter<
-  C extends ModelCtor,
-  S = any,
-  P extends any[] = any[],
->(
-  fn: (...args: P) => Promise<Adapter<C, S>>,
-): (...args: P) => Asyncify<Adapter<C, S>>;
-
-/**
- * Defines an adapter.
  * @param a Sync adapter factory.
  */
 export function defineAdapter<
@@ -135,7 +123,7 @@ export function defineAdapter<A extends Adapter<any, any>>(a: unknown) {
   if (typeof a === "function") {
     // an async function?
     if ((a as any)[Symbol.toStringTag] === "AsyncFunction") {
-      return defineAsyncAdapter<A>(a as any); // safe
+      return asyncify<A>(a as any); // safe
     }
 
     // a standard function
@@ -144,7 +132,7 @@ export function defineAdapter<A extends Adapter<any, any>>(a: unknown) {
     const factory = () => a;
 
     if (a instanceof Promise) {
-      return defineAsyncAdapter<A>(factory as any); // safe
+      return asyncify<A>(factory as any); // safe
     }
 
     return factory;
@@ -154,7 +142,7 @@ export function defineAdapter<A extends Adapter<any, any>>(a: unknown) {
 /**
  * Turns every property into a `Promise`, and every function to return a `Promise`.
  */
-type Asyncify<T> = {
+export type Asyncify<T> = {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R
     ? (...args: A) => Promise<R>
     : Promise<T[K]>;
@@ -164,9 +152,7 @@ type Asyncify<T> = {
  * Handles an async adapter factory.
  * @param factory The factory.
  */
-function defineAsyncAdapter<A extends Adapter<any, any>>(
-  adapterPromise: Promise<A>,
-): Asyncify<A> {
+export function asyncify<A>(promise: Promise<A>): Asyncify<A> {
   return new Proxy({} as Asyncify<A>, {
     get(_target, prop) {
       // Special case: allow awaiting the whole adapter
@@ -175,7 +161,7 @@ function defineAsyncAdapter<A extends Adapter<any, any>>(
       }
 
       return async (...args: any[]) => {
-        const adapter = await adapterPromise;
+        const adapter = await promise;
         const value = (adapter as any)[prop];
 
         if (typeof value === "function") {

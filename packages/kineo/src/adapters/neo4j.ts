@@ -129,6 +129,8 @@ export const neo4jAdapter = defineAdapter<Neo4jAdapter, [Neo4jOpts]>((opts) => {
         : driver.session(opts.session);
   return {
     Model: GraphModel,
+    driver,
+    session,
 
     async close() {
       await session.close();
@@ -181,11 +183,6 @@ export const neo4jAdapter = defineAdapter<Neo4jAdapter, [Neo4jOpts]>((opts) => {
         raw: records,
       };
     },
-
-    driver,
-    session,
-
-    // KineoKitin
   };
 });
 

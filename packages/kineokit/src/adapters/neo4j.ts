@@ -1,6 +1,11 @@
+import {
+  defineAdapterKit,
+  type AdapterKit,
+  type MigrationEntry,
+} from "@/adapter";
+
 import neo4j, { Session, type Driver, type SessionConfig } from "neo4j-driver";
 import { auth, type Neo4jAdapter, type Neo4jOpts } from "kineo/adapters/neo4j";
-import type { AdapterKit, MigrationEntry } from "kineo/adapter";
 import {
   field,
   FieldDef,
@@ -27,9 +32,10 @@ export interface Neo4jKit extends AdapterKit {
  * @param opts Runtime adapter, client or options for creating the adapter.
  * @returns A Neo4j KineoKit adapter.
  */
-export function neo4jKit(
-  opts: Neo4jOpts | Neo4jAdapter | Kineo<any, any>,
-): Neo4jKit {
+export const neo4jKit = defineAdapterKit<
+  Neo4jKit,
+  [Neo4jOpts | Neo4jAdapter | Kineo<any, any>]
+>((opts) => {
   const { driver, session } = getDriverSession(opts);
 
   return {
@@ -522,7 +528,7 @@ export function neo4jKit(
       return migrations;
     },
   };
-}
+});
 
 /**
  * Extracts a driver and a session from options, a runtime adapter or a client.
