@@ -39,6 +39,14 @@ export class FieldDef<
    * The default value of the field.
    */
   $default: TDefault = undefined as any;
+  /**
+   * The index name of the field.
+   */
+  $indexName?: string;
+  /**
+   * If this field is unique.
+   */
+  $unique = false;
 
   /**
    * Creates a new field definition
@@ -55,7 +63,7 @@ export class FieldDef<
    * @param kind The new type.
    * @returns `this`.
    */
-  type<T extends Kind>(kind: T): FieldDef<T, TId, TRequired, TArray, T> {
+  type<T extends Kind>(kind: T): FieldDef<T, TId, TRequired, TArray, TDefault> {
     this.$kind = kind as any;
     return this as any;
   }
@@ -124,6 +132,34 @@ export class FieldDef<
     this.$default = value as any;
     return this as any;
   }
+
+  /**
+   * The index name.
+   * @param name The name of the index.
+   * @returns `this`.
+   */
+  index(name: string): this {
+    this.$indexName = name;
+    return this;
+  }
+
+  /**
+   * Sets the field as unique.
+   * @returns `this`.
+   */
+  unique(): this {
+    this.$unique = true;
+    return this;
+  }
+
+  /**
+   * Sets the field as common (not unique).
+   * @returns `this`.
+   */
+  common(): this {
+    this.$unique = false;
+    return this;
+  }
 }
 
 /**
@@ -140,11 +176,34 @@ export class RelationDef<
   TArray extends boolean = false,
   TDefault = undefined,
 > {
+  /**
+   * If this relationship is required.
+   */
   $required: TRequired = false as any;
+  /**
+   * If this is a list of relationships.
+   */
   $array: TArray = false as any;
+  /**
+   * The default value of the relationship.
+   */
   $default: TDefault = undefined as any;
+  /**
+   * The direction of the relationship.
+   */
   $direction?: Direction;
+  /**
+   * The relationship label.
+   */
   $label?: string;
+  /**
+   * The relationship index name.
+   */
+  $indexName?: string;
+  /**
+   * If this relationship is unique (e.g. one-to-one relationships)
+   */
+  $unique: boolean = false;
 
   /**
    * Creates a new relationship definition
@@ -273,6 +332,34 @@ export class RelationDef<
   single(): RelationDef<To, TRequired, false, TDefault> {
     this.$array = false as any;
     return this as any;
+  }
+
+  /**
+   * Creates an index for this relationship.
+   * @param name The index name.
+   * @returns `this`.
+   */
+  index(name: string): this {
+    this.$indexName = name;
+    return this;
+  }
+
+  /**
+   * Sets the relationship as unique.
+   * @returns `this`.
+   */
+  unique(): this {
+    this.$unique = true;
+    return this;
+  }
+
+  /**
+   * Sets the relationship as not unique.
+   * @returns `this`.
+   */
+  common(): this {
+    this.$unique = false;
+    return this;
   }
 }
 

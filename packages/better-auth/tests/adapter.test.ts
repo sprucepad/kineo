@@ -24,7 +24,7 @@ describe("kineoAdapter", () => {
 
     client = {
       $adapter: {
-        emit: vi.fn().mockResolvedValue("emitd-ir"),
+        emit: vi.fn().mockResolvedValue("emitted-ir"),
         exec: vi.fn().mockResolvedValue(execResult),
       },
     };
@@ -47,7 +47,7 @@ describe("kineoAdapter", () => {
     });
 
     expect(client.$adapter.emit).toHaveBeenCalledWith("ir");
-    expect(client.$adapter.exec).toHaveBeenCalledWith("emitd-ir");
+    expect(client.$adapter.exec).toHaveBeenCalledWith("emitted-ir");
     expect(result).toBe(5);
   });
 

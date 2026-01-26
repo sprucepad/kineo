@@ -15,7 +15,12 @@ export interface ModelShape {
  */
 export class ModelDef<S extends ModelShape> {
   /**
-   * Creates a new model def
+   * The indexed fields.
+   */
+  $indexes = new Map<string, IndexOptions<S>>();
+
+  /**
+   * Creates a new model definition.
    * @param $shape The model shape.
    * @param $name The internal model name.
    */
@@ -33,6 +38,40 @@ export class ModelDef<S extends ModelShape> {
     this.$name = name;
     return this;
   }
+
+  // TODO timestamping
+
+  /**
+   * Creates an index on fields.
+   * @param name The index name.
+   * @param opts The index options.
+   */
+  index(name: string, opts: IndexOptions<S>) {
+    this.$indexes.set(name, opts);
+  }
+
+  /**
+   * Updates indexes, by adding individual field indexes to this model's index map.
+   */
+  update() {
+    for (const key in this.$shape) {
+      const property = this.$shape[key];
+      if (property.$indexName && !this.$indexes.has(property.$indexName)) {
+        this.$indexes.set(property.$indexName, { fields: [key] });
+      }
+    }
+  }
+}
+
+export interface IndexOptions<S extends ModelShape> {
+  fields: (keyof S)[];
+  where?: {
+    [Key in keyof S]: S[Key] extends FieldDef<any, any, any, any, any>
+      ? InferField<S[Key]>
+      : S[Key] extends RelationDef<any, any, any, any>
+        ? InferRelationship<S[Key], any>
+        : never;
+  };
 }
 
 /**

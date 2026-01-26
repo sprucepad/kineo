@@ -103,10 +103,10 @@ describe("deemitEntries()", () => {
       },
     ];
 
-    const emitd = toMigration(entries);
-    const deemitd = toEntries(emitd);
+    const migration = toMigration(entries);
+    const decompiledEntries = toEntries(migration);
 
-    expect(deemitd).toEqual(
+    expect(decompiledEntries).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           type: "command",

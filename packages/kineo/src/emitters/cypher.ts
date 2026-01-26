@@ -83,7 +83,7 @@ function createEmitContext(): EmitContext {
  * @param ctx The emitter context.
  * @param prefix The prefix of the property.
  * @param props The properties to convert.
- * @returns The emitd properties.
+ * @returns The emitted properties.
  */
 function propsToCypher(
   ctx: EmitContext,

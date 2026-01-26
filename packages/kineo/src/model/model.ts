@@ -1,5 +1,5 @@
 import type { Adapter } from "@/adapter";
-import type { InferModelShape, ModelShape, Schema } from "@/schema";
+import type { InferModelShape, ModelDef, ModelShape, Schema } from "@/schema";
 import * as ir from "@/ir";
 
 // ---------- Generic Utility Types ---------- //
@@ -286,28 +286,20 @@ export type UpsertManyReturn<
  */
 export class Model<S extends Schema, M extends ModelShape> {
   /**
-   * The name of the model.
-   */
-  protected $name: string;
-  /**
-   * The adapter.
-   */
-  protected $adapter: Adapter<any, any>;
-
-  /**
    * Creates a new model. This is usually done by Kineo -- it is not recommended to create a model manually like this.
    * @param name The name of the model.
    * @param adapter The adapter.
    */
-  constructor(name: string, adapter: Adapter<any, any>) {
-    this.$name = name;
-    this.$adapter = adapter;
-  }
+  constructor(
+    protected $def: ModelDef<M>,
+    protected $name: string,
+    protected $adapter: Adapter<any, any>,
+  ) {}
 
   protected async $exec(opts: any, op: string) {
     const tree = ir.emitToIR(this.$name, op, opts);
-    const emitd = await this.$adapter.emit(tree);
-    const result = await this.$adapter.exec(emitd);
+    const emitted = await this.$adapter.emit(tree);
+    const result = await this.$adapter.exec(emitted);
 
     return result;
   }

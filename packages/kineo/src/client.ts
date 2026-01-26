@@ -1,4 +1,4 @@
-import type { InferSchema, ModelDef, Schema } from "./schema";
+import { model, type InferSchema, type ModelDef, type Schema } from "./schema";
 import type { Model, GraphModel } from "./model";
 import type { Adapter } from "./adapter";
 
@@ -53,7 +53,14 @@ export function kineo<
 >(adapter: TAdapter, schema: TSchema): Kineo<TSchema, TAdapter> {
   const modelsForSchema: Partial<ModelsForSchema<TSchema, TAdapter>> = {};
   for (const key in schema) {
-    modelsForSchema[key] = new adapter.Model(schema[key].$name ?? key, adapter);
+    const modelDef = schema[key];
+    modelDef.update();
+
+    modelsForSchema[key] = new adapter.Model(
+      modelDef,
+      modelDef.$name ?? key,
+      adapter,
+    );
   }
 
   return {
