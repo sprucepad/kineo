@@ -1,4 +1,4 @@
-import { model, type InferSchema, type ModelDef, type Schema } from "./schema";
+import type { InferSchema, ModelDef, Schema } from "./schema";
 import type { Model, GraphModel } from "./model";
 import type { Adapter } from "./adapter";
 
