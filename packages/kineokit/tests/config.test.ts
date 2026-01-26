@@ -27,7 +27,9 @@ function mockAdapter(): Adapter<typeof GraphModel, any> {
 }
 
 function mockAdapterKit(): AdapterKit {
-  return {};
+  return {
+    exec() {},
+  };
 }
 
 describe("parseConfig()", () => {
