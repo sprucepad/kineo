@@ -1,3 +1,5 @@
+import type { StandardSchemaV1 } from "./standard-schema";
+
 /**
  * All supported field types.
  */
@@ -5,6 +7,7 @@ export type Kind =
   | "string"
   | "char"
   | "int"
+  | "bigint"
   | "float"
   | "date"
   | "time"
@@ -47,6 +50,10 @@ export class FieldDef<
    * If this field is unique.
    */
   $unique = false;
+  /**
+   * Standard Schema validator for the field.
+   */
+  $schema?: StandardSchemaV1;
 
   /**
    * Creates a new field definition
@@ -160,6 +167,15 @@ export class FieldDef<
     this.$unique = false;
     return this;
   }
+
+  /**
+   * Adds a Standard Schema validator.
+   * @returns `this`.
+   */
+  validate(schema: StandardSchemaV1): this {
+    this.$schema = schema;
+    return this;
+  }
 }
 
 /**
@@ -204,6 +220,10 @@ export class RelationDef<
    * If this relationship is unique (e.g. one-to-one relationships)
    */
   $unique: boolean = false;
+  /**
+   * Standard Schema validator.
+   */
+  $schema?: StandardSchemaV1;
 
   /**
    * Creates a new relationship definition
@@ -361,6 +381,15 @@ export class RelationDef<
     this.$unique = false;
     return this;
   }
+
+  /**
+   * Adds a Standard Schema validator.
+   * @returns `this`.
+   */
+  validate(schema: StandardSchemaV1): this {
+    this.$schema = schema;
+    return this;
+  }
 }
 
 /**
@@ -385,6 +414,12 @@ export const field = {
    * @returns A int field definition.
    */
   int: (name?: string) => new FieldDef("int", name),
+  /**
+   * Creates a new `bigint` field definition.
+   * @param name _optional_ The name of the field.
+   * @returns A int field definition.
+   */
+  bigint: (name?: string) => new FieldDef("bigint", name),
   /**
    * Creates a new floating point field definition.
    * @param name _optional_ The name of the field.

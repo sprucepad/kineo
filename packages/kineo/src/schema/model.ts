@@ -1,4 +1,5 @@
 import { FieldDef, RelationDef, type Kind } from "./field";
+import type { StandardSchemaV1 } from "./standard-schema";
 import type { Schema } from ".";
 
 /**
@@ -18,6 +19,10 @@ export class ModelDef<S extends ModelShape> {
    * The indexed fields.
    */
   $indexes = new Map<string, IndexOptions<S>>();
+  /**
+   * The validators for properties.
+   */
+  $schemas = new Map<string, StandardSchemaV1>();
 
   /**
    * Creates a new model definition.
@@ -51,13 +56,27 @@ export class ModelDef<S extends ModelShape> {
   }
 
   /**
-   * Updates indexes, by adding individual field indexes to this model's index map.
+   * Adds validators to properties.
+   * @param props The properties to validate.
+   */
+  validate(props: { [Key in keyof S]: StandardSchemaV1 }) {
+    for (const key in props) {
+      this.$schemas.set(key, props[key]);
+    }
+  }
+
+  /**
+   * Updates indexes and validators, by adding individual field indexes/schemas to this model's index/schema map respectively.
    */
   update() {
     for (const key in this.$shape) {
       const property = this.$shape[key];
       if (property.$indexName && !this.$indexes.has(property.$indexName)) {
         this.$indexes.set(property.$indexName, { fields: [key] });
+      }
+
+      if (property.$schema) {
+        this.$schemas.set(key, property.$schema);
       }
     }
   }
@@ -103,15 +122,17 @@ export type InferField<TField extends FieldDef<any, any, any, any, any>> =
  */
 export type TypeOf<K extends Kind> = K extends "string" | "char"
   ? string
-  : K extends "int" | "float"
-    ? number
-    : K extends "date" | "time" | "datetime" | "timestamp"
-      ? Date
-      : K extends "bool"
-        ? boolean
-        : K extends "blob"
-          ? Blob
-          : never;
+  : K extends "bigint"
+    ? bigint
+    : K extends "int" | "float"
+      ? number
+      : K extends "date" | "time" | "datetime" | "timestamp"
+        ? Date
+        : K extends "bool"
+          ? boolean
+          : K extends "blob"
+            ? Blob
+            : never;
 
 /**
  * Infer a single model's properties.

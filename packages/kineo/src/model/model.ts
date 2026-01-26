@@ -301,6 +301,12 @@ export class Model<S extends Schema, M extends ModelShape> {
     const emitted = await this.$adapter.emit(tree);
     const result = await this.$adapter.exec(emitted);
 
+    for (const entry of result.entries) {
+      for (const key in entry) {
+        await this.$def.$schemas.get(key)?.["~standard"].validate(entry[key]);
+      }
+    }
+
     return result;
   }
 

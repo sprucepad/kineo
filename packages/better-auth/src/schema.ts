@@ -92,11 +92,11 @@ export function toKineoSchema(schema?: BetterAuthPluginDBSchema) {
             f = field.datetime(baField.fieldName);
             break;
           case "json":
-            // TODO json
             f = field.string(baField.fieldName);
             break;
           case "number":
-            f = field.int(baField.fieldName);
+            if (baField.bigint) f = field.bigint(baField.fieldName);
+            else f = field.int(baField.fieldName);
             break;
           case "number[]":
             f = field.int(baField.fieldName).array();
@@ -112,19 +112,15 @@ export function toKineoSchema(schema?: BetterAuthPluginDBSchema) {
         }
       }
 
-      // TODO bigint
       if (baField.defaultValue) f.default(baField.defaultValue);
       if (baField.index) f.index(`better_auth_${f.$name ?? fieldKey}`);
       if (baField.required) f.required();
       if (baField.unique) f.unique();
-      // TODO validator
+      if (baField.validator?.output) f.validate(baField.validator.output);
 
       fields[fieldKey] = f;
     }
 
     models[modelKey] = model(baModel.modelName ?? modelKey, fields);
   }
-
-  // TODO check if baField.references.model is model key or model name,
-  // TODO and transform into model key if it _is_ model name
 }
