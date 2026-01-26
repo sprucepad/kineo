@@ -181,14 +181,14 @@ function emitWhere(ctx: Ctx, where?: Record<string, any>): string | undefined {
 
     // otherwise, assume a map of fields -> constraints
     const pieces: string[] = [];
-    for (const k of Object.keys(obj)) {
+    for (const k in obj) {
       const v = obj[k];
 
       // nested logical inside field is not expected
       // handle operators if v is object with operator keys
       if (v && typeof v === "object" && !Array.isArray(v)) {
         // operator map
-        for (const opKey of Object.keys(v)) {
+        for (const opKey in v) {
           const operand = v[opKey];
           const colExpr = emitColumnOrJson(ctx, k);
           switch (opKey) {

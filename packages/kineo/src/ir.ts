@@ -24,7 +24,7 @@ export interface Statement {
 }
 
 /**
- * IR root — represents a emitd set of model operations
+ * IR root — represents a emitted set of model operations
  */
 export interface IR {
   statements: Statement[];

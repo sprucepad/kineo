@@ -13,7 +13,7 @@ const simpleSchema = defineSchema({
 
 describe("push()", () => {
   test("throws if adapter lacks pull or push", async () => {
-    const adapter: AdapterKit = {};
+    const adapter: AdapterKit = { exec() {} };
     await expect(push(adapter, simpleSchema)).rejects.toThrowError(
       KineoKitError,
     );
@@ -21,6 +21,7 @@ describe("push()", () => {
 
   test("throws on breaking schema diff", async () => {
     const adapter: AdapterKit = {
+      exec() {},
       pull: vi.fn().mockResolvedValue({
         schema: {
           User: model({
@@ -46,6 +47,7 @@ describe("push()", () => {
 
   test("calls push when no breaking changes", async () => {
     const adapter: AdapterKit = {
+      exec() {},
       pull: vi.fn().mockResolvedValue({ schema: simpleSchema, full: true }),
       push: vi.fn(),
     };
@@ -56,6 +58,7 @@ describe("push()", () => {
 
   test("skips diff check when force = true", async () => {
     const adapter: AdapterKit = {
+      exec() {},
       pull: vi.fn().mockRejectedValue(new Error("should not be called")),
       push: vi.fn(),
     };
@@ -87,12 +90,13 @@ describe("getDiff()", () => {
 
 describe("pull()", () => {
   test("throws if adapter lacks pull", async () => {
-    const adapter: AdapterKit = {};
+    const adapter: AdapterKit = { exec() {} };
     await expect(pull(adapter)).rejects.toThrowError(KineoKitError);
   });
 
   test("returns schema if adapter.pull exists", async () => {
     const adapter: AdapterKit = {
+      exec() {},
       pull: vi.fn().mockResolvedValue({ schema: simpleSchema, full: true }),
     };
 
@@ -104,7 +108,7 @@ describe("pull()", () => {
 
 describe("generate()", () => {
   test("throws if adapter lacks generate", async () => {
-    const adapter: AdapterKit = {};
+    const adapter: AdapterKit = { exec() {} };
     await expect(generate(adapter, simpleSchema, simpleSchema)).rejects.toThrow(
       KineoKitError,
     );
@@ -112,6 +116,7 @@ describe("generate()", () => {
 
   test("calls adapter.generate()", async () => {
     const adapter: AdapterKit = {
+      exec() {},
       generate: vi.fn().mockResolvedValue(["migration.sql"]),
     };
     const result = await generate(adapter, simpleSchema, simpleSchema);
@@ -122,12 +127,13 @@ describe("generate()", () => {
 
 describe("deploy()", () => {
   test("throws if adapter lacks deploy", async () => {
-    const adapter: AdapterKit = {};
+    const adapter: AdapterKit = { exec() {} };
     await expect(deploy(adapter, "")).rejects.toThrow(KineoKitError);
   });
 
   test("calls deploy with hash", async () => {
     const adapter: AdapterKit = {
+      exec() {},
       deploy: vi.fn(),
     };
 
@@ -138,12 +144,13 @@ describe("deploy()", () => {
 
 describe("status()", () => {
   test("throws if adapter lacks status", async () => {
-    const adapter: AdapterKit = {};
+    const adapter: AdapterKit = { exec() {} };
     await expect(status(adapter, "")).rejects.toThrow(KineoKitError);
   });
 
   test("calls status with hash", async () => {
     const adapter: AdapterKit = {
+      exec() {},
       status: vi.fn().mockResolvedValue("completed"),
     };
 

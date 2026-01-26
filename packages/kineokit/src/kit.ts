@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import type { AdapterKit } from "./adapter";
 import { FieldDef, RelationDef, type Schema } from "kineo/schema";
 import { KineoKitError, KineoKitErrorKind } from "./error";
+import { toMigration } from "./migration";
 
 /**
  * Pushes a schema to the database.
@@ -15,11 +16,10 @@ export async function push(
   newSchema: Schema,
   force?: boolean,
 ) {
-  if (!adapter.pull) throw new KineoKitError(KineoKitErrorKind.NoSupport);
-  if (!adapter.push) throw new KineoKitError(KineoKitErrorKind.NoSupport);
-
+  let prevSchema: Schema | undefined;
   if (!force) {
-    const { schema: prevSchema } = await adapter.pull();
+    if (!adapter.pull) throw new KineoKitError(KineoKitErrorKind.NoSupport);
+    ({ schema: prevSchema } = await adapter.pull());
     const diff = getDiff(prevSchema, newSchema);
 
     if (diff.breaking.length > 0) {
@@ -27,7 +27,21 @@ export async function push(
     }
   }
 
-  await adapter.push(newSchema);
+  if (adapter.push) {
+    await adapter.push(newSchema);
+  } else {
+    if (!adapter.generate) throw new KineoKitError(KineoKitErrorKind.NoSupport);
+    if (!adapter.deploy) throw new KineoKitError(KineoKitErrorKind.NoSupport);
+
+    if (!prevSchema) {
+      if (!adapter.pull) throw new KineoKitError(KineoKitErrorKind.NoSupport);
+      ({ schema: prevSchema } = await adapter.pull());
+    }
+
+    const entries = await adapter.generate(prevSchema, newSchema);
+    const [up] = toMigration(entries);
+    await adapter.exec(up, {});
+  }
 }
 
 /**

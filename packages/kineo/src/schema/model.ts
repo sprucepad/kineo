@@ -1,4 +1,5 @@
 import { FieldDef, RelationDef, type Kind } from "./field";
+import type { StandardSchemaV1 } from "./standard-schema";
 import type { Schema } from ".";
 
 /**
@@ -15,7 +16,16 @@ export interface ModelShape {
  */
 export class ModelDef<S extends ModelShape> {
   /**
-   * Creates a new model def
+   * The indexed fields.
+   */
+  $indexes = new Map<string, IndexOptions<S>>();
+  /**
+   * The validators for properties.
+   */
+  $schemas = new Map<string, StandardSchemaV1>();
+
+  /**
+   * Creates a new model definition.
    * @param $shape The model shape.
    * @param $name The internal model name.
    */
@@ -33,6 +43,54 @@ export class ModelDef<S extends ModelShape> {
     this.$name = name;
     return this;
   }
+
+  // TODO timestamping
+
+  /**
+   * Creates an index on fields.
+   * @param name The index name.
+   * @param opts The index options.
+   */
+  index(name: string, opts: IndexOptions<S>) {
+    this.$indexes.set(name, opts);
+  }
+
+  /**
+   * Adds validators to properties.
+   * @param props The properties to validate.
+   */
+  validate(props: { [Key in keyof S]: StandardSchemaV1 }) {
+    for (const key in props) {
+      this.$schemas.set(key, props[key]);
+    }
+  }
+
+  /**
+   * Updates indexes and validators, by adding individual field indexes/schemas to this model's index/schema map respectively.
+   */
+  update() {
+    for (const key in this.$shape) {
+      const property = this.$shape[key];
+      if (property.$indexName && !this.$indexes.has(property.$indexName)) {
+        this.$indexes.set(property.$indexName, { fields: [key] });
+      }
+
+      if (property.$schema) {
+        this.$schemas.set(key, property.$schema);
+      }
+    }
+  }
+}
+
+export interface IndexOptions<S extends ModelShape> {
+  fields: (keyof S)[];
+  where?: {
+    [Key in keyof S]: S[Key] extends FieldDef<any, any, any, any, any>
+      ? InferField<S[Key]>
+      : S[Key] extends RelationDef<any, any, any, any>
+        ? InferRelationship<S[Key], any>
+        : never;
+  };
 }
 
 /**
@@ -64,15 +122,17 @@ export type InferField<TField extends FieldDef<any, any, any, any, any>> =
  */
 export type TypeOf<K extends Kind> = K extends "string" | "char"
   ? string
-  : K extends "int" | "float"
-    ? number
-    : K extends "date" | "time" | "datetime" | "timestamp"
-      ? Date
-      : K extends "bool"
-        ? boolean
-        : K extends "blob"
-          ? Blob
-          : never;
+  : K extends "bigint"
+    ? bigint
+    : K extends "int" | "float"
+      ? number
+      : K extends "date" | "time" | "datetime" | "timestamp"
+        ? Date
+        : K extends "bool"
+          ? boolean
+          : K extends "blob"
+            ? Blob
+            : never;
 
 /**
  * Infer a single model's properties.

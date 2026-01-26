@@ -1,5 +1,6 @@
 import type { IR } from "./ir";
 import type { Model } from "./model";
+import type { ModelDef } from "./schema";
 
 /**
  * Either a Promise or not.
@@ -42,7 +43,11 @@ export interface ExecResult<T = any> {
  * A model constructor, for any inheritors of `Model`.
  */
 export type ModelCtor = {
-  new (name: string, adapter: Adapter<any, any>): Model<any, any>;
+  new (
+    def: ModelDef<any>,
+    name: string,
+    adapter: Adapter<any, any>,
+  ): Model<any, any>;
 };
 
 /**

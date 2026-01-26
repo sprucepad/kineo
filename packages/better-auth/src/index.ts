@@ -1,65 +1,8 @@
-import {
-  defineSchema,
-  field,
-  model,
-  relation,
-  type Schema,
-} from "kineo/schema";
+import type { Schema } from "kineo/schema";
 import type { Adapter } from "kineo/adapter";
 import type { Kineo } from "kineo/client";
 import { createAdapterFactory } from "better-auth/adapters";
 import { emit } from "./emitter";
-
-/**
- * The schema used by Better-Auth, that you can spread onto your schema.
- */
-export const betterAuthSchema = defineSchema({
-  users: model("user", {
-    id: field.string().id(),
-    name: field.string().required(),
-    email: field.string().required(),
-    emailVerified: field.bool().default(false),
-    image: field.string().optional(),
-    createdAt: field.datetime().required(),
-    updatedAt: field.datetime().required(),
-  }),
-
-  sessions: model("session", {
-    id: field.string().id(),
-    userId: relation.to("user").required(),
-    token: field.string().required(),
-    expiresAt: field.datetime().required(),
-    ipAddress: field.string().optional(),
-    userAgent: field.string().optional(),
-    createdAt: field.datetime().required(),
-    updatedAt: field.datetime().required(),
-  }),
-
-  accounts: model("account", {
-    id: field.string().id(),
-    userId: relation.to("user").required(),
-    accountId: field.string().required(),
-    providerId: field.string().required(),
-    accessToken: field.string().optional(),
-    refreshToken: field.string().optional(),
-    accessTokenExpiresAt: field.datetime().optional(),
-    refreshTokenExpiresAt: field.datetime().optional(),
-    scope: field.string().optional(),
-    idToken: field.string().optional(),
-    password: field.string().optional(),
-    createdAt: field.datetime().required(),
-    updatedAt: field.datetime().required(),
-  }),
-
-  verifications: model("verification", {
-    id: field.string().id(),
-    identifier: field.string().required(),
-    value: field.string().required(),
-    expiresAt: field.datetime().required(),
-    createdAt: field.datetime().required(),
-    updatedAt: field.datetime().required(),
-  }),
-});
 
 /**
  * Creates a Better-Auth adapter from a Kineo client.
@@ -122,3 +65,5 @@ async function exec(
   const result = await client.$adapter.emit(ir);
   return (await client.$adapter.exec(result)) as any;
 }
+
+export { betterAuthSchema } from "./schema";
