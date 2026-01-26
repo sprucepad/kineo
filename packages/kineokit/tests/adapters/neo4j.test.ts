@@ -50,21 +50,6 @@ describe("neo4jAdapterKit (integration)", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // push()
-  // ---------------------------------------------------------------------------
-
-  test("push() applies constraints & indexes without throwing", async () => {
-    const schema = defineSchema({
-      User: model("User", {
-        id: field.string().id().required(),
-        name: field.string().required(),
-      }),
-    });
-
-    await expect(adapter.push!(schema)).resolves.not.toThrow();
-  });
-
-  // ---------------------------------------------------------------------------
   // generate()
   // ---------------------------------------------------------------------------
 

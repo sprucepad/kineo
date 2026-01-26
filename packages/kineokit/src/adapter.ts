@@ -11,6 +11,13 @@ type Resolvable<T> = T | Promise<T>;
  */
 export interface AdapterKit {
   /**
+   * Executes a one-off command.
+   * @param command The command to execute.
+   * @param params Parameters of the command.
+   */
+  exec(command: string, params: Record<string, unknown>): Resolvable<any>;
+
+  /**
    * Push a schema to the database. You don't need to warn the user, Kineo does that for you.
    * @param schema The schema to push.
    */

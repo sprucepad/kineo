@@ -42,6 +42,10 @@ export const neo4jKit = defineAdapterKit<
     driver,
     session,
 
+    async exec(command, params) {
+      await session.run(command, params);
+    },
+
     async pull() {
       const models: Schema = {};
 
@@ -98,126 +102,6 @@ export const neo4jKit = defineAdapterKit<
       };
     },
 
-    async push(schema: Schema) {
-      // Wrap everything so one exception doesn't stop the rest
-      async function tryRun(cypher: string) {
-        try {
-          await session.run(cypher);
-        } catch (err: any) {
-          // Neo4j will error with "already exists" -> ignore
-          console.warn(
-            "[kineo/neo4j] Skipped:",
-            cypher,
-            "Reason:",
-            err.code || err.message,
-          );
-        }
-      }
-
-      // Convert schema key or $modelName to label
-      function getLabel(name: string, model: ModelDef<any>): string {
-        return model.$name ?? name;
-      }
-
-      /**
-       * For each model -> produce constraints & indexes
-       */
-      for (const [modelKey, modelDef] of Object.entries(schema)) {
-        const label = getLabel(modelKey, modelDef);
-
-        const fieldEntries = Object.entries(modelDef).filter(
-          ([k, v]) => k !== "$modelName" && v instanceof FieldDef,
-        ) as [string, FieldDef<any, any, any, any>][];
-
-        const relationEntries = Object.entries(modelDef).filter(
-          ([k, v]) => k !== "$modelName" && v instanceof RelationDef,
-        ) as [string, RelationDef<any, any, any, any>][];
-
-        // ------------------------------------------------------------
-        // 1. FIELD-BASED NODE CONSTRAINTS
-        // ------------------------------------------------------------
-
-        for (const [propName, field] of fieldEntries) {
-          const neoProp = field.$name ?? propName;
-
-          // 1a. ID -> unique constraint
-          if (field.$id) {
-            const cypher = `
-          CREATE CONSTRAINT ${label}_${neoProp}_unique
-          IF NOT EXISTS
-          FOR (n:${label})
-          REQUIRE n.${neoProp} IS UNIQUE
-        `;
-            await tryRun(cypher);
-          }
-
-          // 1b. Required -> existence constraint
-          if (field.$required) {
-            const cypher = `
-          CREATE CONSTRAINT ${label}_${neoProp}_exists
-          IF NOT EXISTS
-          FOR (n:${label})
-          REQUIRE n.${neoProp} IS NOT NULL
-        `;
-            await tryRun(cypher);
-          }
-
-          // 1c. Optional index (useful for search)
-          if (!field.$id) {
-            const cypher = `
-          CREATE INDEX ${label}_${neoProp}_index
-          IF NOT EXISTS
-          FOR (n:${label})
-          ON (n.${neoProp})
-        `;
-            await tryRun(cypher);
-          }
-        }
-
-        // ------------------------------------------------------------
-        // 2. RELATIONSHIP CONSTRAINTS
-        // ------------------------------------------------------------
-
-        for (const [relName, rel] of relationEntries) {
-          const relLabel = rel.$label ?? relName;
-
-          // Directions:
-          // outgoing: (a)-[:REL]->(b)
-          // incoming: (a)<-[:REL]-(b)
-          // both:     (a)-[:REL]-(b)
-          const direction = rel.$direction;
-
-          // Required relationship existence constraint
-          if (rel.$required) {
-            // For required rels we at least enforce presence of the relationship.
-            // Neo4j supports relationship property constraints, but required relationships
-            // must be enforced through pattern constraints (Neo4j 5+):
-            //
-            //   FOR (a:Label) REQUIRE (a)-[:REL]->() IS NOT EMPTY
-            //
-            let pattern = "";
-            if (direction === "outgoing") {
-              pattern = `(a:${label})-[:${relLabel}]->()`;
-            } else if (direction === "incoming") {
-              pattern = `(a:${label})<-[:${relLabel}]-()`;
-            } else {
-              pattern = `(a:${label})-[:${relLabel}]-()`;
-            }
-
-            const cypher = `
-          CREATE CONSTRAINT ${label}_${relLabel}_rel_required
-          IF NOT EXISTS
-          FOR (a:${label})
-          REQUIRE ${pattern} IS NOT EMPTY
-        `;
-            await tryRun(cypher);
-          }
-        }
-      }
-
-      console.log("[kineo/neo4j] Schema push completed.");
-    },
-
     async deploy(migration, hash) {
       await session.run(migration);
 
@@ -254,26 +138,17 @@ export const neo4jKit = defineAdapterKit<
       return deployed ? "completed" : "pending";
     },
 
-    generate(prev, cur) {
+    generate(
+      prev /*: Record<string, ModelDef<any>>*/,
+      cur /*: Record<string, ModelDef<any>>*/,
+    ) {
       const migrations: MigrationEntry[] = [];
 
       const prevModels = new Set(Object.keys(prev || {}));
       const curModels = new Set(Object.keys(cur || {}));
 
-      function findIdFieldName(modelDef: ModelDef<any>): string | undefined {
-        for (const k of Object.keys(modelDef)) {
-          const v = (modelDef as any)[k];
-          if (isFieldDef(v)) {
-            if ((v as FieldDef<any, any, any, any>).$id) {
-              return (v as FieldDef<any, any, any, any>).$name || k;
-            }
-          }
-        }
-        return undefined;
-      }
-
       // ---------- New models ----------
-      for (const m of Object.keys(cur)) {
+      for (const m in cur) {
         if (!prevModels.has(m)) {
           const def = cur[m];
           const label = modelLabel(m, def);
@@ -310,14 +185,14 @@ export const neo4jKit = defineAdapterKit<
               command:
                 `DROP CONSTRAINT IF EXISTS FOR (n:${label}) REQUIRE n.${idProp} IS UNIQUE;\n` +
                 `MATCH (n:${label}) DETACH DELETE n;`,
-              reverse: "", // cannot bring deleted nodes back
+              reverse: "",
             });
           } else {
             migrations.push({
               type: "command",
               description: `Delete nodes for removed model ${label}`,
               command: `MATCH (n:${label}) DETACH DELETE n;`,
-              reverse: "", // irreversible
+              reverse: "",
             });
           }
         }
@@ -331,20 +206,16 @@ export const neo4jKit = defineAdapterKit<
         const curDef = cur[m];
         const label = modelLabel(m, curDef);
 
-        const prevKeys = new Set(
-          Object.keys(prevDef.$shape || {}).filter((k) => k !== "$modelName"),
-        );
-        const curKeys = new Set(
-          Object.keys(curDef.$shape || {}).filter((k) => k !== "$modelName"),
-        );
+        const prevKeys = new Set(Object.keys(prevDef.$shape));
+        const curKeys = new Set(Object.keys(curDef.$shape));
 
         // ---------- Added keys ----------
-        for (const key of Array.from(curKeys)) {
+        for (const key of curKeys) {
           if (!prevKeys.has(key)) {
             const val = curDef.$shape[key];
 
             if (isFieldDef(val)) {
-              const fieldDef = val as FieldDef<any, any, any, any>;
+              const fieldDef = val;
               const propName = fieldDef.$name || key;
 
               if (fieldDef.$default !== undefined) {
@@ -354,165 +225,130 @@ export const neo4jKit = defineAdapterKit<
                   command: `MATCH (n:${label}) WHERE n.${propName} IS NULL OR NOT exists(n.${propName}) SET n.${propName} = ${serializeDefault(fieldDef.$default)};`,
                   reverse: `MATCH (n:${label}) REMOVE n.${propName};`,
                 });
-              } else {
+              }
+
+              // ---- UNIQUE ----
+              if (fieldDef.$id || fieldDef.$unique) {
                 migrations.push({
-                  type: "note",
-                  description: `Field ${propName} added to ${label}`,
-                  note: `Field '${propName}' added with no default; existing nodes unchanged.`,
+                  type: "command",
+                  description: `Create uniqueness constraint for ${propName} on ${label}`,
+                  command: `CREATE CONSTRAINT ${uniqueConstraintName(label, propName, fieldDef.$indexName)} IF NOT EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
+                  reverse: `DROP CONSTRAINT ${uniqueConstraintName(label, propName, fieldDef.$indexName)} IF EXISTS;`,
                 });
               }
 
-              if (fieldDef.$id) {
+              // ---- INDEX ----
+              if (fieldDef.$indexName && !fieldDef.$unique && !fieldDef.$id) {
                 migrations.push({
                   type: "command",
-                  description: `Create uniqueness constraint for newly-added id field ${propName} on ${label}`,
-                  command: `CREATE CONSTRAINT IF NOT EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
-                  reverse: `DROP CONSTRAINT IF EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
+                  description: `Create index for ${propName} on ${label}`,
+                  command: `CREATE INDEX ${indexName(label, propName, fieldDef.$indexName)} IF NOT EXISTS FOR (n:${label}) ON (n.${propName});`,
+                  reverse: `DROP INDEX ${indexName(label, propName, fieldDef.$indexName)} IF EXISTS;`,
                 });
               }
             } else if (isRelationDef(val)) {
-              const rel = val as RelationDef<any, any, any, any>;
-              migrations.push({
-                type: "note",
-                description: `Relation ${key} added on ${label}`,
-                note: `Relation '${key}' added on '${label}' pointing to '${rel.$to}'.`,
-              });
-            } else {
-              migrations.push({
-                type: "note",
-                description: `Unknown key ${String(key)} added`,
-                note: `Key '${String(key)}' added but not recognized.`,
-              });
-            }
-          }
-        }
+              const rel = val;
+              const relLabel = rel.$label || key;
 
-        // ---------- Removed keys ----------
-        for (const key of Array.from(prevKeys)) {
-          if (!curKeys.has(key)) {
-            const val = prevDef.$shape[key];
-
-            if (isFieldDef(val)) {
-              const fieldDef = val as FieldDef<any, any, any, any>;
-              const propName = fieldDef.$name || key;
-
-              migrations.push({
-                type: "command",
-                description: `Remove property for removed field ${propName} on ${label}`,
-                command: `MATCH (n:${label}) REMOVE n.${propName};`,
-                reverse: "", // cannot restore old values
-              });
-
-              if (fieldDef.$id) {
+              // ---- RELATION UNIQUE ----
+              if (rel.$unique) {
                 migrations.push({
                   type: "command",
-                  description: `Drop uniqueness constraint for removed id field ${propName}`,
-                  command: `DROP CONSTRAINT IF EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
-                  reverse: `CREATE CONSTRAINT IF NOT EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
+                  description: `Create unique relationship constraint for ${relLabel}`,
+                  command: `CREATE CONSTRAINT ${uniqueConstraintName(relLabel, "rel", rel.$indexName)} IF NOT EXISTS FOR ()-[r:${relLabel}]-() REQUIRE r IS UNIQUE;`,
+                  reverse: `DROP CONSTRAINT ${uniqueConstraintName(relLabel, "rel", rel.$indexName)} IF EXISTS;`,
                 });
               }
-            } else if (isRelationDef(val)) {
-              migrations.push({
-                type: "note",
-                description: `Relation ${key} removed from ${label}`,
-                note: `Relation '${key}' removed; relationship data not automatically deleted.`,
-              });
-            } else {
-              migrations.push({
-                type: "note",
-                description: `Unknown key ${String(key)} removed`,
-                note: `Key '${String(key)}' removed from '${label}'.`,
-              });
+
+              // ---- RELATION INDEX ----
+              if (rel.$indexName && !rel.$unique) {
+                migrations.push({
+                  type: "command",
+                  description: `Create relationship index for ${relLabel}`,
+                  command: `CREATE INDEX ${indexName(relLabel, "rel", rel.$indexName)} IF NOT EXISTS FOR ()-[r:${relLabel}]-() ON (r);`,
+                  reverse: `DROP INDEX ${indexName(relLabel, "rel", rel.$indexName)} IF EXISTS;`,
+                });
+              }
             }
           }
         }
 
         // ---------- Modified keys ----------
-        for (const key of Array.from(curKeys)) {
+        for (const key of curKeys) {
           if (!prevKeys.has(key)) continue;
 
-          const prevVal = prevDef.$shape[key];
-          const curVal = curDef.$shape[key];
+          const p = prevDef.$shape[key];
+          const c = curDef.$shape[key];
 
-          if (isFieldDef(prevVal) && isFieldDef(curVal)) {
-            const p = prevVal as FieldDef<any, any, any, any>;
-            const c = curVal as FieldDef<any, any, any, any>;
+          // ---------- FIELD ----------
+          if (isFieldDef(p) && isFieldDef(c)) {
             const propName = c.$name || key;
 
-            if (p.$default !== c.$default) {
-              if (c.$default !== undefined) {
-                migrations.push({
-                  type: "command",
-                  description: `Apply new default for ${propName} on ${label}`,
-                  command: `MATCH (n:${label}) WHERE n.${propName} IS NULL OR NOT exists(n.${propName}) SET n.${propName} = ${serializeDefault(c.$default)};`,
-                  reverse:
-                    p.$default !== undefined
-                      ? `MATCH (n:${label}) WHERE n.${propName} = ${serializeDefault(c.$default)} SET n.${propName} = ${serializeDefault(p.$default)};`
-                      : `MATCH (n:${label}) REMOVE n.${propName};`,
-                });
-              } else {
-                migrations.push({
-                  type: "note",
-                  description: `Default removed for ${propName} on ${label}`,
-                  note: `Default removed; no data change.`,
-                });
-              }
-            }
+            const prevUnique = !!p.$id || !!p.$unique;
+            const curUnique = !!c.$id || !!c.$unique;
 
-            if (!p.$id && c.$id) {
+            // ---- UNIQUE CHANGED ----
+            if (!prevUnique && curUnique) {
               migrations.push({
                 type: "command",
                 description: `Create uniqueness constraint for ${propName}`,
-                command: `CREATE CONSTRAINT IF NOT EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
-                reverse: `DROP CONSTRAINT IF EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
+                command: `CREATE CONSTRAINT ${uniqueConstraintName(label, propName, c.$indexName)} IF NOT EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
+                reverse: `DROP CONSTRAINT ${uniqueConstraintName(label, propName, c.$indexName)} IF EXISTS;`,
               });
             }
 
-            if (p.$id && !c.$id) {
+            if (prevUnique && !curUnique) {
               migrations.push({
                 type: "command",
                 description: `Drop uniqueness constraint for ${propName}`,
-                command: `DROP CONSTRAINT IF EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
-                reverse: `CREATE CONSTRAINT IF NOT EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
+                command: `DROP CONSTRAINT ${uniqueConstraintName(label, propName, p.$indexName)} IF EXISTS;`,
+                reverse: `CREATE CONSTRAINT ${uniqueConstraintName(label, propName, p.$indexName)} IF NOT EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
               });
             }
 
-            if (p.$kind !== c.$kind) {
-              migrations.push({
-                type: "note",
-                description: `Type changed for ${propName}`,
-                note: `Type changed from '${p.$kind}' to '${c.$kind}'.`,
-              });
-            }
+            // ---- INDEX NAME CHANGED ----
+            if (p.$indexName !== c.$indexName && !curUnique) {
+              if (p.$indexName) {
+                migrations.push({
+                  type: "command",
+                  description: `Drop index for ${propName}`,
+                  command: `DROP INDEX ${indexName(label, propName, p.$indexName)} IF EXISTS;`,
+                  reverse: "",
+                });
+              }
 
-            if (p.$array !== c.$array) {
-              migrations.push({
-                type: "note",
-                description: `Array flag changed for ${propName}`,
-                note: `Array-ness changed; may require custom migration.`,
-              });
+              if (c.$indexName) {
+                migrations.push({
+                  type: "command",
+                  description: `Create index for ${propName}`,
+                  command: `CREATE INDEX ${indexName(label, propName, c.$indexName)} IF NOT EXISTS FOR (n:${label}) ON (n.${propName});`,
+                  reverse: `DROP INDEX ${indexName(label, propName, c.$indexName)} IF EXISTS;`,
+                });
+              }
             }
-          } else if (isRelationDef(prevVal) && isRelationDef(curVal)) {
-            const p = prevVal;
-            const c = curVal;
+          }
 
-            if (
-              p.$to !== c.$to ||
-              p.$label !== c.$label ||
-              p.$direction !== c.$direction
-            ) {
-              migrations.push({
-                type: "note",
-                description: `Relation changed for '${key}'`,
-                note: `Relation '${key}' changed; cannot auto-migrate data.`,
-              });
+          // ---------- RELATION ----------
+          else if (isRelationDef(p) && isRelationDef(c)) {
+            const relLabel = c.$label || key;
+
+            if (p.$unique !== c.$unique) {
+              if (c.$unique) {
+                migrations.push({
+                  type: "command",
+                  description: `Create unique constraint for relationship ${relLabel}`,
+                  command: `CREATE CONSTRAINT ${uniqueConstraintName(relLabel, "rel", c.$indexName)} IF NOT EXISTS FOR ()-[r:${relLabel}]-() REQUIRE r IS UNIQUE;`,
+                  reverse: `DROP CONSTRAINT ${uniqueConstraintName(relLabel, "rel", c.$indexName)} IF EXISTS;`,
+                });
+              } else {
+                migrations.push({
+                  type: "command",
+                  description: `Drop unique constraint for relationship ${relLabel}`,
+                  command: `DROP CONSTRAINT ${uniqueConstraintName(relLabel, "rel", p.$indexName)} IF EXISTS;`,
+                  reverse: "",
+                });
+              }
             }
-          } else {
-            migrations.push({
-              type: "note",
-              description: `Key ${key} changed type`,
-              note: `Field <-> relation change; no automatic migration.`,
-            });
           }
         }
       }
@@ -572,11 +408,23 @@ function inferKind(value: any): FieldDef<any, any, any, any> {
   return field.string(); // fallback
 }
 
+function findIdFieldName(modelDef: ModelDef<any>) {
+  for (const k in modelDef.$shape) {
+    const v = modelDef.$shape[k];
+    if (isFieldDef(v)) {
+      if (v.$id) {
+        return v.$name ?? k;
+      }
+    }
+  }
+  return null;
+}
+
 /**
- * Produce a stable label for a model: prefer $modelName when set, otherwise use schema key.
+ * Produce a stable label for a model: prefer def.$name when set, otherwise use schema key.
  */
-function modelLabel(key: string, def: any) {
-  return (def && typeof def.$modelName === "string" && def.$modelName) || key;
+function modelLabel(key: string, def?: ModelDef<any>) {
+  return def && typeof def.$name === "string" ? def.$name : key;
 }
 
 function isFieldDef(v: any): v is FieldDef<any, any, any, any> {
@@ -646,4 +494,12 @@ function mergeRelationship(
       rel.both(relType);
     }
   }
+}
+
+function uniqueConstraintName(label: string, prop: string, name?: string) {
+  return name || `${label}_${prop}_unique`;
+}
+
+function indexName(label: string, prop: string, name?: string) {
+  return name || `${label}_${prop}_idx`;
 }

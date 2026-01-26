@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from "vitest";
 import { Model, GraphModel } from "@/model";
+import { ModelDef } from "@/schema";
 
 // ---------- Mock IR emitter ---------- //
 vi.mock("@/ir", () => ({
@@ -155,7 +156,7 @@ describe("Model (with fake adapter)", () => {
       { id: 1, name: "Alice" },
       { id: 2, name: "Bob" },
     ];
-    model = new Model("User", adapter);
+    model = new Model(new ModelDef({}, "User"), "User", adapter);
   });
 
   test("findFirst returns first record", async () => {
@@ -239,7 +240,7 @@ describe("GraphModel (with fake adapter)", () => {
       { id: 1, name: "Root" },
       { id: 2, name: "Child" },
     ];
-    graph = new GraphModel("User", adapter);
+    graph = new GraphModel(new ModelDef({}, "User"), "User", adapter);
   });
 
   test("findPath returns nodes and edges", async () => {

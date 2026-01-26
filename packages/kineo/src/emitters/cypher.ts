@@ -208,7 +208,7 @@ function projection(
   const fields: string[] = [];
 
   if (select && Object.keys(select).length) {
-    for (const key of Object.keys(select)) {
+    for (const key in select) {
       fields.push(`${alias}.${key} AS ${key}`);
     }
   } else {
