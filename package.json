@@ -19,7 +19,7 @@
     "globals": "^16.4.0",
     "prettier": "^3.6.2",
     "tsdown": "^0.18.0",
-    "turbo": "^2.7.6",
+    "turbo": "^2.8.0",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.44.0",
     "vitest": "^4.0.15"
