@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "test": "turbo run test",
-    "start": "turbo run start",
+    "dev": "turbo run dev",
     "check": "turbo run check",
     "build": "turbo run build",
     "lint": "eslint .",
