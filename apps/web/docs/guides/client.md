@@ -10,7 +10,7 @@ The Kineo client is a simple wrapper that gives you access to your models and th
 import { kineo } from "kineo";
 ```
 
-The `kineo` function takes in two parameters: an [adapter](/docs/guides/adapters), and a [schema](/docs/guides/schema). Kineo creates a new model instance for each model definition from your schema.
+The `kineo` function takes in two parameters: an [adapter](/docs/guides/adapters/neo4j), and a [schema](/docs/guides/schema). Kineo creates a new model instance for each model definition from your schema.
 
 ```ts
 const schema = defineSchema({
