@@ -134,7 +134,6 @@ const emit = defineEmitter<Dialect>((ir, dialect) => {
     ),
   };
 });
-
 export default emit;
 
 // column path support: for `user.profile.name` treat as JSON extraction if needed

@@ -1,6 +1,6 @@
 import { defineAdapter, type Adapter } from "@/adapter";
 import { GraphModel } from "@/model";
-import { emit } from "@/emitters/cypher";
+import emit from "@/emitters/cypher";
 import * as neo4j from "neo4j-driver";
 
 /**

@@ -12,7 +12,7 @@ type Params = Record<string, any>;
  * @param ir The IR to emit.
  * @returns A compilation result.
  */
-export const emit = defineEmitter((ir) => {
+const emit = defineEmitter((ir) => {
   const ctx = createEmitContext();
   const chunks: string[] = [];
 
@@ -50,6 +50,7 @@ export const emit = defineEmitter((ir) => {
 
   return { command: chunks.join("\n\n"), params: ctx.params };
 });
+export default emit;
 
 /* -------------------------------------------------------------------------- */
 /*                               Emitter Context                             */

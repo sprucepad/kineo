@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { emit } from "@/emitters/cypher";
+import emit from "@/emitters/cypher";
 import * as IR from "@/ir";
 import { DateTime } from "neo4j-driver";
 
