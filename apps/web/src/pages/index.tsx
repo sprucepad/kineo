@@ -6,9 +6,6 @@ import Layout from "@theme/Layout";
 import Heading from "@theme/Heading";
 
 import styles from "./index.module.css";
-import DocusaurusMountain from "@site/static/img/undraw_docusaurus_mountain.svg";
-import DocusaurusTree from "@site/static/img/undraw_docusaurus_tree.svg";
-import DocusaurusReact from "@site/static/img/undraw_docusaurus_react.svg";
 
 export default function Home() {
   const { siteConfig } = useDocusaurusContext();
@@ -49,38 +46,34 @@ function HomepageHeader() {
 
 type FeatureItem = {
   title: string;
-  Svg: React.ComponentType<React.ComponentProps<"svg">>;
   description: ReactNode;
 };
 
 const FeatureList: FeatureItem[] = [
   {
     title: "Easy to Use",
-    Svg: DocusaurusMountain,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Kineo uses a single schema object, and uses simple typed objects to
+        query your database.
       </>
     ),
   },
   {
-    title: "Focus on What Matters",
-    Svg: DocusaurusTree,
+    title: "Fully Type-Safe",
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Kineo is fully type-safe: you create a schema, and the types will flow
+        through all your models, and you can also extract types from the schema.
       </>
     ),
   },
   {
-    title: "Powered by React",
-    Svg: DocusaurusReact,
+    title: "Easy Migrations",
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Kineo has a CLI that makes migrations easy; automatically generating
+        migrations based on your schema.
       </>
     ),
   },
@@ -100,12 +93,9 @@ function HomepageFeatures() {
   );
 }
 
-function Feature({ title, Svg, description }: FeatureItem) {
+function Feature({ title, description }: FeatureItem) {
   return (
     <div className={clsx("col col--4")}>
-      <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
-      </div>
       <div className="text--center padding-horiz--md">
         <Heading as="h3">{title}</Heading>
         <p>{description}</p>
