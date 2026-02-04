@@ -5,6 +5,7 @@ pnpm-lock.yaml
 
 # build
 dist/
+build/
 
 # environment files
 .env*
