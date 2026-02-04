@@ -4,9 +4,11 @@ export {
   model,
   field,
   relation,
-  type InferSchema,
+  ModelDef,
   type Schema,
-  type ModelDef,
+  type InferSchema,
+  type InferModelDef,
+  type InferModelShape,
 } from "./schema";
 export { Model, GraphModel } from "./model";
 export {

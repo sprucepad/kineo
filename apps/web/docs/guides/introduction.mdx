@@ -1,13 +1,11 @@
 ---
-position: 0
+sidebar_position: 0
 ---
 
 # Introduction
 
 :::danger
-
 Kineo is very new, and its API is not stable at the moment. Expect major breaking changes.
-
 :::
 
 Kineo is an Object-Relation/Graph Mapper, or an ORM. It maps your input objects into the correct query syntax. For example, this:
@@ -31,7 +29,7 @@ Make sure you have Node.js >=20.19 and a package manager.
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
-<Tabs queryString="pm">
+<Tabs>
   <TabItem value="npm">
 ```sh
 npm install kineo
@@ -58,7 +56,7 @@ bun add kineo
   </TabItem>
 </Tabs>
 
-## Getting Started
+## Quick start
 
 **Define a schema.** This schema can be anywhere in your codebase, as long as you can reference it.
 
@@ -127,4 +125,4 @@ const user = await db.users.findFirst({
 });
 ```
 
-Kineo also provides a way to manage your migrations, which you can see [here.](/guides/kit)
+Kineo also provides a way to manage your migrations, which you can see [here.](./kit)

@@ -1,10 +1,14 @@
-# pnpm/turbo stuff
+# pnpm
 pnpm-lock.yaml
 .pnpm-store/
+
+# framework stuff
+.docusaurus/
 .turbo/
 
 # build
 dist/
+build/
 
 # environment files
 .env*

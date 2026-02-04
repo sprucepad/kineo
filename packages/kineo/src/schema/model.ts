@@ -179,7 +179,7 @@ export type InferRelationship<
 /**
  * Infers types from a model definition.
  */
-export type InferModelDef<T, TSchema extends Schema> =
+export type InferModelDef<T, TSchema extends Schema = Schema> =
   T extends ModelDef<infer Shape> ? InferModelShape<Shape, TSchema> : never;
 
 /**
