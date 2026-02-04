@@ -16,5 +16,5 @@ export default defineConfig([
       "@typescript-eslint/no-explicit-any": "off",
     },
   },
-  globalIgnores(["**/dist/**/*", "**/.docusaurus/**/*"]),
+  globalIgnores(["**/dist/**/*", "**/build/**/*", "**/.docusaurus/**/*"]),
 ]);
