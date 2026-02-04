@@ -101,8 +101,10 @@ export type Neo4jOpts =
 /**
  * A Neo4j adapter.
  */
-export interface Neo4jAdapter
-  extends Adapter<typeof GraphModel, neo4j.ResultSummary> {
+export interface Neo4jAdapter extends Adapter<
+  typeof GraphModel,
+  neo4j.ResultSummary
+> {
   /**
    * The driver.
    */

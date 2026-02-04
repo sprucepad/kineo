@@ -13,8 +13,10 @@ Takes in a function, returns an adapter factory function. You must pass, as gene
 ```ts
 import { defineAdapter, type Adapter } from "kineo/adapter";
 
-export interface Neo4jAdapter
-  extends Adapter<typeof GraphModel, neo4j.ResultSummary> {
+export interface Neo4jAdapter extends Adapter<
+  typeof GraphModel,
+  neo4j.ResultSummary
+> {
   driver: neo4j.Driver;
   session: neo4j.Session;
 }
