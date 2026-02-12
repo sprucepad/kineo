@@ -1,58 +1,118 @@
-import { describe, test, expect, vi } from "vitest";
-import { model, defineSchema, field, relation } from "@/schema";
-import { kineo, type Kineo, type InferClient } from "@/client";
-import { GraphModel, Model } from "@/model";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
+import { kineo } from "@/client";
+import { ModelDef } from "@/schema/model";
 import type { Adapter } from "@/adapter";
+import { Model } from "@/model";
 
-// --- Setup test schema and adapter --- //
+describe("kineo()", () => {
+  class MockModel extends Model<any, any> {}
 
-const adapter: Adapter<typeof GraphModel, any> = {
-  Model: GraphModel,
+  let ModelSpy: Mock<typeof MockModel>;
+  let adapter: Adapter<typeof ModelSpy>;
 
-  close: vi.fn(),
-  emit: vi.fn().mockReturnValue({ command: "", params: {} }),
-  exec: vi.fn().mockReturnValue([]),
-};
-
-const schema = defineSchema({
-  users: model("User", {
-    name: field.string().id(),
-    bio: field.string(),
-    posts: relation.to("posts").array().default([]),
-  }),
-  posts: model("Post", {
-    id: field.int().id(),
-    created: field.datetime(),
-    updated: field.timestamp(),
-    author: relation.to("users").required(),
-  }),
-});
-describe("Kineo client", () => {
-  const client = kineo(adapter, schema);
-
-  test("creates a client with models matching schema keys", () => {
-    // every model key should be a Model instance
-    expect(client.users).toBeInstanceOf(Model);
-    expect(client.posts).toBeInstanceOf(Model);
-    expect(client.$schema).toEqual(schema);
+  beforeEach(() => {
+    ModelSpy = vi.fn(MockModel);
+    adapter = {
+      Model: ModelSpy,
+      emit: vi.fn(),
+      exec: vi.fn(),
+      close: vi.fn(),
+    };
   });
 
-  test("schema property is preserved in client", () => {
+  it("creates a model instance for each schema entry", () => {
+    const userDef = new ModelDef({});
+    const postDef = new ModelDef({});
+
+    const schema = {
+      user: userDef,
+      post: postDef,
+    };
+
+    const client = kineo(adapter, schema);
+
+    expect(ModelSpy).toHaveBeenCalledTimes(2);
+
+    expect(client.user).toBeInstanceOf(ModelSpy);
+    expect(client.post).toBeInstanceOf(ModelSpy);
+  });
+
+  it("calls update before instantiating models", () => {
+    const userDef = new ModelDef({});
+    const updateSpy = vi.spyOn(userDef, "update");
+
+    class MockModel extends Model<any, any> {
+      constructor(def: any, name: any, adapter: any) {
+        super(def, name, adapter);
+        expect(updateSpy).toHaveBeenCalled();
+      }
+    }
+    const ModelSpy = vi.fn(MockModel);
+
+    const adapter: Adapter<typeof ModelSpy, any> = {
+      Model: ModelSpy,
+      emit: vi.fn(),
+      exec: vi.fn(),
+      close: vi.fn(),
+    };
+
+    kineo(adapter, { user: userDef });
+  });
+
+  it("passes modelDef, resolved name, and adapter to Model constructor", () => {
+    const userDef = new ModelDef({});
+
+    const schema = { user: userDef };
+
+    kineo(adapter, schema);
+
+    expect(ModelSpy).toHaveBeenCalledWith(
+      userDef,
+      "user", // fallback to key
+      adapter,
+    );
+  });
+
+  it("uses ModelDef.$name if defined instead of schema key", () => {
+    const userDef = new ModelDef({}, "CustomUserName");
+
+    const schema = { user: userDef };
+
+    kineo(adapter, schema);
+
+    expect(ModelSpy).toHaveBeenCalledWith(userDef, "CustomUserName", adapter);
+  });
+
+  it("returns $adapter and $schema on the client", () => {
+    const userDef = new ModelDef({});
+    const schema = { user: userDef };
+
+    const client = kineo(adapter, schema);
+
+    expect(client.$adapter).toBe(adapter);
     expect(client.$schema).toBe(schema);
   });
 
-  test("different models are independent instances", () => {
-    expect(client.users).not.toBe(client.posts);
+  it("does not mutate the original schema object", () => {
+    const userDef = new ModelDef({});
+    const schema = { user: userDef };
+
+    const originalKeys = Object.keys(schema);
+
+    kineo(adapter, schema);
+
+    expect(Object.keys(schema)).toEqual(originalKeys);
+    expect(schema.user).toBe(userDef);
   });
 
-  test("InferClient type inference works (emit-time)", () => {
-    // purely type-level, but we can runtime-check shape loosely
-    type ClientType = InferClient<Kineo<typeof schema, typeof adapter>>;
+  it("returns distinct model instances for different keys", () => {
+    const userDef = new ModelDef({});
+    const postDef = new ModelDef({});
 
-    // runtime check: keys should exist
-    const keys: (keyof ClientType)[] = ["users", "posts"];
-    for (const k of keys) {
-      expect(client).toHaveProperty(k);
-    }
+    const schema = { user: userDef, post: postDef };
+
+    const client = kineo(adapter, schema);
+
+    expect(client.user).not.toBe(client.post);
   });
 });

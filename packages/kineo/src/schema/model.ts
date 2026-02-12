@@ -201,5 +201,5 @@ export function model<S extends ModelShape>(shape: S): ModelDef<S>;
 
 export function model(shapeOrName: ModelShape | string, shape?: ModelShape) {
   if (typeof shapeOrName === "string") return new ModelDef(shape!, shapeOrName);
-  return new ModelDef(shape!);
+  return new ModelDef(shapeOrName);
 }

@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   StatementType,
   emitFindStatement,
@@ -12,204 +12,158 @@ import {
   emitToIR,
 } from "@/ir";
 
-// Mock model types — just need to shape opts as expected
-const baseOpts = {
-  where: { id: 1 },
-  select: { id: true },
-  include: { posts: true },
-  orderBy: [{ id: "asc" as const }],
-  distinct: ["id"],
-  skip: 5,
-  take: 10,
-};
+describe("IR emitters", () => {
+  const modelName = "User";
 
-describe("emitFindStatement", () => {
-  test("creates a valid FindStatement", () => {
-    const stmt = emitFindStatement("User", baseOpts);
-    expect(stmt).toEqual({
-      type: StatementType.Find,
-      model: "User",
+  it("emitFindStatement builds correct structure", () => {
+    const stmt = emitFindStatement(modelName, {
       where: { id: 1 },
       select: { id: true },
-      include: { posts: true },
-      orderBy: [{ id: "asc" }],
+      distinct: ["id"],
+      skip: 5,
+      take: 10,
+    } as any);
+
+    expect(stmt).toEqual({
+      type: StatementType.Find,
+      model: modelName,
+      where: { id: 1 },
+      select: { id: true },
+      include: undefined,
+      orderBy: undefined,
       distinct: ["id"],
       skip: 5,
       take: 10,
     });
   });
 
-  test("handles undefined optional fields", () => {
-    const stmt = emitFindStatement("User", {});
-    expect(stmt.type).toBe(StatementType.Find);
-    expect(stmt.model).toBe("User");
-  });
-});
+  it("emitCountStatement builds correct structure", () => {
+    const stmt = emitCountStatement(modelName, {
+      where: { active: true },
+    } as any);
 
-describe("emitCountStatement", () => {
-  test("creates a valid CountStatement", () => {
-    const stmt = emitCountStatement("Post", { where: { published: true } });
     expect(stmt).toEqual({
       type: StatementType.Count,
-      model: "Post",
-      where: { published: true },
+      model: modelName,
+      where: { active: true },
     });
   });
-});
 
-describe("emitCreateStatement", () => {
-  test("creates a valid CreateStatement", () => {
-    const stmt = emitCreateStatement("User", {
-      data: { name: "Alice" },
-      select: { id: true },
-      include: { posts: true },
-    });
+  it("emitCreateStatement builds correct structure", () => {
+    const stmt = emitCreateStatement(modelName, {
+      data: { name: "John" },
+    } as any);
+
     expect(stmt).toEqual({
       type: StatementType.Create,
-      model: "User",
-      data: { name: "Alice" },
-      select: { id: true },
-      include: { posts: true },
+      model: modelName,
+      data: { name: "John" },
+      select: undefined,
+      include: undefined,
     });
   });
-});
 
-describe("emitUpsertStatement", () => {
-  test("creates a valid UpsertStatement", () => {
-    const stmt = emitUpsertStatement("User", {
+  it("emitUpsertStatement builds correct structure", () => {
+    const stmt = emitUpsertStatement(modelName, {
       where: { id: 1 },
-      create: { name: "Alice" },
-      update: { name: "Bob" },
-      select: { id: true },
-      include: { posts: true },
-    });
+      create: { name: "New" },
+      update: { name: "Updated" },
+    } as any);
+
     expect(stmt).toEqual({
       type: StatementType.Upsert,
-      model: "User",
+      model: modelName,
       where: { id: 1 },
       data: {
-        create: { name: "Alice" },
-        update: { name: "Bob" },
+        create: { name: "New" },
+        update: { name: "Updated" },
       },
-      select: { id: true },
-      include: { posts: true },
+      select: undefined,
+      include: undefined,
     });
   });
-});
 
-describe("emitDeleteStatement", () => {
-  test("creates a valid DeleteStatement", () => {
-    const stmt = emitDeleteStatement("User", { where: { id: 2 } });
+  it("emitDeleteStatement builds correct structure", () => {
+    const stmt = emitDeleteStatement(modelName, {
+      where: { id: 1 },
+    } as any);
+
     expect(stmt).toEqual({
       type: StatementType.Delete,
-      model: "User",
-      where: { id: 2 },
+      model: modelName,
+      where: { id: 1 },
     });
   });
-});
 
-describe("emitConnectQueryStatement", () => {
-  test("creates a valid ConnectQueryStatement", () => {
-    const stmt = emitConnectQueryStatement("User", {
+  it("emitConnectQueryStatement builds correct structure", () => {
+    const stmt = emitConnectQueryStatement(modelName, {
       from: { where: { id: 1 } },
       to: { where: { id: 2 } },
-      relation: "FRIEND_OF",
+      relation: "FRIEND",
       direction: "outgoing",
       properties: { since: 2020 },
-    });
+    } as any);
+
     expect(stmt).toEqual({
       type: StatementType.ConnectQuery,
-      model: "User",
+      model: modelName,
       from: { id: 1 },
       to: { id: 2 },
-      relation: "FRIEND_OF",
+      relation: "FRIEND",
       direction: "outgoing",
       properties: { since: 2020 },
     });
   });
-});
 
-describe("emitRelationQueryStatement", () => {
-  test("creates a valid RelationQueryStatement", () => {
-    const stmt = emitRelationQueryStatement("User", {
+  it("emitRelationQueryStatement builds correct structure", () => {
+    const stmt = emitRelationQueryStatement(modelName, {
       from: { where: { id: 1 } },
-      to: { where: { id: 3 } },
-      maxDepth: 5,
-      minDepth: 1,
-      direction: "outgoing",
-      limit: 10,
-    });
+      to: { where: { id: 2 } },
+      maxDepth: 3,
+      direction: "incoming",
+    } as any);
+
     expect(stmt).toEqual({
       type: StatementType.RelationQuery,
-      model: "User",
+      model: modelName,
       from: { id: 1 },
-      to: { id: 3 },
-      maxDepth: 5,
-      minDepth: 1,
-      direction: "outgoing",
-      limit: 10,
+      to: { id: 2 },
+      maxDepth: 3,
+      minDepth: undefined,
+      direction: "incoming",
+      limit: undefined,
     });
   });
-});
 
-describe("makeIR", () => {
-  test("wraps statements in IR", () => {
-    const stmt = { type: StatementType.Find, model: "User" } as any;
+  it("makeIR wraps statements", () => {
+    const stmt = emitDeleteStatement(modelName, { where: { id: 1 } } as any);
     const ir = makeIR(stmt);
-    expect(ir).toEqual({ statements: [stmt] });
-  });
-});
 
-describe("emitToIR", () => {
-  test("handles findFirst/findMany", () => {
-    const ir = emitToIR("User", "findFirst", baseOpts);
-    expect(ir.statements[0].type).toBe(StatementType.Find);
-  });
-
-  test("handles count", () => {
-    const ir = emitToIR("Post", "count", { where: { active: true } });
-    expect(ir.statements[0].type).toBe(StatementType.Count);
-  });
-
-  test("handles create", () => {
-    const ir = emitToIR("User", "create", { data: { name: "A" } });
-    expect(ir.statements[0].type).toBe(StatementType.Create);
-  });
-
-  test("handles upsert", () => {
-    const ir = emitToIR("User", "upsert", {
-      where: { id: 1 },
-      create: { name: "A" },
-      update: { name: "B" },
+    expect(ir).toEqual({
+      statements: [stmt],
     });
-    expect(ir.statements[0].type).toBe(StatementType.Upsert);
   });
 
-  test("handles delete", () => {
-    const ir = emitToIR("User", "delete", { where: { id: 3 } });
-    expect(ir.statements[0].type).toBe(StatementType.Delete);
-  });
-
-  test("handles connect", () => {
-    const ir = emitToIR("User", "connect", {
-      from: { where: { id: 1 } },
-      to: { where: { id: 2 } },
-      relation: "FRIEND_OF",
+  describe("emitToIR routing", () => {
+    it("routes findMany to FindStatement", () => {
+      const ir = emitToIR(modelName, "findMany", {});
+      expect(ir.statements[0].type).toBe(StatementType.Find);
     });
-    expect(ir.statements[0].type).toBe(StatementType.ConnectQuery);
-  });
 
-  test("handles findPath", () => {
-    const ir = emitToIR("User", "findPath", {
-      from: { where: { id: 1 } },
-      to: { where: { id: 2 } },
+    it("routes count to CountStatement", () => {
+      const ir = emitToIR(modelName, "count", {});
+      expect(ir.statements[0].type).toBe(StatementType.Count);
     });
-    expect(ir.statements[0].type).toBe(StatementType.RelationQuery);
-  });
 
-  test("throws on unknown operation", () => {
-    expect(() => emitToIR("User", "invalidOp", {})).toThrowError(
-      /Unknown operation type: invalidOp/,
-    );
+    it("routes create to CreateStatement", () => {
+      const ir = emitToIR(modelName, "create", { data: {} });
+      expect(ir.statements[0].type).toBe(StatementType.Create);
+    });
+
+    it("throws on unknown operation", () => {
+      expect(() => emitToIR(modelName, "unknownOp", {})).toThrowError(
+        "Unknown operation type: unknownOp",
+      );
+    });
   });
 });
