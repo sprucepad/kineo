@@ -1,13 +1,9 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { kineoAdapter } from "@/index";
 
-// mock emitter and schema
+// mock emitter
 vi.mock("@/emitter", () => ({
   emit: vi.fn(),
-}));
-
-vi.mock("@/schema", () => ({
-  createSchema: vi.fn(),
 }));
 
 import { emit } from "@/emitter";

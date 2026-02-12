@@ -96,10 +96,10 @@ export function toKineoSchema(schema?: BetterAuthPluginDBSchema) {
             break;
           case "number":
             if (baField.bigint) f = field.bigint(baField.fieldName);
-            else f = field.int(baField.fieldName);
+            else f = field.float(baField.fieldName);
             break;
           case "number[]":
-            f = field.int(baField.fieldName).array();
+            f = field.float(baField.fieldName).array();
             break;
           case "string":
             f = field.string(baField.fieldName);
@@ -123,4 +123,6 @@ export function toKineoSchema(schema?: BetterAuthPluginDBSchema) {
 
     models[modelKey] = model(baModel.modelName ?? modelKey, fields);
   }
+
+  return models;
 }
