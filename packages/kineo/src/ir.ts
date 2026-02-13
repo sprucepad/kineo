@@ -231,9 +231,9 @@ export function emitConnectStatement(
 export function emitDisconnectStatement(
   modelName: string,
   opts: model.ConnectOpts<any, any>,
-): ConnectStatement {
+): DisconnectStatement {
   return {
-    type: StatementType.Connect,
+    type: StatementType.Disconnect,
     model: modelName,
     from: opts.from.where,
     to: opts.to.where,
