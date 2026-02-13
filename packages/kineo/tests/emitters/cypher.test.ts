@@ -8,7 +8,7 @@ import {
   type CreateStatement,
   type UpdateStatement,
   type DeleteStatement,
-  type ConnectQueryStatement,
+  type ConnectStatement,
   type RelationQueryStatement,
   type Statement,
 } from "@/ir";
@@ -137,8 +137,8 @@ describe("Neo4j emitter", () => {
   });
 
   it("emits CONNECT query with OUT direction (default)", async () => {
-    const stmt: ConnectQueryStatement = {
-      type: StatementType.ConnectQuery,
+    const stmt: ConnectStatement = {
+      type: StatementType.Connect,
       model: "User",
       from: { id: 1 },
       to: { id: 2 },
@@ -153,8 +153,8 @@ describe("Neo4j emitter", () => {
   });
 
   it("emits CONNECT query with IN direction", async () => {
-    const stmt: ConnectQueryStatement = {
-      type: StatementType.ConnectQuery,
+    const stmt: ConnectStatement = {
+      type: StatementType.Connect,
       model: "User",
       from: { id: 1 },
       to: { id: 2 },

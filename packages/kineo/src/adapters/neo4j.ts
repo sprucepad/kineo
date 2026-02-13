@@ -182,21 +182,12 @@ export const neo4jAdapter = defineAdapter<Neo4jAdapter, [Neo4jOpts]>((opts) => {
         }
       }
 
-      // Detect scalar count result
-      if (entries.length === 1 && typeof entries[0] === "number") {
-        return {
-          entries,
-          entryCount: entries[0], // <-- this is the fix
-          edges,
-          edgeCount: edges.length,
-          summary,
-          raw: records,
-        };
-      }
-
       return {
         entries,
-        entryCount: entries.length,
+        entryCount:
+          entries.length === 1 && typeof entries[0] === "number"
+            ? entries[0]
+            : entries.length,
         edges,
         edgeCount: edges.length,
         summary,
@@ -291,6 +282,7 @@ export function collectEdges(value: any, edges: any[]) {
     for (const seg of value.segments) {
       collectEdges(seg.relationship, edges);
     }
+    return;
   }
 
   // Recurse into arrays/objects

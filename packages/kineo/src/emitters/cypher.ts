@@ -33,9 +33,12 @@ const emit = defineEmitter((ir) => {
       case IR.StatementType.Delete:
         chunks.push(emitDeleteStatement(ctx, stmt as IR.DeleteStatement));
         break;
-      case IR.StatementType.ConnectQuery:
+      case IR.StatementType.Connect:
+        chunks.push(emitConnectStatement(ctx, stmt as IR.ConnectStatement));
+        break;
+      case IR.StatementType.Disconnect:
         chunks.push(
-          emitConnectStatement(ctx, stmt as IR.ConnectQueryStatement),
+          emitDisconnectStatement(ctx, stmt as IR.DisconnectStatement),
         );
         break;
       case IR.StatementType.RelationQuery:
@@ -439,7 +442,7 @@ function emitDeleteStatement(ctx: EmitContext, s: IR.DeleteStatement): string {
  */
 function emitConnectStatement(
   ctx: EmitContext,
-  s: IR.ConnectQueryStatement,
+  s: IR.ConnectStatement,
 ): string {
   const from = "a";
   const to = "b";
@@ -517,4 +520,30 @@ function emitRelationStatement(
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+function emitDisconnectStatement(
+  ctx: EmitContext,
+  s: IR.DisconnectStatement,
+): string {
+  const from = "a";
+  const to = "b";
+  const rel = s.relation.toUpperCase();
+
+  // Make disconnect direction-agnostic unless explicitly specified
+  const relPattern =
+    s.direction === "IN"
+      ? `<-[r:${rel}]-`
+      : s.direction === "OUT"
+        ? `-[r:${rel}]->`
+        : `-[r:${rel}]-`; // default BOTH
+
+  return [
+    `MATCH (${from}:${s.model})`,
+    `WHERE ${whereToCypher(ctx, from, s.from)}`,
+    `MATCH (${to}:${s.model})`,
+    `WHERE ${whereToCypher(ctx, to, s.to)}`,
+    `MATCH (${from})${relPattern}(${to})`,
+    `DELETE r`,
+  ].join("\n");
 }

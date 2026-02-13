@@ -6,7 +6,7 @@ import {
   emitCreateStatement,
   emitUpsertStatement,
   emitDeleteStatement,
-  emitConnectQueryStatement,
+  emitConnectStatement,
   emitRelationQueryStatement,
   makeIR,
   emitToIR,
@@ -96,7 +96,7 @@ describe("IR emitters", () => {
   });
 
   it("emitConnectQueryStatement builds correct structure", () => {
-    const stmt = emitConnectQueryStatement(modelName, {
+    const stmt = emitConnectStatement(modelName, {
       from: { where: { id: 1 } },
       to: { where: { id: 2 } },
       relation: "FRIEND",
@@ -105,7 +105,7 @@ describe("IR emitters", () => {
     } as any);
 
     expect(stmt).toEqual({
-      type: StatementType.ConnectQuery,
+      type: StatementType.Connect,
       model: modelName,
       from: { id: 1 },
       to: { id: 2 },

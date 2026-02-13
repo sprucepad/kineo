@@ -9,7 +9,8 @@ export const enum StatementType {
   Create = "Create",
   Upsert = "Upsert",
   Delete = "Delete",
-  ConnectQuery = "ConnectQuery",
+  Connect = "Connect",
+  Disconnect = "Disconnect",
   RelationQuery = "RelationQuery",
 }
 
@@ -84,10 +85,22 @@ export interface DeleteStatement extends Statement {
 }
 
 /**
- * A `connect`/`disconnect` statement.
+ * A `connect` statement.
  */
-export interface ConnectQueryStatement extends Statement {
-  type: StatementType.ConnectQuery;
+export interface ConnectStatement extends Statement {
+  type: StatementType.Connect;
+  from: Record<string, any>;
+  to: Record<string, any>;
+  relation: string;
+  direction?: string;
+  properties?: Record<string, any>;
+}
+
+/**
+ * A `connect` statement.
+ */
+export interface DisconnectStatement extends Statement {
+  type: StatementType.Disconnect;
   from: Record<string, any>;
   to: Record<string, any>;
   relation: string;
@@ -197,12 +210,30 @@ export function emitDeleteStatement(
 /**
  * Emits a `Connect` query
  */
-export function emitConnectQueryStatement(
+export function emitConnectStatement(
   modelName: string,
   opts: model.ConnectOpts<any, any>,
-): ConnectQueryStatement {
+): ConnectStatement {
   return {
-    type: StatementType.ConnectQuery,
+    type: StatementType.Connect,
+    model: modelName,
+    from: opts.from.where,
+    to: opts.to.where,
+    relation: opts.relation,
+    direction: opts.direction,
+    properties: opts.properties,
+  };
+}
+
+/**
+ * Emits a `Disconnect` query
+ */
+export function emitDisconnectStatement(
+  modelName: string,
+  opts: model.ConnectOpts<any, any>,
+): ConnectStatement {
+  return {
+    type: StatementType.Connect,
     model: modelName,
     from: opts.from.where,
     to: opts.to.where,
@@ -266,9 +297,11 @@ export function emitToIR(modelName: string, op: string, opts: any): IR {
     case "deleteMany":
       stmt = emitDeleteStatement(modelName, opts);
       break;
-    case "connect":
     case "disconnect":
-      stmt = emitConnectQueryStatement(modelName, opts);
+      stmt = emitDisconnectStatement(modelName, opts);
+      break;
+    case "connect":
+      stmt = emitConnectStatement(modelName, opts);
       break;
     case "findPath":
     case "findShortestPath":

@@ -115,7 +115,7 @@ const emit = defineEmitter<Dialect>((ir, dialect) => {
       case IR.StatementType.Delete:
         sqlStatements.push(emitDelete(ctx, stmt as IR.DeleteStatement));
         break;
-      case IR.StatementType.ConnectQuery:
+      case IR.StatementType.Connect:
       case IR.StatementType.RelationQuery:
         throw new Error(
           `${stmt.type} is not supported by the SQL emitter (graph operations).`,
