@@ -26,6 +26,10 @@ export type Emitter<T = any> = (ir: IR, preset?: T) => Resolvable<EmitResult>;
 export interface ExecResult<T = any> {
   entries: Record<string, any>[];
   entryCount: number;
+
+  nodes?: Record<string, any>[];
+  nodeCount?: number;
+
   edges?: {
     type: string;
     direction: "incoming" | "outgoing";

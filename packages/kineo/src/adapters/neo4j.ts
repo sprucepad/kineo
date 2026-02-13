@@ -173,7 +173,25 @@ export const neo4jAdapter = defineAdapter<Neo4jAdapter, [Neo4jOpts]>((opts) => {
           }
         }
 
-        entries.push(obj);
+        // If record has a single key and that key was a node, unwrap it
+        if (record.keys.length === 1) {
+          const value = toNative(record.get(record.keys[0]));
+          entries.push(value);
+        } else {
+          entries.push(obj);
+        }
+      }
+
+      // Detect scalar count result
+      if (entries.length === 1 && typeof entries[0] === "number") {
+        return {
+          entries,
+          entryCount: entries[0], // <-- this is the fix
+          edges,
+          edgeCount: edges.length,
+          summary,
+          raw: records,
+        };
       }
 
       return {
@@ -191,7 +209,7 @@ export const neo4jAdapter = defineAdapter<Neo4jAdapter, [Neo4jOpts]>((opts) => {
 /**
  * Converts a Neo4j value to a vanilla JavaScript type.
  * @param value The value to convert.
- * @returns The converted value.
+ * @returns The converted value.t
  */
 export function toNative(value: any): any {
   if (neo4j.isInt(value)) {

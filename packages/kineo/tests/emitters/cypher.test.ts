@@ -181,7 +181,7 @@ describe("Neo4j emitter", () => {
 
     const { command } = await emit(makeIR(stmt));
 
-    expect(command).toContain("MATCH p = (a)-[:*1..3]->(b)");
+    expect(command).toContain("MATCH p = (a)-[*1..3]->(b)");
     expect(command).toContain("LIMIT 10");
   });
 

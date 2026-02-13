@@ -58,7 +58,7 @@ describe("auth()", () => {
   });
 });
 
-describe("neo4jAdapter (integration)", () => {
+describe("neo4jAdapter()", () => {
   let adapter: Neo4jAdapter;
 
   beforeAll(async () => {

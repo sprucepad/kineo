@@ -268,7 +268,7 @@ function emitFindStatement(ctx: EmitContext, s: IR.FindStatement): string {
     s.orderBy && s.orderBy.length
       ? `ORDER BY ${s.orderBy
           .map((o) => {
-            const [[field, [, dir]]] = Object.entries(o);
+            const [[field, dir]] = Object.entries(o);
             return `${alias}.${field} ${dir.toUpperCase()}`;
           })
           .join(", ")}`
@@ -474,16 +474,19 @@ function directionalRel(
   max: number,
   direction?: "IN" | "OUT" | "BOTH",
 ) {
+  const range = `[*${min}..${max}]`;
+
   switch (direction) {
     case "IN":
-      return `<-[:*${min}..${max}]->`;
+      return `<-${range}-`;
     case "OUT":
-      return `-[:*${min}..${max}]->`;
+      return `-${range}->`;
     case "BOTH":
     default:
-      return `-[:*${min}..${max}]-`;
+      return `-${range}-`;
   }
 }
+
 /**
  * Emits a Relation query statement.
  * @param ctx The context.
