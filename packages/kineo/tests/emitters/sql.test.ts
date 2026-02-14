@@ -50,10 +50,134 @@ function createFakeDialect() {
 }
 
 describe("SQL emitter (with fake dialect)", () => {
-  it("emits simple SELECT with where, order, limit/offset", async () => {
+  // -----------------------
+  // UPDATE TESTS
+  // -----------------------
+
+  it("emits UPDATE with WHERE", () => {
     const dialect = createFakeDialect();
 
-    const result = await emit(
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Update,
+        model: "User",
+        data: { name: "Alice", age: 30 },
+        where: { id: 1 },
+      } as any),
+      dialect,
+    );
+
+    expect(result.command).toBe(
+      `UPDATE "User" SET "name" = 'Alice', "age" = 30 WHERE "id" = 1`,
+    );
+  });
+
+  it("emits UPDATE with RETURNING", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Update,
+        model: "User",
+        data: { active: true },
+        where: { id: 5 },
+        select: { id: true, active: true },
+      } as any),
+      dialect,
+    );
+
+    expect(result.command).toBe(
+      `UPDATE "User" SET "active" = TRUE WHERE "id" = 5 RETURNING id, active`,
+    );
+  });
+
+  it("emits UPDATE with JSON path field", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Update,
+        model: "User",
+        data: { "profile.name": "Bob" },
+        where: { id: 2 },
+      } as any),
+      dialect,
+    );
+
+    expect(result.command).toBe(
+      `UPDATE "User" SET JSON_EXTRACT("profile", '$.name') = 'Bob' WHERE "id" = 2`,
+    );
+  });
+
+  it("supports complex WHERE in UPDATE", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Update,
+        model: "User",
+        data: { age: 40 },
+        where: {
+          AND: [
+            { active: true },
+            { OR: [{ age: { lt: 50 } }, { name: "Charlie" }] },
+          ],
+        },
+      } as any),
+      dialect,
+    );
+
+    expect(result.command).toContain(
+      `WHERE ("active" = TRUE) AND (("age" < 50) OR ("name" = 'Charlie'))`,
+    );
+  });
+
+  it("throws if UPDATE has no data", () => {
+    const dialect = createFakeDialect();
+
+    expect(() =>
+      emit(
+        IR.makeIR({
+          type: IR.StatementType.Update,
+          model: "User",
+          data: {},
+          where: { id: 1 },
+        } as any),
+        dialect,
+      ),
+    ).toThrow(/requires at least one field/i);
+  });
+
+  // -----------------------
+  // Existing tests below
+  // -----------------------
+
+  it("emits simple SELECT with where, order, limit/offset", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Find,
+        model: "User",
+        select: { id: true, name: true },
+        where: { name: "John", age: { gt: 18 } },
+        orderBy: [{ age: "desc" }],
+        take: 10,
+        skip: 5,
+      } as any),
+      dialect,
+    );
+
+    expect(result.command).toBe(
+      `SELECT "id", "name" FROM "User" ` +
+        `WHERE "name" = 'John' AND "age" > 18 ` +
+        `ORDER BY "age" DESC LIMIT 10 OFFSET 5`,
+    );
+  });
+  it("emits simple SELECT with where, order, limit/offset", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
       IR.makeIR({
         type: IR.StatementType.Find,
         model: "User",
@@ -73,10 +197,10 @@ describe("SQL emitter (with fake dialect)", () => {
     );
   });
 
-  it("supports AND / OR nesting", async () => {
+  it("supports AND / OR nesting", () => {
     const dialect = createFakeDialect();
 
-    const result = await emit(
+    const result = emit(
       IR.makeIR({
         type: IR.StatementType.Find,
         model: "User",
@@ -97,10 +221,10 @@ describe("SQL emitter (with fake dialect)", () => {
     );
   });
 
-  it("supports JSON column paths via jsonExtract", async () => {
+  it("supports JSON column paths via jsonExtract", () => {
     const dialect = createFakeDialect();
 
-    const result = await emit(
+    const result = emit(
       IR.makeIR({
         type: IR.StatementType.Find,
         model: "User",
@@ -116,10 +240,10 @@ describe("SQL emitter (with fake dialect)", () => {
     );
   });
 
-  it("emits INSERT with data + RETURNING", async () => {
+  it("emits INSERT with data + RETURNING", () => {
     const dialect = createFakeDialect();
 
-    const result = await emit(
+    const result = emit(
       IR.makeIR({
         type: IR.StatementType.Create,
         model: "User",
@@ -134,10 +258,10 @@ describe("SQL emitter (with fake dialect)", () => {
     );
   });
 
-  it("emits INSERT DEFAULT VALUES when no data provided", async () => {
+  it("emits INSERT DEFAULT VALUES when no data provided", () => {
     const dialect = createFakeDialect();
 
-    const result = await emit(
+    const result = emit(
       IR.makeIR({
         type: IR.StatementType.Create,
         model: "User",
@@ -149,10 +273,10 @@ describe("SQL emitter (with fake dialect)", () => {
     expect(result.command).toBe(`INSERT INTO "User" DEFAULT VALUES`);
   });
 
-  it("delegates UPSERT generation to dialect", async () => {
+  it("delegates UPSERT generation to dialect", () => {
     const dialect = createFakeDialect();
 
-    const result = await emit(
+    const result = emit(
       IR.makeIR({
         type: IR.StatementType.Upsert,
         model: "User",
@@ -175,10 +299,10 @@ describe("SQL emitter (with fake dialect)", () => {
     expect(result.command).toContain(`RETURNING id`);
   });
 
-  it("emits DELETE with WHERE", async () => {
+  it("emits DELETE with WHERE", () => {
     const dialect = createFakeDialect();
 
-    const result = await emit(
+    const result = emit(
       IR.makeIR({
         type: IR.StatementType.Delete,
         model: "User",
@@ -190,10 +314,10 @@ describe("SQL emitter (with fake dialect)", () => {
     expect(result.command).toBe(`DELETE FROM "User" WHERE "id" = 1`);
   });
 
-  it("emits COUNT with WHERE", async () => {
+  it("emits COUNT with WHERE", () => {
     const dialect = createFakeDialect();
 
-    const result = await emit(
+    const result = emit(
       IR.makeIR({
         type: IR.StatementType.Count,
         model: "User",
@@ -207,10 +331,10 @@ describe("SQL emitter (with fake dialect)", () => {
     );
   });
 
-  it("joins multiple statements with semicolons", async () => {
+  it("joins multiple statements with semicolons", () => {
     const dialect = createFakeDialect();
 
-    const result = await emit(
+    const result = emit(
       IR.makeIR(
         {
           type: IR.StatementType.Delete,

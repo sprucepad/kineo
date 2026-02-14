@@ -13,6 +13,7 @@ export const enum StatementType {
   Connect = "Connect",
   Disconnect = "Disconnect",
   RelationQuery = "RelationQuery",
+  Traverse = "Traverse",
 }
 
 /**
@@ -134,6 +135,17 @@ export interface RelationQueryStatement extends Statement {
   minDepth?: number;
   direction?: string;
   limit?: number;
+}
+
+export interface TraverseStatement extends Statement {
+  type: StatementType.Traverse;
+  start: Record<string, any>;
+  direction?: string;
+  minDepth?: number;
+  maxDepth?: number;
+  relationFilter?: string | string[];
+  includeNodes?: boolean;
+  includeEdges?: boolean;
 }
 
 // ---------- Parser / Emitter Utilities ---------- //
@@ -294,6 +306,23 @@ export function emitRelationQueryStatement(
   };
 }
 
+export function emitTraverseStatement(
+  modelName: string,
+  opts: model.TraverseOpts<any, any>,
+): TraverseStatement {
+  return {
+    type: StatementType.Traverse,
+    model: modelName,
+    start: opts.start.where,
+    direction: opts.direction,
+    includeEdges: opts.includeEdges,
+    includeNodes: opts.includeNodes,
+    relationFilter: opts.relationFilter,
+    maxDepth: opts.maxDepth,
+    minDepth: opts.depth,
+  };
+}
+
 // ---------- IR Construction Helpers ---------- //
 
 /**
@@ -343,6 +372,9 @@ export function emitToIR(modelName: string, op: string, opts: any): IR {
     case "findShortestPath":
     case "findAllPaths":
       stmt = emitRelationQueryStatement(modelName, opts);
+      break;
+    case "traverse":
+      stmt = emitTraverseStatement(modelName, opts);
       break;
     default:
       throw new Error(`Unknown operation type: ${op}`);

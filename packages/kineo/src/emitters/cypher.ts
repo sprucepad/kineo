@@ -49,6 +49,9 @@ const emit = defineEmitter((ir) => {
           emitRelationStatement(ctx, stmt as IR.RelationQueryStatement),
         );
         break;
+      case IR.StatementType.Traverse:
+        chunks.push(emitTraverseStatement(ctx, stmt as IR.TraverseStatement));
+        break;
       default:
         throw new Error(`Unsupported statement type: ${stmt.type}`);
     }
@@ -625,5 +628,73 @@ function emitDisconnectStatement(
     `WHERE ${whereToCypher(ctx, to, s.to)}`,
     `MATCH (${from})${relPattern}(${to})`,
     `DELETE r`,
+  ].join("\n");
+}
+
+export function emitTraverseStatement(
+  ctx: EmitContext,
+  s: IR.TraverseStatement,
+): string {
+  const startAlias = "a";
+  const endAlias = "b";
+
+  const min = s.minDepth ?? 1;
+  const max = s.maxDepth ?? 5;
+
+  // Build relationship type filter
+  let relTypes = "";
+  if (s.relationFilter) {
+    const types = Array.isArray(s.relationFilter)
+      ? s.relationFilter
+      : [s.relationFilter];
+
+    relTypes = ":" + types.map((t) => t.toUpperCase()).join("|:");
+  }
+
+  // IMPORTANT: range must follow type directly
+  const relCore = `[r${relTypes}*${min}..${max}]`;
+
+  let relPattern: string;
+  switch (s.direction) {
+    case "IN":
+      relPattern = `<-${relCore}-`;
+      break;
+    case "OUT":
+      relPattern = `-${relCore}->`;
+      break;
+    case "BOTH":
+    default:
+      relPattern = `-${relCore}-`;
+      break;
+  }
+
+  const path = `p = (${startAlias})${relPattern}(${endAlias})`;
+
+  const includeNodes = s.includeNodes ?? true;
+  const includeEdges = s.includeEdges ?? false;
+
+  let returnClause: string;
+
+  if (includeNodes && includeEdges) {
+    returnClause = `
+RETURN {
+  nodes: [n IN nodes(p) | properties(n)],
+  edges: [e IN relationships(p) | properties(e)]
+} AS traversal`;
+  } else if (includeEdges) {
+    returnClause = `
+RETURN [e IN relationships(p) | properties(e)] AS edges`;
+  } else if (includeNodes) {
+    returnClause = `
+RETURN [n IN nodes(p) | properties(n)] AS nodes`;
+  } else {
+    returnClause = `RETURN p`;
+  }
+
+  return [
+    `MATCH (${startAlias})`,
+    `WHERE ${whereToCypher(ctx, startAlias, s.start)}`,
+    `MATCH ${path}`,
+    returnClause.trim(),
   ].join("\n");
 }
