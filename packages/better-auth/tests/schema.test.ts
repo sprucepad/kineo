@@ -20,7 +20,6 @@ describe("betterAuthSchema", () => {
 
   it("merges plugin schemas into the base schema", () => {
     const schema = betterAuthSchema(twoFactor(), organization());
-    console.log(Object.keys(schema));
 
     // Two-factor plugin adds model(s)
     const hasTwoFactorModel = Object.keys(schema).some((k) =>

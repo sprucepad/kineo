@@ -41,7 +41,6 @@ describe("GraphModel", () => {
     expect(result.success).toBe(true);
   });
 
-  // TODO fix below
   it("traverse maps edges to nodes", async () => {
     const result = await graphModel.traverse({
       start: { where: { id: 1 } },
