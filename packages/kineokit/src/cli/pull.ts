@@ -117,7 +117,7 @@ export function generateSchemaSource(
 export function serializeFieldOrRelation(value: unknown): string {
   // Handle FieldDef
   if (value instanceof FieldDef) {
-    const f = value as FieldDef<any, any, any, any>;
+    const f = value as FieldDef<any, any, any, any, any>;
     let expr = `field.${f.$kind}(${f.$name ? `"${f.$name}"` : ""})`;
 
     if (f.$id) expr += `.id()`;

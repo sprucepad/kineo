@@ -393,7 +393,7 @@ function getDriverSession(opts: Neo4jOpts | Neo4jAdapter | Kineo<any, any>) {
 /**
  * Infer field type from Neo4j value.
  */
-function inferKind(value: any): FieldDef<any, any, any, any> {
+function inferKind(value: any): FieldDef<any, any, any, any, any> {
   if (Array.isArray(value)) {
     // recursively infer base type
     if (value.length === 0) return field.string().array(); // unknown empty array
@@ -427,7 +427,7 @@ function modelLabel(key: string, def?: ModelDef<any>) {
   return def && typeof def.$name === "string" ? def.$name : key;
 }
 
-function isFieldDef(v: any): v is FieldDef<any, any, any, any> {
+function isFieldDef(v: any): v is FieldDef<any, any, any, any, any> {
   return v instanceof FieldDef;
 }
 function isRelationDef(v: any): v is RelationDef<any, any, any, any> {
