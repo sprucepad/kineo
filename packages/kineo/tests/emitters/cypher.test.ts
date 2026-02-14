@@ -6,11 +6,11 @@ import {
   type FindStatement,
   type CountStatement,
   type CreateStatement,
-  type UpdateStatement,
   type DeleteStatement,
   type ConnectStatement,
   type RelationQueryStatement,
   type Statement,
+  type UpsertStatement,
 } from "@/ir";
 
 describe("Neo4j emitter", () => {
@@ -91,7 +91,7 @@ describe("Neo4j emitter", () => {
   });
 
   it("emits UPSERT with MERGE when where exists", async () => {
-    const stmt: UpdateStatement = {
+    const stmt: UpsertStatement = {
       type: StatementType.Upsert,
       model: "User",
       where: { id: 1 },
@@ -109,7 +109,7 @@ describe("Neo4j emitter", () => {
   });
 
   it("falls back to CREATE when UPSERT has no where", async () => {
-    const stmt: UpdateStatement = {
+    const stmt: UpsertStatement = {
       type: StatementType.Upsert,
       model: "User",
       where: {},

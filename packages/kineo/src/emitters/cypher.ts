@@ -27,8 +27,11 @@ const emit = defineEmitter((ir) => {
       case IR.StatementType.Create:
         chunks.push(emitCreateStatement(ctx, stmt as IR.CreateStatement));
         break;
+      case IR.StatementType.Update:
+        chunks.push(emitUpdateStatement(ctx, stmt as IR.UpdateStatement));
+        break;
       case IR.StatementType.Upsert:
-        chunks.push(emitUpsertStatement(ctx, stmt as IR.UpdateStatement));
+        chunks.push(emitUpsertStatement(ctx, stmt as IR.UpsertStatement));
         break;
       case IR.StatementType.Delete:
         chunks.push(emitDeleteStatement(ctx, stmt as IR.DeleteStatement));
@@ -111,11 +114,15 @@ function normalizeValue(v: any): any {
   if (v instanceof Date) {
     return neo4j.types.DateTime.fromStandardDate(v);
   }
-  if (typeof v === "object" && v !== null && !Array.isArray(v)) {
-    throw new Error(
-      `Unsupported parameter value (object): ${JSON.stringify(v)}`,
-    );
+
+  if (v && typeof v === "object") {
+    const obj: Record<string, any> = {};
+    for (const [k, val] of Object.entries(v)) {
+      obj[k] = normalizeValue(val);
+    }
+    return obj;
   }
+
   return v;
 }
 
@@ -368,12 +375,85 @@ function emitCreateStatement(ctx: EmitContext, s: IR.CreateStatement): string {
 }
 
 /**
+ * Emits an Update statement.
+ * @param ctx The context.
+ * @param s The statement.
+ * @returns A Cypher query.
+ */
+function emitUpdateStatement(ctx: EmitContext, s: IR.UpdateStatement): string {
+  const alias = "n";
+
+  if (!s.where || Object.keys(s.where).length === 0) {
+    throw new Error("Update statements require a non-empty where clause.");
+  }
+
+  if (!s.data || Object.keys(s.data).length === 0) {
+    throw new Error("Update statements require non-empty data.");
+  }
+
+  // ---- MATCH ----
+  const whereClauses = Object.entries(s.where).map(([k, v]) => {
+    const p = ctx.nextParamName(`where_${k}`);
+    ctx.params[p] = normalizeValue(v);
+    return `${alias}.${k} = $${p}`;
+  });
+
+  const match = `MATCH (${alias}:${s.model})`;
+  const where = `WHERE ${whereClauses.join(" AND ")}`;
+
+  // ---- PARTIAL UPDATE ----
+  const patchParam = ctx.nextParamName("patch");
+  ctx.params[patchParam] = normalizeValue(s.data);
+
+  const set = `SET ${alias} += $${patchParam}`;
+
+  // ---- INCLUDE SUPPORT ----
+  const includeClauses: string[] = [];
+  const returnFields: string[] = [];
+
+  if (s.include) {
+    Object.entries(s.include).forEach(([key, value]) => {
+      if (!value) return;
+
+      const relAlias = `${alias}_${key}`;
+      const relType = key.toUpperCase();
+
+      includeClauses.push(
+        `OPTIONAL MATCH (${alias})-[:${relType}]->(${relAlias})`,
+      );
+
+      returnFields.push(`${key}: collect(properties(${relAlias}))`);
+    });
+  }
+
+  // ---- SELECT SUPPORT ----
+  if (s.select && Object.keys(s.select).length > 0) {
+    const selectedProps = Object.entries(s.select)
+      .filter(([, v]) => v)
+      .map(([k]) => `.${k}`)
+      .join(", ");
+
+    returnFields.unshift(`${alias} { ${selectedProps} }`);
+  } else {
+    // default: full node
+    returnFields.unshift(`properties(${alias})`);
+  }
+
+  const returnClause =
+    returnFields.length === 1
+      ? `RETURN ${returnFields[0]} AS ${alias}`
+      : `RETURN { ${returnFields.join(", ")} } AS ${alias}`;
+
+  return [match, where, set, ...includeClauses, returnClause].join("\n");
+}
+
+/**
  * Emits an Upsert statement.
  * @param ctx The context.
  * @param s The statement.
  * @returns A Cypher query.
  */
-function emitUpsertStatement(ctx: EmitContext, s: IR.UpdateStatement): string {
+function emitUpsertStatement(ctx: EmitContext, s: IR.UpsertStatement): string {
   const alias = s.alias ?? "n";
 
   // If there are no where keys, fallback to simple create

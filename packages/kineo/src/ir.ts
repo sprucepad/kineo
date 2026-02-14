@@ -1,4 +1,4 @@
-import type * as model from "./model";
+import * as model from "./model";
 
 /**
  * A type of statement.
@@ -7,6 +7,7 @@ export const enum StatementType {
   Find = "Find",
   Count = "Count",
   Create = "Create",
+  Update = "Update",
   Upsert = "Upsert",
   Delete = "Delete",
   Connect = "Connect",
@@ -69,9 +70,23 @@ export interface CreateStatement extends Statement {
  * An `update`/`updateMany` statement.
  */
 export interface UpdateStatement extends Statement {
-  type: StatementType.Upsert;
+  type: StatementType.Update;
   where: Record<string, any>;
   data: Record<string, any>;
+  select?: Record<string, any>;
+  include?: Record<string, any>;
+}
+
+/**
+ * An `upsert`/`upsertMany` statement.
+ */
+export interface UpsertStatement extends Statement {
+  type: StatementType.Upsert;
+  where: Record<string, any>;
+  data: {
+    create?: Record<string, any>;
+    update?: Record<string, any>;
+  };
   select?: Record<string, any>;
   include?: Record<string, any>;
 }
@@ -174,12 +189,12 @@ export function emitCreateStatement(
 }
 
 /**
- * Emits an `Update` or `Upsert` query
+ * Emits an `Upsert` query.
  */
 export function emitUpsertStatement(
   modelName: string,
   opts: model.UpsertOpts<any, any>,
-): UpdateStatement {
+): UpsertStatement {
   return {
     type: StatementType.Upsert,
     model: modelName,
@@ -188,6 +203,23 @@ export function emitUpsertStatement(
       create: opts.create,
       update: opts.update,
     },
+    select: opts.select,
+    include: opts.include,
+  };
+}
+
+/**
+ * Emits an `Update` query.
+ */
+export function emitUpdateStatement(
+  modelName: string,
+  opts: model.UpdateOpts<any, any>,
+): UpdateStatement {
+  return {
+    type: StatementType.Update,
+    model: modelName,
+    where: opts.where,
+    data: opts.data,
     select: opts.select,
     include: opts.include,
   };
@@ -288,6 +320,10 @@ export function emitToIR(modelName: string, op: string, opts: any): IR {
     case "create":
     case "createMany":
       stmt = emitCreateStatement(modelName, opts);
+      break;
+    case "update":
+    case "updateMany":
+      stmt = emitUpdateStatement(modelName, opts);
       break;
     case "upsert":
     case "upsertMany":
