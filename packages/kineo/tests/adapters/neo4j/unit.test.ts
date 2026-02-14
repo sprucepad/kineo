@@ -1,5 +1,6 @@
 import { describe, test, expect, vi, beforeAll, afterAll } from "vitest";
 import neo4j from "neo4j-driver";
+import { Neo4jContainer } from "@testcontainers/neo4j";
 import {
   neo4jAdapter,
   type Neo4jAdapter,
@@ -7,11 +8,6 @@ import {
   toNative,
   collectEdges,
 } from "@/adapters/neo4j";
-
-// Neo4j connection settings
-const NEO4J_URL = "bolt://localhost:7687";
-const NEO4J_USER = "neo4j";
-const NEO4J_PASS = "password";
 
 describe("auth()", () => {
   test("creates basic auth token", () => {
@@ -62,18 +58,18 @@ describe("neo4jAdapter()", () => {
   let adapter: Neo4jAdapter;
 
   beforeAll(async () => {
+    const container = await new Neo4jContainer("neo4j:5").start();
     adapter = neo4jAdapter({
-      url: NEO4J_URL,
+      url: container.getBoltUri(),
       auth: {
-        type: "basic",
-        username: NEO4J_USER,
-        password: NEO4J_PASS,
+        username: container.getUsername(),
+        password: container.getPassword(),
       },
     });
 
     // Clean database before testing
     await adapter.session.run("MATCH (n) DETACH DELETE n");
-  });
+  }, 180_000); // 3 min
 
   afterAll(async () => {
     await adapter.close();
@@ -117,8 +113,6 @@ describe("neo4jAdapter()", () => {
     expect(edge.type).toBe("KNOWS");
     expect(edge.props.since).toBe(2020);
   });
-
-  // TODO integration tests with client
 });
 
 describe("toNative()", () => {

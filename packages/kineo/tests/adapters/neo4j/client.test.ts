@@ -2,6 +2,7 @@ import { describe, beforeAll, afterAll, beforeEach, it, expect } from "vitest";
 import { neo4jAdapter, type Neo4jAdapter } from "@/adapters/neo4j";
 import { kineo, type Kineo } from "@/client";
 import { defineSchema, field, model } from "@/schema";
+import { Neo4jContainer } from "@testcontainers/neo4j";
 
 // ----------------------------------------------------------------------------
 // Schema
@@ -31,17 +32,17 @@ describe("Kineo + Neo4j Integration", () => {
   let client: Kineo<typeof schema, Neo4jAdapter>;
 
   beforeAll(async () => {
+    const container = await new Neo4jContainer("neo4j:5").start();
     const adapter = neo4jAdapter({
-      url: "bolt://localhost:7687",
+      url: container.getBoltUri(),
       auth: {
-        type: "basic",
-        username: "neo4j",
-        password: "password",
+        username: container.getUsername(),
+        password: container.getPassword(),
       },
     });
 
     client = kineo(adapter, schema);
-  });
+  }, 180_000); // 3 min
 
   beforeEach(async () => {
     await client.$adapter.session.run("MATCH (n) DETACH DELETE n");

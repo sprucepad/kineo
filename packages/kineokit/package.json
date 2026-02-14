@@ -50,6 +50,7 @@
     }
   },
   "devDependencies": {
-    "kineo": "workspace:*"
+    "kineo": "workspace:*",
+    "@testcontainers/neo4j": "^11.11.0"
   }
 }

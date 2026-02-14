@@ -1,27 +1,24 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vitest";
 import { neo4jKit, type Neo4jKit } from "@/adapters/neo4j";
 import { defineSchema, field, model } from "kineo/schema";
-
-// Neo4j connection settings
-const NEO4J_URL = "bolt://localhost:7687";
-const NEO4J_USER = "neo4j";
-const NEO4J_PASS = "password";
+import { Neo4jContainer } from "@testcontainers/neo4j";
 
 describe("neo4jAdapterKit (integration)", () => {
   let adapter: Neo4jKit;
-  beforeEach(async () => {
+  beforeAll(async () => {
+    const container = await new Neo4jContainer("neo4j:5").start();
     adapter = neo4jKit({
-      url: NEO4J_URL,
+      url: container.getBoltUri(),
       auth: {
         type: "basic",
-        username: NEO4J_USER,
-        password: NEO4J_PASS,
+        username: container.getUsername(),
+        password: container.getPassword(),
       },
     });
 
     // Clean database before testing
     await adapter.session.run("MATCH (n) DETACH DELETE n");
-  });
+  }, 180_000); // 3 min
 
   // ---------------------------------------------------------------------------
   // pull()

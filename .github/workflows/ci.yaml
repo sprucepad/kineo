@@ -13,9 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Start Docker Compose
-        run: docker compose up -d
-
       - name: Set up Node.js 20.19.0
         uses: actions/setup-node@v6
         with:
@@ -24,11 +21,8 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Install dependencies
+      - name: Install dependencies and build
         run: pnpm install
-
-      - name: Build
-        run: pnpm build
 
       - name: Type check
         run: pnpm check
@@ -41,8 +35,3 @@ jobs:
 
       - name: Test
         run: pnpm test
-
-      # always shut down Docker Compose
-      - name: Stop Docker Compose
-        if: always()
-        run: docker compose down
