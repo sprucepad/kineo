@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "kineo": "workspace:*",
+    "neo4j-driver": "^6.0.0",
     "@testcontainers/neo4j": "^11.11.0"
   }
 }

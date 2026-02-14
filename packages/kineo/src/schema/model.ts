@@ -141,7 +141,7 @@ export type InferModelShape<
   TDef extends ModelShape,
   TSchema extends Schema = Schema,
 > = {
-  [P in keyof TDef]: TDef[P] extends FieldDef<any, any, any, any>
+  [P in keyof TDef]: TDef[P] extends FieldDef<any, any, any, any, any>
     ? InferField<TDef[P]>
     : TDef[P] extends RelationDef<any, any, any, any>
       ? InferRelationship<TDef[P], TSchema>
@@ -164,8 +164,8 @@ export type InferRelationship<
     ? TSchema[To] extends ModelDef<infer Shape>
       ? (
           IsArray extends true
-            ? InferModelShape<Shape>[]
-            : InferModelShape<Shape>
+            ? InferModelShape<Shape, TSchema>[]
+            : InferModelShape<Shape, TSchema>
         ) extends infer Base
         ? IsRequired extends true
           ? Base
