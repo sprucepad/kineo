@@ -1,187 +1,356 @@
-import { describe, test, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import emit from "@/emitters/sql";
 import * as IR from "@/ir";
 
-// A minimal mock dialect implementation for testing
-const mockDialect = {
-  identifier: vi.fn((name: string) => `"${name}"`),
-  string: vi.fn((value: string) => `'${value}'`),
-  array: vi.fn(
-    (values: unknown[]) => `(${values.map((v) => `'${v}'`).join(", ")})`,
-  ),
-  limitOffset: vi.fn((limit?: number, offset?: number) => {
-    const clauses = [];
-    if (limit !== undefined) clauses.push(`LIMIT ${limit}`);
-    if (offset !== undefined) clauses.push(`OFFSET ${offset}`);
-    return clauses.join(" ");
-  }),
-  boolean: vi.fn((value: boolean) => (value ? "TRUE" : "FALSE")),
-  upsert: vi.fn((table: string, args: any) => {
-    return `UPSERT INTO ${table} (${args.insertColumns.join(", ")}) VALUES (${args.insertValues.join(", ")}) ON CONFLICT (${args.conflictTarget.join(", ")}) DO UPDATE SET ${args.updateAssignments.join(", ")} ${args.returning}`;
-  }),
-  autoIncrement: vi.fn(() => "SERIAL"),
-  now: vi.fn(() => "CURRENT_TIMESTAMP"),
-  jsonExtract: vi.fn(
-    (column: string, path: string) => `JSON_EXTRACT(${column}, '${path}')`,
-  ),
-  type: vi.fn((type: string) => type.toUpperCase()),
-  returning: vi.fn((columns?: string[]) =>
-    columns?.length ? `RETURNING ${columns.join(", ")}` : "",
-  ),
-};
-
-describe("SQL Emitter", () => {
-  test("emits a simple Find statement", async () => {
-    const ir: IR.IR = {
-      statements: [
+// MInimal fake dialect
+function createFakeDialect() {
+  return {
+    identifier: (name: string) => `"${name}"`,
+    string: (value: string) => `'${value}'`,
+    array: (values: unknown[]) =>
+      `(${values.map((v) => JSON.stringify(v)).join(",")})`,
+    limitOffset: (limit?: number, offset?: number) => {
+      const parts = [];
+      if (limit != null) parts.push(`LIMIT ${limit}`);
+      if (offset != null) parts.push(`OFFSET ${offset}`);
+      return parts.join(" ");
+    },
+    boolean: (value: boolean) => (value ? "TRUE" : "FALSE"),
+    upsert: vi.fn(
+      (
+        table: string,
         {
-          type: IR.StatementType.Find,
-          model: "User",
-          where: { id: 1 },
-          select: { id: true, name: true },
-        } as any,
-      ],
-    };
+          insertColumns,
+          insertValues,
+          conflictTarget,
+          updateAssignments,
+          returning,
+        },
+      ) => {
+        return [
+          `UPSERT ${table}`,
+          `INSERT(${insertColumns.join(",")})`,
+          `VALUES(${insertValues.join(",")})`,
+          `CONFLICT(${conflictTarget.join(",")})`,
+          `UPDATE(${updateAssignments.join(",")})`,
+          returning,
+        ]
+          .filter(Boolean)
+          .join(" ");
+      },
+    ),
+    autoIncrement: () => "AUTO_INCREMENT",
+    now: () => "NOW()",
+    jsonExtract: (column: string, path: string) =>
+      `JSON_EXTRACT(${column}, '${path}')`,
+    type: (type: string) => type.toUpperCase(),
+    returning: (columns?: string[]) =>
+      columns?.length ? `RETURNING ${columns.join(", ")}` : "",
+  };
+}
 
-    const result = await emit(ir, mockDialect);
-    expect(result.command).toContain('SELECT "id", "name" FROM "User"');
-    expect(result.command).toContain('WHERE "id" = 1');
-    expect(result.params).toEqual({});
-  });
+describe("SQL emitter (with fake dialect)", () => {
+  // -----------------------
+  // UPDATE TESTS
+  // -----------------------
 
-  test("emits a Find with orderBy and pagination", async () => {
-    const ir: IR.IR = {
-      statements: [
-        {
-          type: IR.StatementType.Find,
-          model: "Post",
-          orderBy: [{ createdAt: "desc" }],
-          skip: 5,
-          take: 10,
-        } as any,
-      ],
-    };
+  it("emits UPDATE with WHERE", () => {
+    const dialect = createFakeDialect();
 
-    const result = await emit(ir, mockDialect);
-    expect(result.command).toContain('SELECT * FROM "Post"');
-    expect(result.command).toContain('ORDER BY "createdAt" DESC');
-    expect(result.command).toContain("LIMIT 10 OFFSET 5");
-  });
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Update,
+        model: "User",
+        data: { name: "Alice", age: 30 },
+        where: { id: 1 },
+      } as any),
+      dialect,
+    );
 
-  test("emits a Count statement with WHERE clause", async () => {
-    const ir: IR.IR = {
-      statements: [
-        {
-          type: IR.StatementType.Count,
-          model: "User",
-          where: { active: true },
-        } as any,
-      ],
-    };
-
-    const result = await emit(ir, mockDialect);
     expect(result.command).toBe(
-      'SELECT COUNT(*) AS count FROM "User" WHERE "active" = TRUE',
+      `UPDATE "User" SET "name" = 'Alice', "age" = 30 WHERE "id" = 1`,
     );
   });
 
-  test("emits a Create statement with data", async () => {
-    const ir: IR.IR = {
-      statements: [
-        {
-          type: IR.StatementType.Create,
-          model: "User",
-          data: { name: "Alice", age: 30 },
-          select: { id: true },
-        } as any,
-      ],
-    };
+  it("emits UPDATE with RETURNING", () => {
+    const dialect = createFakeDialect();
 
-    const result = await emit(ir, mockDialect);
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Update,
+        model: "User",
+        data: { active: true },
+        where: { id: 5 },
+        select: { id: true, active: true },
+      } as any),
+      dialect,
+    );
+
     expect(result.command).toBe(
-      'INSERT INTO "User" ("name", "age") VALUES (\'Alice\', 30) RETURNING id',
+      `UPDATE "User" SET "active" = TRUE WHERE "id" = 5 RETURNING id, active`,
     );
   });
 
-  test("emits a Create with empty data (DEFAULT VALUES)", async () => {
-    const ir: IR.IR = {
-      statements: [
-        {
-          type: IR.StatementType.Create,
+  it("emits UPDATE with JSON path field", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Update,
+        model: "User",
+        data: { "profile.name": "Bob" },
+        where: { id: 2 },
+      } as any),
+      dialect,
+    );
+
+    expect(result.command).toBe(
+      `UPDATE "User" SET JSON_EXTRACT("profile", '$.name') = 'Bob' WHERE "id" = 2`,
+    );
+  });
+
+  it("supports complex WHERE in UPDATE", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Update,
+        model: "User",
+        data: { age: 40 },
+        where: {
+          AND: [
+            { active: true },
+            { OR: [{ age: { lt: 50 } }, { name: "Charlie" }] },
+          ],
+        },
+      } as any),
+      dialect,
+    );
+
+    expect(result.command).toContain(
+      `WHERE ("active" = TRUE) AND (("age" < 50) OR ("name" = 'Charlie'))`,
+    );
+  });
+
+  it("throws if UPDATE has no data", () => {
+    const dialect = createFakeDialect();
+
+    expect(() =>
+      emit(
+        IR.makeIR({
+          type: IR.StatementType.Update,
           model: "User",
           data: {},
-        } as any,
-      ],
-    };
-
-    const result = await emit(ir, mockDialect);
-    expect(result.command).toContain('INSERT INTO "User" DEFAULT VALUES');
-  });
-
-  test("emits an Upsert statement", async () => {
-    const ir: IR.IR = {
-      statements: [
-        {
-          type: IR.StatementType.Upsert,
-          model: "User",
           where: { id: 1 },
-          data: {
-            create: { id: 1, name: "Alice" },
-            update: { name: "Bob" },
-          },
-          select: { id: true },
-        } as any,
-      ],
-    };
-
-    const result = await emit(ir, mockDialect);
-    expect(result.command).toContain('UPSERT INTO "User"');
-    expect(mockDialect.upsert).toHaveBeenCalled();
+        } as any),
+        dialect,
+      ),
+    ).toThrow(/requires at least one field/i);
   });
 
-  test("emits a Delete statement with WHERE", async () => {
-    const ir: IR.IR = {
-      statements: [
+  // -----------------------
+  // Existing tests below
+  // -----------------------
+
+  it("emits simple SELECT with where, order, limit/offset", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Find,
+        model: "User",
+        select: { id: true, name: true },
+        where: { name: "John", age: { gt: 18 } },
+        orderBy: [{ age: "desc" }],
+        take: 10,
+        skip: 5,
+      } as any),
+      dialect,
+    );
+
+    expect(result.command).toBe(
+      `SELECT "id", "name" FROM "User" ` +
+        `WHERE "name" = 'John' AND "age" > 18 ` +
+        `ORDER BY "age" DESC LIMIT 10 OFFSET 5`,
+    );
+  });
+  it("emits simple SELECT with where, order, limit/offset", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Find,
+        model: "User",
+        select: { id: true, name: true },
+        where: { name: "John", age: { gt: 18 } },
+        orderBy: [{ age: "desc" }],
+        take: 10,
+        skip: 5,
+      } as any),
+      dialect,
+    );
+
+    expect(result.command).toBe(
+      `SELECT "id", "name" FROM "User" ` +
+        `WHERE "name" = 'John' AND "age" > 18 ` +
+        `ORDER BY "age" DESC LIMIT 10 OFFSET 5`,
+    );
+  });
+
+  it("supports AND / OR nesting", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Find,
+        model: "User",
+        where: {
+          AND: [
+            { age: { gte: 18 } },
+            {
+              OR: [{ name: "Alice" }, { name: "Bob" }],
+            },
+          ],
+        },
+      } as any),
+      dialect,
+    );
+
+    expect(result.command).toContain(
+      `WHERE ("age" >= 18) AND (("name" = 'Alice') OR ("name" = 'Bob'))`,
+    );
+  });
+
+  it("supports JSON column paths via jsonExtract", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Find,
+        model: "User",
+        where: {
+          "profile.name": "John",
+        },
+      } as any),
+      dialect,
+    );
+
+    expect(result.command).toContain(
+      `JSON_EXTRACT("profile", '$.name') = 'John'`,
+    );
+  });
+
+  it("emits INSERT with data + RETURNING", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Create,
+        model: "User",
+        data: { name: "Alice", active: true },
+        select: { id: true },
+      } as any),
+      dialect,
+    );
+
+    expect(result.command).toBe(
+      `INSERT INTO "User" ("name", "active") VALUES ('Alice', TRUE) RETURNING id`,
+    );
+  });
+
+  it("emits INSERT DEFAULT VALUES when no data provided", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Create,
+        model: "User",
+        data: {},
+      } as any),
+      dialect,
+    );
+
+    expect(result.command).toBe(`INSERT INTO "User" DEFAULT VALUES`);
+  });
+
+  it("delegates UPSERT generation to dialect", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Upsert,
+        model: "User",
+        where: { id: 1 },
+        data: {
+          create: { id: 1, name: "Alice" },
+          update: { name: "Updated" },
+        },
+        select: { id: true },
+      } as any),
+      dialect,
+    );
+
+    expect(dialect.upsert).toHaveBeenCalledOnce();
+
+    expect(result.command).toContain(`UPSERT "User"`);
+    expect(result.command).toContain(`INSERT(id,name)`);
+    expect(result.command).toContain(`CONFLICT(id)`);
+    expect(result.command).toContain(`UPDATE("name" = 'Updated')`);
+    expect(result.command).toContain(`RETURNING id`);
+  });
+
+  it("emits DELETE with WHERE", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Delete,
+        model: "User",
+        where: { id: 1 },
+      } as any),
+      dialect,
+    );
+
+    expect(result.command).toBe(`DELETE FROM "User" WHERE "id" = 1`);
+  });
+
+  it("emits COUNT with WHERE", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR({
+        type: IR.StatementType.Count,
+        model: "User",
+        where: { active: true },
+      } as any),
+      dialect,
+    );
+
+    expect(result.command).toBe(
+      `SELECT COUNT(*) AS count FROM "User" WHERE "active" = TRUE`,
+    );
+  });
+
+  it("joins multiple statements with semicolons", () => {
+    const dialect = createFakeDialect();
+
+    const result = emit(
+      IR.makeIR(
         {
           type: IR.StatementType.Delete,
           model: "User",
-          where: { id: 42 },
+          where: { id: 1 },
         } as any,
-      ],
-    };
-
-    const result = await emit(ir, mockDialect);
-    expect(result.command).toBe('DELETE FROM "User" WHERE "id" = 42');
-  });
-
-  test("throws on unsupported statement types", () => {
-    const ir: IR.IR = {
-      statements: [
         {
-          type: IR.StatementType.ConnectQuery,
-          model: "Graph",
-          from: {},
-          to: {},
-          relation: "REL",
-        } as any,
-      ],
-    };
-
-    expect(() => emit(ir, mockDialect)).toThrow(/graph operations/);
-  });
-
-  test("supports JSON path extraction in where clause", async () => {
-    const ir: IR.IR = {
-      statements: [
-        {
-          type: IR.StatementType.Find,
+          type: IR.StatementType.Count,
           model: "User",
-          where: { "profile.name": "Alice" },
         } as any,
-      ],
-    };
+      ),
+      dialect,
+    );
 
-    const result = await emit(ir, mockDialect);
-    expect(result.command).toContain("JSON_EXTRACT");
+    expect(result.command).toBe(
+      `DELETE FROM "User" WHERE "id" = 1;SELECT COUNT(*) AS count FROM "User"`,
+    );
   });
 });

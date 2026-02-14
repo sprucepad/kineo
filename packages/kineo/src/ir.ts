@@ -1,4 +1,4 @@
-import type * as model from "./model";
+import * as model from "./model";
 
 /**
  * A type of statement.
@@ -7,10 +7,13 @@ export const enum StatementType {
   Find = "Find",
   Count = "Count",
   Create = "Create",
+  Update = "Update",
   Upsert = "Upsert",
   Delete = "Delete",
-  ConnectQuery = "ConnectQuery",
+  Connect = "Connect",
+  Disconnect = "Disconnect",
   RelationQuery = "RelationQuery",
+  Traverse = "Traverse",
 }
 
 /**
@@ -68,9 +71,23 @@ export interface CreateStatement extends Statement {
  * An `update`/`updateMany` statement.
  */
 export interface UpdateStatement extends Statement {
-  type: StatementType.Upsert;
+  type: StatementType.Update;
   where: Record<string, any>;
   data: Record<string, any>;
+  select?: Record<string, any>;
+  include?: Record<string, any>;
+}
+
+/**
+ * An `upsert`/`upsertMany` statement.
+ */
+export interface UpsertStatement extends Statement {
+  type: StatementType.Upsert;
+  where: Record<string, any>;
+  data: {
+    create?: Record<string, any>;
+    update?: Record<string, any>;
+  };
   select?: Record<string, any>;
   include?: Record<string, any>;
 }
@@ -84,10 +101,22 @@ export interface DeleteStatement extends Statement {
 }
 
 /**
- * A `connect`/`disconnect` statement.
+ * A `connect` statement.
  */
-export interface ConnectQueryStatement extends Statement {
-  type: StatementType.ConnectQuery;
+export interface ConnectStatement extends Statement {
+  type: StatementType.Connect;
+  from: Record<string, any>;
+  to: Record<string, any>;
+  relation: string;
+  direction?: string;
+  properties?: Record<string, any>;
+}
+
+/**
+ * A `connect` statement.
+ */
+export interface DisconnectStatement extends Statement {
+  type: StatementType.Disconnect;
   from: Record<string, any>;
   to: Record<string, any>;
   relation: string;
@@ -106,6 +135,17 @@ export interface RelationQueryStatement extends Statement {
   minDepth?: number;
   direction?: string;
   limit?: number;
+}
+
+export interface TraverseStatement extends Statement {
+  type: StatementType.Traverse;
+  start: Record<string, any>;
+  direction?: string;
+  minDepth?: number;
+  maxDepth?: number;
+  relationFilter?: string | string[];
+  includeNodes?: boolean;
+  includeEdges?: boolean;
 }
 
 // ---------- Parser / Emitter Utilities ---------- //
@@ -161,12 +201,12 @@ export function emitCreateStatement(
 }
 
 /**
- * Emits an `Update` or `Upsert` query
+ * Emits an `Upsert` query.
  */
 export function emitUpsertStatement(
   modelName: string,
   opts: model.UpsertOpts<any, any>,
-): UpdateStatement {
+): UpsertStatement {
   return {
     type: StatementType.Upsert,
     model: modelName,
@@ -175,6 +215,23 @@ export function emitUpsertStatement(
       create: opts.create,
       update: opts.update,
     },
+    select: opts.select,
+    include: opts.include,
+  };
+}
+
+/**
+ * Emits an `Update` query.
+ */
+export function emitUpdateStatement(
+  modelName: string,
+  opts: model.UpdateOpts<any, any>,
+): UpdateStatement {
+  return {
+    type: StatementType.Update,
+    model: modelName,
+    where: opts.where,
+    data: opts.data,
     select: opts.select,
     include: opts.include,
   };
@@ -197,12 +254,30 @@ export function emitDeleteStatement(
 /**
  * Emits a `Connect` query
  */
-export function emitConnectQueryStatement(
+export function emitConnectStatement(
   modelName: string,
   opts: model.ConnectOpts<any, any>,
-): ConnectQueryStatement {
+): ConnectStatement {
   return {
-    type: StatementType.ConnectQuery,
+    type: StatementType.Connect,
+    model: modelName,
+    from: opts.from.where,
+    to: opts.to.where,
+    relation: opts.relation,
+    direction: opts.direction,
+    properties: opts.properties,
+  };
+}
+
+/**
+ * Emits a `Disconnect` query
+ */
+export function emitDisconnectStatement(
+  modelName: string,
+  opts: model.ConnectOpts<any, any>,
+): DisconnectStatement {
+  return {
+    type: StatementType.Disconnect,
     model: modelName,
     from: opts.from.where,
     to: opts.to.where,
@@ -228,6 +303,23 @@ export function emitRelationQueryStatement(
     minDepth: opts.minDepth,
     direction: opts.direction,
     limit: opts.limit,
+  };
+}
+
+export function emitTraverseStatement(
+  modelName: string,
+  opts: model.TraverseOpts<any, any>,
+): TraverseStatement {
+  return {
+    type: StatementType.Traverse,
+    model: modelName,
+    start: opts.start.where,
+    direction: opts.direction,
+    includeEdges: opts.includeEdges,
+    includeNodes: opts.includeNodes,
+    relationFilter: opts.relationFilter,
+    maxDepth: opts.maxDepth,
+    minDepth: opts.depth,
   };
 }
 
@@ -258,6 +350,10 @@ export function emitToIR(modelName: string, op: string, opts: any): IR {
     case "createMany":
       stmt = emitCreateStatement(modelName, opts);
       break;
+    case "update":
+    case "updateMany":
+      stmt = emitUpdateStatement(modelName, opts);
+      break;
     case "upsert":
     case "upsertMany":
       stmt = emitUpsertStatement(modelName, opts);
@@ -266,14 +362,19 @@ export function emitToIR(modelName: string, op: string, opts: any): IR {
     case "deleteMany":
       stmt = emitDeleteStatement(modelName, opts);
       break;
-    case "connect":
     case "disconnect":
-      stmt = emitConnectQueryStatement(modelName, opts);
+      stmt = emitDisconnectStatement(modelName, opts);
+      break;
+    case "connect":
+      stmt = emitConnectStatement(modelName, opts);
       break;
     case "findPath":
     case "findShortestPath":
     case "findAllPaths":
       stmt = emitRelationQueryStatement(modelName, opts);
+      break;
+    case "traverse":
+      stmt = emitTraverseStatement(modelName, opts);
       break;
     default:
       throw new Error(`Unknown operation type: ${op}`);

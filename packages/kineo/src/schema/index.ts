@@ -3,9 +3,9 @@ import type { InferModelDef, ModelDef } from "./model";
 /**
  * A schema. Contains model definitions.
  */
-export interface Schema {
-  [key: string]: ModelDef<any>;
-}
+export type Schema = {
+  [Key in string]: ModelDef<any>;
+};
 
 /**
  * Infers a whole schema.

@@ -338,8 +338,8 @@ export class Model<S extends Schema, M extends ModelShape> {
    * @returns The first element that matches the filter, or `null` if not found.
    */
   async count<O extends QueryOpts<S, M>>(opts: O): CountReturn {
-    const { entryCount: rowCount } = await this.$exec(opts, "count");
-    return rowCount;
+    const { entryCount } = await this.$exec(opts, "count");
+    return entryCount;
   }
 
   /**

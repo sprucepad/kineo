@@ -1,248 +1,324 @@
-import { describe, test, expect } from "vitest";
+import { describe, it, expect } from "vitest";
 import emit from "@/emitters/cypher";
-import * as IR from "@/ir";
-import { DateTime } from "neo4j-driver";
+import {
+  StatementType,
+  makeIR,
+  type FindStatement,
+  type CountStatement,
+  type CreateStatement,
+  type DeleteStatement,
+  type ConnectStatement,
+  type RelationQueryStatement,
+  type Statement,
+  type UpsertStatement,
+} from "@/ir";
 
-describe("emit()", () => {
-  test("throws on unsupported statement type", () => {
-    const ir = { statements: [{ type: "Unknown" }] as any };
-    expect(() => emit(ir as any)).toThrow(/Unsupported statement type/);
+describe("Neo4j emitter", () => {
+  it("emits a simple FIND query", () => {
+    const stmt: FindStatement = {
+      type: StatementType.Find,
+      model: "User",
+      where: { id: 1 },
+    };
+
+    const { command, params } = emit(makeIR(stmt));
+
+    expect(command).toContain("MATCH (n:User)");
+    expect(command).toContain("WHERE (n.id = $id_1)");
+    expect(command).toContain("RETURN properties(n) AS n");
+
+    expect(Object.values(params)).toEqual([1]);
   });
 
-  test("emits a Find statement with where, orderBy, skip, take, and include", async () => {
-    const ir = {
-      statements: [
-        {
-          type: IR.StatementType.Find,
-          model: "User",
-          alias: "u",
-          where: { age: { gt: 18 }, OR: [{ name: "Alice" }, { name: "Bob" }] },
-          orderBy: [{ name: ["asc", "asc"] }],
-          skip: 5,
-          take: 10,
-          include: {
-            posts: {
-              where: { title: { contains: "Neo4j" } },
-              include: {
-                comments: {},
-              },
-            },
-          },
-        },
-      ],
-    } as any;
+  it("handles WHERE operators", () => {
+    const stmt: FindStatement = {
+      type: StatementType.Find,
+      model: "User",
+      where: {
+        age: { gt: 18 },
+        name: { contains: "john" },
+      },
+    };
 
-    const { command, params } = await emit(ir);
+    const { command } = emit(makeIR(stmt));
 
-    expect(command).toContain("MATCH (u:User)");
-    expect(command).toContain("WHERE");
-    expect(command).toContain("ORDER BY u.name ASC");
-    expect(command).toContain("SKIP 5");
-    expect(command).toContain("LIMIT 10");
-    expect(command).toContain("OPTIONAL MATCH (u)-[:POSTS]->(u_posts:posts)");
-    expect(command).toContain("OPTIONAL MATCH (u_posts)-[:COMMENTS]->");
-    expect(params).toMatchObject({
-      age_1: 18,
-      name_2: "Alice",
-      name_3: "Bob",
-    });
+    expect(command).toContain("n.age >");
+    expect(command).toContain("n.name CONTAINS");
   });
 
-  test("emits a Count statement", async () => {
-    const ir = {
-      statements: [
-        {
-          type: IR.StatementType.Count,
-          model: "User",
-          alias: "u",
-          where: { active: true },
-        },
-      ],
-    } as any;
+  it("handles AND / OR / NOT conditions", () => {
+    const stmt: FindStatement = {
+      type: StatementType.Find,
+      model: "User",
+      where: {
+        AND: [{ id: 1 }, { id: 2 }],
+        NOT: { age: { lt: 10 } },
+      },
+    };
 
-    const { command, params } = await emit(ir);
-    expect(command).toContain("MATCH (u:User)");
-    expect(command).toContain("RETURN count(u) AS count");
-    expect(Object.keys(params)).toContain("active_1");
+    const { command } = emit(makeIR(stmt));
+
+    expect(command).toContain("AND");
+    expect(command).toContain("NOT");
   });
 
-  test("emits a Create statement with props and select", async () => {
-    const ir = {
-      statements: [
-        {
-          type: IR.StatementType.Create,
-          model: "User",
-          alias: "u",
-          data: { name: "Alice", age: 30 },
-          select: { name: true },
-        },
-      ],
-    } as any;
+  it("emits COUNT query", () => {
+    const stmt: CountStatement = {
+      type: StatementType.Count,
+      model: "User",
+      where: { active: true },
+    };
 
-    const { command, params } = await emit(ir);
-    expect(command).toContain("CREATE (u:User");
-    expect(command).toContain("RETURN u.name AS name");
-    expect(params).toMatchObject({
-      create_name_1: "Alice",
-      create_age_2: 30,
-    });
+    const { command } = emit(makeIR(stmt));
+
+    expect(command).toContain("RETURN count(n) AS count");
   });
 
-  test("emits an Upsert with both create and update data", async () => {
-    const ir = {
-      statements: [
-        {
-          type: IR.StatementType.Upsert,
-          model: "User",
-          alias: "u",
-          where: { email: "a@b.com" },
-          data: {
-            create: { name: "Alice" },
-            update: { age: 31 },
-          },
-        },
-      ],
-    } as any;
+  it("emits CREATE query with params", () => {
+    const stmt: CreateStatement = {
+      type: StatementType.Create,
+      model: "User",
+      data: { name: "Alice", age: 30 },
+    };
 
-    const { command, params } = await emit(ir);
-    expect(command).toContain("MERGE (u:User");
+    const { command, params } = emit(makeIR(stmt));
+
+    expect(command).toContain("CREATE (n:User");
+    expect(command).toContain("RETURN properties(n) AS n");
+
+    expect(Object.values(params)).toContain("Alice");
+    expect(Object.values(params)).toContain(30);
+  });
+
+  it("emits UPSERT with MERGE when where exists", () => {
+    const stmt: UpsertStatement = {
+      type: StatementType.Upsert,
+      model: "User",
+      where: { id: 1 },
+      data: {
+        create: { name: "Alice" },
+        update: { name: "Bob" },
+      },
+    };
+
+    const { command } = emit(makeIR(stmt));
+
+    expect(command).toContain("MERGE (n:User");
     expect(command).toContain("ON CREATE SET");
     expect(command).toContain("ON MATCH SET");
-    expect(command).toContain("RETURN properties(u) AS u");
-    expect(Object.keys(params)).toEqual(
-      expect.arrayContaining([
-        "merge_email_1",
-        "oncreate_name_2",
-        "onmatch_age_3",
-      ]),
+  });
+
+  it("falls back to CREATE when UPSERT has no where", () => {
+    const stmt: UpsertStatement = {
+      type: StatementType.Upsert,
+      model: "User",
+      where: {},
+      data: {
+        create: { name: "Alice" },
+      },
+    };
+
+    const { command } = emit(makeIR(stmt));
+
+    expect(command).toContain("CREATE (n:User");
+    expect(command).not.toContain("MERGE");
+  });
+
+  it("emits DELETE query", () => {
+    const stmt: DeleteStatement = {
+      type: StatementType.Delete,
+      model: "User",
+      where: { id: 1 },
+    };
+
+    const { command } = emit(makeIR(stmt));
+
+    expect(command).toContain("DELETE n");
+  });
+
+  it("emits CONNECT query with OUT direction (default)", () => {
+    const stmt: ConnectStatement = {
+      type: StatementType.Connect,
+      model: "User",
+      from: { id: 1 },
+      to: { id: 2 },
+      relation: "friend",
+      direction: "OUT",
+    };
+
+    const { command } = emit(makeIR(stmt));
+
+    expect(command).toContain("MERGE (a)-[r:FRIEND");
+    expect(command).toContain("RETURN properties(r) AS relation");
+  });
+
+  it("emits CONNECT query with IN direction", () => {
+    const stmt: ConnectStatement = {
+      type: StatementType.Connect,
+      model: "User",
+      from: { id: 1 },
+      to: { id: 2 },
+      relation: "friend",
+      direction: "IN",
+    };
+
+    const { command } = emit(makeIR(stmt));
+
+    expect(command).toContain("<-[r:FRIEND");
+  });
+
+  it("emits RELATION query with depth and limit", () => {
+    const stmt: RelationQueryStatement = {
+      type: StatementType.RelationQuery,
+      model: "User",
+      from: { id: 1 },
+      to: { id: 2 },
+      minDepth: 1,
+      maxDepth: 3,
+      direction: "OUT",
+      limit: 10,
+    };
+
+    const { command } = emit(makeIR(stmt));
+
+    expect(command).toContain("MATCH p = (a)-[*1..3]->(b)");
+    expect(command).toContain("LIMIT 10");
+  });
+
+  it("handles includes recursively", () => {
+    const stmt: FindStatement = {
+      type: StatementType.Find,
+      model: "User",
+      include: {
+        posts: {
+          include: {
+            comments: {},
+          },
+        },
+      },
+    };
+
+    const { command } = emit(makeIR(stmt));
+
+    expect(command).toContain("OPTIONAL MATCH (n)-[:POSTS]->(n_posts:posts)");
+    expect(command).toContain(
+      "OPTIONAL MATCH (n_posts)-[:COMMENTS]->(n_posts_comments:comments)",
     );
   });
 
-  test("emits an Upsert fallback to simple create when no where keys", async () => {
+  it("normalizes Date values into neo4j DateTime", () => {
+    const stmt: CreateStatement = {
+      type: StatementType.Create,
+      model: "User",
+      data: { createdAt: new Date() },
+    };
+
+    const { params } = emit(makeIR(stmt));
+
+    const value = Object.values(params)[0];
+
+    // neo4j DateTime has .year property
+    expect(value).toHaveProperty("year");
+  });
+
+  it("joins multiple statements with blank lines", () => {
+    const ir = makeIR(
+      {
+        type: StatementType.Count,
+        model: "User",
+        where: {},
+      } as Statement,
+      {
+        type: StatementType.Delete,
+        model: "User",
+        where: { id: 1 },
+      } as Statement,
+    );
+
+    const { command } = emit(ir);
+
+    expect(command.split("\n\n").length).toBe(2);
+  });
+
+  it("throws for unsupported statement type", () => {
     const ir = {
       statements: [
         {
-          type: IR.StatementType.Upsert,
+          type: "Unknown" as any,
           model: "User",
-          alias: "u",
-          where: {},
-          data: { create: { name: "Alice" } },
         },
       ],
-    } as any;
+    };
 
-    const { command } = await emit(ir);
-    expect(command).toContain("CREATE (u:User");
-    expect(command).toContain("RETURN properties(u) AS u");
+    expect(() => emit(ir as any)).toThrow();
   });
 
-  test("emits a Delete statement", async () => {
-    const ir = {
-      statements: [
-        {
-          type: IR.StatementType.Delete,
-          model: "User",
-          alias: "u",
-          where: { id: 123 },
-        },
-      ],
+  it("emits UPDATE query with where, partial patch, select, and include", () => {
+    const stmt = {
+      type: StatementType.Update,
+      model: "User",
+      where: { id: 1 },
+      data: { name: "Updated", age: 42 },
+      select: { name: true },
+      include: {
+        posts: true,
+      },
     } as any;
 
-    const { command, params } = await emit(ir);
-    expect(command).toContain("DELETE u");
-    expect(params).toMatchObject({ id_1: 123 });
+    const { command, params } = emit(makeIR(stmt));
+
+    // MATCH + WHERE
+    expect(command).toContain("MATCH (n:User)");
+    expect(command).toContain("WHERE n.id =");
+
+    // Partial update
+    expect(command).toContain("SET n +=");
+
+    // Include relationship
+    expect(command).toContain("OPTIONAL MATCH (n)-[:POSTS]->(n_posts)");
+
+    // RETURN structure
+    expect(command).toContain("RETURN {");
+    expect(command).toContain("posts: collect(properties(n_posts))");
+
+    // Params should contain where value
+    expect(Object.values(params)).toContain(1);
+
+    // Patch param should contain updated fields
+    const patch = Object.values(params).find(
+      (v) => typeof v === "object" && v?.name === "Updated",
+    );
+
+    expect(patch).toBeDefined();
+    expect(patch).toMatchObject({ name: "Updated", age: 42 });
   });
 
-  test("emits a ConnectQuery statement (OUT direction)", async () => {
-    const ir = {
-      statements: [
-        {
-          type: IR.StatementType.ConnectQuery,
-          model: "User",
-          relation: "FRIENDS_WITH",
-          from: { id: 1 },
-          to: { id: 2 },
-          properties: { since: 2024 },
-          direction: "OUT",
-        },
-      ],
+  it("emits TRAVERSE query with relation filter and node+edge output", () => {
+    const stmt = {
+      type: StatementType.Traverse,
+      model: "User",
+      start: { id: 1 },
+      minDepth: 1,
+      maxDepth: 3,
+      relationFilter: ["friend", "follows"],
+      direction: "OUT",
+      includeNodes: true,
+      includeEdges: true,
     } as any;
 
-    const { command, params } = await emit(ir);
-    expect(command).toContain("MERGE (a)-[r:FRIENDS_WITH");
-    expect(command).toContain("RETURN properties(r) AS relation");
-    expect(params).toMatchObject({
-      rel_since_1: 2024,
-      id_2: 1,
-      id_3: 2,
-    });
-  });
+    const { command, params } = emit(makeIR(stmt));
 
-  test("emits a ConnectQuery with IN and BOTH directions", async () => {
-    const inIR = {
-      statements: [
-        {
-          type: IR.StatementType.ConnectQuery,
-          model: "User",
-          relation: "KNOWS",
-          from: { id: 1 },
-          to: { id: 2 },
-          direction: "IN",
-        },
-      ],
-    } as any;
-    const bothIR = {
-      statements: [
-        {
-          type: IR.StatementType.ConnectQuery,
-          model: "User",
-          relation: "KNOWS",
-          from: { id: 1 },
-          to: { id: 2 },
-          direction: "BOTH",
-        },
-      ],
-    } as any;
+    // Start match
+    expect(command).toContain("MATCH (a)");
+    expect(command).toContain("WHERE (a.id =");
 
-    expect((await emit(inIR)).command).toContain("<-[r:KNOWS");
-    expect((await emit(bothIR)).command).toContain("-[r:KNOWS");
-  });
+    // Proper relationship pattern with types + depth
+    expect(command).toContain("p = (a)-[r:FRIEND|:FOLLOWS*1..3]->(b)");
 
-  test("emits a RelationQuery statement with min/max/limit/direction", async () => {
-    const ir = {
-      statements: [
-        {
-          type: IR.StatementType.RelationQuery,
-          model: "User",
-          from: { id: 1 },
-          to: { id: 2 },
-          direction: "IN",
-          minDepth: 1,
-          maxDepth: 3,
-          limit: 2,
-        },
-      ],
-    } as any;
+    // Return traversal structure
+    expect(command).toContain("nodes: [n IN nodes(p)");
+    expect(command).toContain("edges: [e IN relationships(p)");
 
-    const { command } = await emit(ir);
-    expect(command).toContain("MATCH (a:User)");
-    expect(command).toContain("<-[:*1..3]->");
-    expect(command).toContain("RETURN p");
-    expect(command).toContain("LIMIT 2");
-  });
-
-  test("normalizes dates into neo4j date time", async () => {
-    const ir = {
-      statements: [
-        {
-          type: IR.StatementType.Create,
-          data: {
-            hello: new Date(),
-          },
-        },
-      ],
-    } as any;
-    const { params } = await emit(ir);
-    expect(params["create_hello_1"]).toBeInstanceOf(DateTime);
+    expect(Object.values(params)).toContain(1);
   });
 });

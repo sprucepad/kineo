@@ -26,6 +26,10 @@ export type Emitter<T = any> = (ir: IR, preset?: T) => Resolvable<EmitResult>;
 export interface ExecResult<T = any> {
   entries: Record<string, any>[];
   entryCount: number;
+
+  nodes?: Record<string, any>[];
+  nodeCount?: number;
+
   edges?: {
     type: string;
     direction: "incoming" | "outgoing";
@@ -83,7 +87,9 @@ export interface Adapter<TModelCtor extends ModelCtor, Summary = any> {
  * @param fn The emitter function.
  * @returns The same function.
  */
-export function defineEmitter<T>(fn: Emitter<T>): Emitter<T> {
+export function defineEmitter<T, R = EmitResult>(
+  fn: (ir: IR, preset?: T) => R,
+): (ir: IR, preset?: T) => R {
   return fn;
 }
 

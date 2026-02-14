@@ -105,6 +105,29 @@ export class GraphModel<S extends Schema, M extends ModelShape> extends Model<
    */
   async findPath(opts: PathOpts<S, M>): PathReturn<S, M> {
     const result = await this.$exec(opts, "findPath");
+
+    const entry = result.entries?.[0] as any;
+
+    // If adapter returned a Neo4j-style path object
+    if (entry && Array.isArray(entry.segments)) {
+      const nodes = [entry.start];
+
+      for (const seg of entry.segments) {
+        nodes.push(seg.end);
+      }
+
+      return {
+        nodes: nodes as InferModelShape<M, S>[],
+        edges:
+          result.edges?.map((e) => ({
+            type: e.type,
+            direction: "outgoing", // path queries currently undirected
+            props: e.props,
+          })) ?? [],
+      };
+    }
+
+    // Fallback (non-path adapter)
     return {
       nodes: result.entries as InferModelShape<M, S>[],
       edges: result.edges ?? [],

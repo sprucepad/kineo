@@ -109,13 +109,17 @@ const emit = defineEmitter<Dialect>((ir, dialect) => {
       case IR.StatementType.Create:
         sqlStatements.push(emitCreate(ctx, stmt as IR.CreateStatement));
         break;
+      case IR.StatementType.Update:
+        sqlStatements.push(emitUpdate(ctx, stmt as IR.UpdateStatement));
+        break;
       case IR.StatementType.Upsert:
-        sqlStatements.push(emitUpsert(ctx, stmt as IR.UpdateStatement));
+        sqlStatements.push(emitUpsert(ctx, stmt as IR.UpsertStatement));
         break;
       case IR.StatementType.Delete:
         sqlStatements.push(emitDelete(ctx, stmt as IR.DeleteStatement));
         break;
-      case IR.StatementType.ConnectQuery:
+      case IR.StatementType.Connect:
+      case IR.StatementType.Disconnect:
       case IR.StatementType.RelationQuery:
         throw new Error(
           `${stmt.type} is not supported by the SQL emitter (graph operations).`,
@@ -269,7 +273,32 @@ function emitCreate(ctx: Ctx, s: IR.CreateStatement): string {
   return `INSERT INTO ${table} (${colList}) VALUES (${placeholders}) ${returning || ""}`.trim();
 }
 
-function emitUpsert(ctx: Ctx, s: IR.UpdateStatement): string {
+function emitUpdate(ctx: Ctx, s: IR.UpdateStatement): string {
+  const d = ctx.dialect;
+  const table = d.identifier(s.model);
+
+  const data = s.data || {};
+  const keys = Object.keys(data);
+
+  if (keys.length === 0) {
+    throw new Error("Update statement requires at least one field in `data`.");
+  }
+
+  const assignments = keys.map((k) => {
+    const colExpr = emitColumnOrJson(ctx, k);
+    const valueExpr = literalForValue(ctx, data[k]);
+    return `${colExpr} = ${valueExpr}`;
+  });
+
+  const whereFrag = emitWhere(ctx, s.where);
+  const returning = d.returning(s.select ? Object.keys(s.select) : undefined);
+
+  return [`UPDATE ${table} SET ${assignments.join(", ")}`, whereFrag, returning]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function emitUpsert(ctx: Ctx, s: IR.UpsertStatement): string {
   const d = ctx.dialect;
   const table = d.identifier(s.model);
 

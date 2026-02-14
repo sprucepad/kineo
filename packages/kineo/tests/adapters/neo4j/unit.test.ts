@@ -58,7 +58,7 @@ describe("auth()", () => {
   });
 });
 
-describe("neo4jAdapter (integration)", () => {
+describe("neo4jAdapter()", () => {
   let adapter: Neo4jAdapter;
 
   beforeAll(async () => {
@@ -255,7 +255,7 @@ describe("collectEdges()", () => {
     const edges: any[] = [];
     collectEdges(path, edges);
 
-    expect(edges).toHaveLength(2);
+    expect(edges).toHaveLength(1);
     expect(edges[0]).toMatchObject({
       id: 2,
       type: "WROTE",
