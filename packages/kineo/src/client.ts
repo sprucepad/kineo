@@ -53,7 +53,7 @@ export function kineo<
 >(adapter: TAdapter, schema: TSchema): Kineo<TSchema, TAdapter> {
   const modelsForSchema: Partial<ModelsForSchema<TSchema, TAdapter>> = {};
   for (const key in schema) {
-    const modelDef = schema[key];
+    const modelDef = schema[key]!;
     modelDef.update();
 
     modelsForSchema[key] = new adapter.Model(

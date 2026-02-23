@@ -75,7 +75,7 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
   for (const model of prevModels) {
     if (!cur[model]) {
       breaking.push(`Model "${model}" was removed`);
-    } else if (cur[model].$name !== prev[model].$name) {
+    } else if (cur[model].$name !== prev[model]!.$name) {
       breaking.push(`Model "${model}" was renamed to ${cur[model].$name}`);
     }
   }
@@ -88,7 +88,7 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
 
   // Compare existing models
   for (const model of prevModels) {
-    const prevDef = prev[model];
+    const prevDef = prev[model]!;
     const curDef = cur[model];
     if (!curDef) continue;
 

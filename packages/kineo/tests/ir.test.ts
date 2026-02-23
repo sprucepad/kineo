@@ -147,17 +147,17 @@ describe("IR emitters", () => {
   describe("emitToIR routing", () => {
     it("routes findMany to FindStatement", () => {
       const ir = emitToIR(modelName, "findMany", {});
-      expect(ir.statements[0].type).toBe(StatementType.Find);
+      expect(ir.statements[0]!.type).toBe(StatementType.Find);
     });
 
     it("routes count to CountStatement", () => {
       const ir = emitToIR(modelName, "count", {});
-      expect(ir.statements[0].type).toBe(StatementType.Count);
+      expect(ir.statements[0]!.type).toBe(StatementType.Count);
     });
 
     it("routes create to CreateStatement", () => {
       const ir = emitToIR(modelName, "create", { data: {} });
-      expect(ir.statements[0].type).toBe(StatementType.Create);
+      expect(ir.statements[0]!.type).toBe(StatementType.Create);
     });
 
     it("throws on unknown operation", () => {

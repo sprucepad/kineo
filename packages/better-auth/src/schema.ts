@@ -72,11 +72,11 @@ export function toKineoSchema(schema?: BetterAuthPluginDBSchema) {
 
   const models: Record<string, ModelDef<any>> = {};
   for (const modelKey in schema) {
-    const baModel = schema[modelKey];
+    const baModel = schema[modelKey]!;
 
     const fields: ModelShape = {};
     for (const fieldKey in baModel.fields) {
-      const baField = baModel.fields[fieldKey];
+      const baField = baModel.fields[fieldKey]!;
       let f: ModelShape[string];
 
       if (baField.references) {

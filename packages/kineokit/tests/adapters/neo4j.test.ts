@@ -38,12 +38,12 @@ describe("neo4jAdapterKit (integration)", () => {
     expect(pulled.schema.Post).toBeDefined();
 
     // Sampled properties
-    expect(pulled.schema.User.$shape.name).toBeDefined();
-    expect(pulled.schema.User.$shape.age).toBeDefined();
+    expect(pulled.schema.User?.$shape.name).toBeDefined();
+    expect(pulled.schema.User?.$shape.age).toBeDefined();
 
     // Sampled relationships
-    expect(pulled.schema.User.$shape.WROTE).toBeDefined();
-    expect(pulled.schema.Post.$shape.WROTE).toBeDefined();
+    expect(pulled.schema.User?.$shape.WROTE).toBeDefined();
+    expect(pulled.schema.Post?.$shape.WROTE).toBeDefined();
   });
 
   // ---------------------------------------------------------------------------

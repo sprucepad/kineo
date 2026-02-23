@@ -175,7 +175,7 @@ export const neo4jAdapter = defineAdapter<Neo4jAdapter, [Neo4jOpts]>((opts) => {
 
         // If record has a single key and that key was a node, unwrap it
         if (record.keys.length === 1) {
-          const value = toNative(record.get(record.keys[0]));
+          const value = toNative(record.get(record.keys[0]!));
           entries.push(value);
         } else {
           entries.push(obj);

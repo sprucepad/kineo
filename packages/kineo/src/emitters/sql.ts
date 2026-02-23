@@ -147,7 +147,7 @@ function emitColumnOrJson(ctx: Ctx, key: string): string {
     const [col, ...pathParts] = key.split(".");
     // dialect.jsonExtract(column, path) expects path as something like '$.a.b'
     const jsonPath = "$." + pathParts.join(".");
-    return ctx.dialect.jsonExtract(ctx.dialect.identifier(col), jsonPath);
+    return ctx.dialect.jsonExtract(ctx.dialect.identifier(col!), jsonPath);
   }
   return ctx.dialect.identifier(key);
 }
@@ -347,7 +347,7 @@ function emitFind(ctx: Ctx, s: IR.FindStatement): string {
   const orderBy = s.orderBy?.length
     ? `ORDER BY ${s.orderBy
         .map((ob) => {
-          const [k, dir] = Object.entries(ob)[0];
+          const [k, dir] = Object.entries(ob)[0] as [string, "asc" | "desc"];
           return `${d.identifier(k)} ${dir === "desc" ? "DESC" : "ASC"}`;
         })
         .join(", ")}`

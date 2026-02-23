@@ -1,14 +1,8 @@
 {
-  "compilerOptions": {
-    "target": "es2020",
-    "module": "es2020",
-    "moduleResolution": "bundler",
-    "noEmit": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "declaration": true,
-    "skipLibCheck": true,
-    "verbatimModuleSyntax": true,
-    "sourceMap": true
-  }
+  "files": [],
+  "references": [
+    { "path": "./packages/kineo" },
+    { "path": "./packages/kineokit" },
+    { "path": "./packages/better-auth" }
+  ]
 }

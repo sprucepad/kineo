@@ -82,7 +82,7 @@ describe("neo4jAdapter()", () => {
     );
 
     expect(createRes.records.length).toBe(1);
-    const node = createRes.records[0].get("n");
+    const node = createRes.records[0]!.get("n");
     expect(node.labels).toContain("Person");
 
     const result = await adapter.exec({
@@ -91,7 +91,7 @@ describe("neo4jAdapter()", () => {
     });
 
     expect(result.entries.length).toBe(1);
-    const entry = result.entries[0];
+    const entry = result.entries[0]!;
     expect(entry.name).toBe("Alice");
     expect(entry.age).toBe(30);
     expect(result.summary).toBeDefined();
@@ -109,7 +109,7 @@ describe("neo4jAdapter()", () => {
     });
 
     expect(result.edgeCount).toBeGreaterThan(0);
-    const edge = result.edges![0];
+    const edge = result.edges![0]!;
     expect(edge.type).toBe("KNOWS");
     expect(edge.props.since).toBe(2020);
   });

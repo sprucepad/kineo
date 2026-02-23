@@ -281,7 +281,7 @@ function emitFindStatement(ctx: EmitContext, s: IR.FindStatement): string {
     s.orderBy && s.orderBy.length
       ? `ORDER BY ${s.orderBy
           .map((o) => {
-            const [[field, dir]] = Object.entries(o);
+            const [[field, dir]] = Object.entries(o) as [[string, string]];
             return `${alias}.${field} ${dir.toUpperCase()}`;
           })
           .join(", ")}`

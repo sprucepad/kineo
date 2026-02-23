@@ -70,7 +70,7 @@ export class ModelDef<S extends ModelShape> {
    */
   update() {
     for (const key in this.$shape) {
-      const property = this.$shape[key];
+      const property = this.$shape[key]!;
       if (property.$indexName && !this.$indexes.has(property.$indexName)) {
         this.$indexes.set(property.$indexName, { fields: [key] });
       }

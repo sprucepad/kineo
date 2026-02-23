@@ -67,9 +67,9 @@ function toEntriesSplit(
 
         let note: string;
         let description: string | undefined;
-        if (i + 1 < split.length && split[i + 1].startsWith("--")) {
+        if (i + 1 < split.length && split[i + 1]!.startsWith("--")) {
           description = entry;
-          note = split[++i];
+          note = split[++i]!;
         } else {
           note = entry;
         }

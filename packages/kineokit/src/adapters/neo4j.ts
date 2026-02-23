@@ -134,7 +134,7 @@ export const neo4jKit = defineAdapterKit<
         return "pending";
       }
 
-      const deployed = result.records[0].get("deployed");
+      const deployed = result.records[0]!.get("deployed");
       return deployed ? "completed" : "pending";
     },
 
@@ -150,7 +150,7 @@ export const neo4jKit = defineAdapterKit<
       // ---------- New models ----------
       for (const m in cur) {
         if (!prevModels.has(m)) {
-          const def = cur[m];
+          const def = cur[m]!;
           const label = modelLabel(m, def);
           const idProp = findIdFieldName(def);
 
@@ -174,7 +174,7 @@ export const neo4jKit = defineAdapterKit<
       // ---------- Removed models ----------
       for (const m of Object.keys(prev)) {
         if (!curModels.has(m)) {
-          const def = prev[m];
+          const def = prev[m]!;
           const label = modelLabel(m, def);
           const idProp = findIdFieldName(def);
 
@@ -203,7 +203,7 @@ export const neo4jKit = defineAdapterKit<
         if (!prev[m]) continue;
 
         const prevDef = prev[m];
-        const curDef = cur[m];
+        const curDef = cur[m]!;
         const label = modelLabel(m, curDef);
 
         const prevKeys = new Set(Object.keys(prevDef.$shape));
