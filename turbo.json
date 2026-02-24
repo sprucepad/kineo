@@ -2,19 +2,29 @@
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
   "tasks": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**/*", "build/**/*"]
+    // packages
+    "prepare": {
+      "dependsOn": ["^prepare"],
+      "outputs": ["dist/**/*"]
     },
     "check": {
-      "dependsOn": ["^build", "^check"]
+      "dependsOn": ["^prepare", "^check"]
     },
     "test": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^prepare"],
       "persistent": true,
       "cache": false
     },
+    // apps
     "dev": {
+      "persistent": true,
+      "cache": false
+    },
+    "build": {
+      "dependsOn": ["^prepare", "^build"]
+    },
+    "serve": {
+      "dependsOn": ["^prepare", "^build", "build"],
       "persistent": true,
       "cache": false
     }
