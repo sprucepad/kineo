@@ -1,0 +1,23 @@
+<%- include("./partials/header") %>
+
+<h1><%- database %> example</h1>
+
+<div>
+  <form type="submit">
+    <input type="text" name="username" placeholder="Username" />
+    <input type="password" name="password" placeholder="Password" />
+    <input type="text" name="title" placeholder="Title" />
+    <textarea name="content" placeholder="Content"></textarea>
+    <button type="submit">Send</button>
+  </form>
+  </div>
+  <div>
+    <% if (data.length) { %>
+      <h1>TODO</h1>
+    <% } else { %>
+      <p>Nothing here yet!</p>
+    <% } %>
+  </div>
+</div>
+
+<%- include("./partials/footer") %>
