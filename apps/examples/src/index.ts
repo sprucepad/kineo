@@ -6,6 +6,7 @@ const PORT = 5500;
 const app = express();
 app.set("view engine", "ejs");
 app.set("views", "./views");
+app.use(express.urlencoded({ extended: true }));
 app.get("/", (_, res) => res.render("index"));
 
 app.use("/neo4j", neo4jRouter);
