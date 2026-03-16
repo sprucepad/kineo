@@ -10,6 +10,7 @@ import { Command } from "convoker";
 
 export default new Command("deploy")
   .description("Deploys existing migrations.")
+  .input({}) // ?? TODO
   .action(async () => {
     const entries = await fs.readdir(path.join(CWD, config.migrations));
 

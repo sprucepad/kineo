@@ -34,13 +34,13 @@
   ],
   "author": "sprucepad",
   "license": "MIT",
-  "packageManager": "pnpm@10.30.1",
+  "packageManager": "pnpm@10.32.1",
   "dependencies": {
-    "convoker": "^0.4.1",
+    "convoker": "^0.5.1",
     "jiti": "^2.6.1"
   },
   "peerDependencies": {
-    "kineo": "workspace:*",
+    "kineo": "workspace:^",
     "neo4j-driver": "^6.0.0"
   },
   "peerDependenciesMeta": {
@@ -50,7 +50,7 @@
   },
   "devDependencies": {
     "@testcontainers/neo4j": "^11.11.0",
-    "kineo": "workspace:*",
+    "kineo": "workspace:^",
     "neo4j-driver": "^6.0.0"
   }
 }

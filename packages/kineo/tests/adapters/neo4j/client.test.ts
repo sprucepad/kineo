@@ -32,7 +32,7 @@ describe("Kineo + Neo4j Integration", () => {
   let client: Kineo<typeof schema, Neo4jAdapter>;
 
   beforeAll(async () => {
-    const container = await new Neo4jContainer("neo4j:5").start();
+    const container = await new Neo4jContainer("neo4j:latest").start();
     const adapter = neo4jAdapter({
       url: container.getBoltUri(),
       auth: {

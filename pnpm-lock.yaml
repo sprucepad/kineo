@@ -48,7 +48,7 @@ importers:
         specifier: ^5.2.1
         version: 5.2.1
       kineo:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/kineo
       neo4j-driver:
         specifier: ^6.0.0
@@ -64,7 +64,7 @@ importers:
         specifier: ~20.19.6
         version: 20.19.31
       kineokit:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/kineokit
       tsx:
         specifier: ^4.21.0
@@ -113,7 +113,7 @@ importers:
         specifier: ^1.0.0
         version: 1.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       kineo:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../kineo
 
   packages/kineo:
@@ -128,8 +128,8 @@ importers:
   packages/kineokit:
     dependencies:
       convoker:
-        specifier: ^0.4.1
-        version: 0.4.1
+        specifier: ^0.5.1
+        version: 0.5.1
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
@@ -138,7 +138,7 @@ importers:
         specifier: ^11.11.0
         version: 11.11.0
       kineo:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../kineo
       neo4j-driver:
         specifier: ^6.0.0
@@ -823,6 +823,35 @@ packages:
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
     engines: {node: '>=0.1.90'}
+
+  '@convoker/core@0.1.1':
+    resolution: {integrity: sha512-L2sooVQ706SltUxqRE7zMuAhlR1eUi430OUSk1q5j9qJBDmkYeanJIZgqy+ryctHFC5fv1Q3vQWpDJ7cQNcH1g==}
+    peerDependencies:
+      '@convoker/input': 0.1.1
+      '@convoker/log': 0.1.1
+      '@convoker/prompt': 0.2.0
+      '@convoker/theme': 0.1.1
+    peerDependenciesMeta:
+      '@convoker/input':
+        optional: true
+      '@convoker/log':
+        optional: true
+      '@convoker/prompt':
+        optional: true
+      '@convoker/theme':
+        optional: true
+
+  '@convoker/input@0.1.1':
+    resolution: {integrity: sha512-XGiJnGk/OXOM9UvLWFzwsnhs0OUvMDLMxZyd5cP7Ob0wkgvPNZNSpNPo9VgpvIzqD4ihK05LrNXTx2DDXSKpaQ==}
+
+  '@convoker/log@0.1.1':
+    resolution: {integrity: sha512-NeO5yr7gI52g+NIQLlOJmC+RzPjAwKSox0hrAw70GMEzYwkMtO4S9S1cPsZ9wx2wxdnm32/7oS7Z9yirDGTzjw==}
+
+  '@convoker/prompt@0.2.0':
+    resolution: {integrity: sha512-Wt+5jpzDnSwscvN8IKSz3jpopv8FXAhLHJmtBgZscsU3ysmMjSa8A4QmagS/CW2PF/3PerJ+hwzXWBOsmoF8pQ==}
+
+  '@convoker/theme@0.1.1':
+    resolution: {integrity: sha512-AVKUPPgPiYzQYrujPOXjIhXKQbykYTL7tj8Ec5t0dmqOqi/Xt5waUvzqB0G8nTSRs1ht6TiHNqFqVQaxnwV5NA==}
 
   '@csstools/cascade-layer-name-parser@2.0.5':
     resolution: {integrity: sha512-p1ko5eHgV+MgXFVa4STPKpvPxr6ReS8oS2jzTukjR74i5zJNyWO1ZM1m8YKBXnzDKWfBN1ztLYlHxbVemDD88A==}
@@ -3137,8 +3166,8 @@ packages:
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
-  convoker@0.4.1:
-    resolution: {integrity: sha512-Ui0g/O+SzD3gCBiqL8JFURjCNZDRZ4ISfW1mrJupIcDieqSvj7ghK0BztSDwPVN8pRUxXzq8iyRuJCagAlVHpg==}
+  convoker@0.5.1:
+    resolution: {integrity: sha512-2LbH3OZBnuzNIvjAeolTXGtchfOeuITeDtuii0oRa/WXw4XwTmTh56xDvDTFL+U8z5HW0blFUJNaBLPU3OoFcw==}
 
   cookie-signature@1.0.7:
     resolution: {integrity: sha512-NXdYc3dLr47pBkpUCHtKSwIOQXLVn8dZEuywboCOJY/osA0wFSLlSawr3KN8qXJEyX66FcONTH8EIlVuK0yyFA==}
@@ -7666,6 +7695,26 @@ snapshots:
   '@colors/colors@1.5.0':
     optional: true
 
+  '@convoker/core@0.1.1(@convoker/input@0.1.1)(@convoker/log@0.1.1)(@convoker/prompt@0.2.0)(@convoker/theme@0.1.1)':
+    optionalDependencies:
+      '@convoker/input': 0.1.1
+      '@convoker/log': 0.1.1
+      '@convoker/prompt': 0.2.0
+      '@convoker/theme': 0.1.1
+
+  '@convoker/input@0.1.1': {}
+
+  '@convoker/log@0.1.1':
+    dependencies:
+      '@convoker/theme': 0.1.1
+
+  '@convoker/prompt@0.2.0':
+    dependencies:
+      '@convoker/input': 0.1.1
+      '@convoker/theme': 0.1.1
+
+  '@convoker/theme@0.1.1': {}
+
   '@csstools/cascade-layer-name-parser@2.0.5(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)':
     dependencies:
       '@csstools/css-parser-algorithms': 3.0.5(@csstools/css-tokenizer@3.0.4)
@@ -10644,7 +10693,13 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  convoker@0.4.1: {}
+  convoker@0.5.1:
+    dependencies:
+      '@convoker/core': 0.1.1(@convoker/input@0.1.1)(@convoker/log@0.1.1)(@convoker/prompt@0.2.0)(@convoker/theme@0.1.1)
+      '@convoker/input': 0.1.1
+      '@convoker/log': 0.1.1
+      '@convoker/prompt': 0.2.0
+      '@convoker/theme': 0.1.1
 
   cookie-signature@1.0.7: {}
 

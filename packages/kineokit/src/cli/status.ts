@@ -10,6 +10,7 @@ import { Command, log } from "convoker";
 
 export default new Command("status")
   .description("Gets status for existing migrations.")
+  .input({}) // ?? TODO fix this in convoker
   .action(async () => {
     const entries = await fs.readdir(path.join(CWD, config.migrations));
 
