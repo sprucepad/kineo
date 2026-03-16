@@ -1,4 +1,4 @@
-import { color, Command, i, log, prompt } from "convoker";
+import { theme, Command, i, log, prompt } from "convoker";
 import { push, type SchemaDiff } from "@/kit";
 import { KineoKitError } from "@/error";
 import { config } from ".";
@@ -18,8 +18,8 @@ export default new Command("push")
         const { data } = e as KineoKitError<SchemaDiff>;
         if ((data?.breaking.length ?? 0) > 0) {
           log.info(
-            `Changes:\n${color.bold("- Breaking:")}\n${data?.breaking.map((entry) => `  ${entry}`).join("\n")}
-${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}`)}`,
+            `Changes:\n${theme.bold("- Breaking:")}\n${data?.breaking.map((entry) => `  ${entry}`).join("\n")}
+${theme.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}`)}`,
           );
           const confirmed = await prompt.confirm({
             message:

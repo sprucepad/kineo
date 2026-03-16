@@ -9,8 +9,8 @@ export async function tryImport(
   opts?: JitiResolveOptions & { default?: true },
 ): Promise<any> {
   try {
-    return jiti.import("./" + id, opts);
+    return jiti.import("./" + id.replace(/\.[^.]+$/, ""), opts);
   } catch {
-    return jiti.import("./" + id.split(".").slice(0, -1).join("."), opts);
+    return jiti.import("./" + id, opts);
   }
 }

@@ -58,7 +58,7 @@ describe("neo4jAdapter()", () => {
   let adapter: Neo4jAdapter;
 
   beforeAll(async () => {
-    const container = await new Neo4jContainer("neo4j:5").start();
+    const container = await new Neo4jContainer("neo4j:latest").start();
     adapter = neo4jAdapter({
       url: container.getBoltUri(),
       auth: {

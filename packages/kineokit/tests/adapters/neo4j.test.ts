@@ -6,7 +6,7 @@ import { Neo4jContainer } from "@testcontainers/neo4j";
 describe("neo4jAdapterKit (integration)", () => {
   let adapter: Neo4jKit;
   beforeAll(async () => {
-    const container = await new Neo4jContainer("neo4j:5").start();
+    const container = await new Neo4jContainer("neo4j:latest").start();
     adapter = neo4jKit({
       url: container.getBoltUri(),
       auth: {

@@ -53,9 +53,8 @@
   ],
   "scripts": {
     "check": "tsc",
-    "build": "tsdown",
-    "test": "vitest",
-    "prepare": "pnpm build"
+    "prepare": "tsdown",
+    "test": "vitest"
   },
   "keywords": [
     "ogm",
