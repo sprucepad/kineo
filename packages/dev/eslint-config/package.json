@@ -1,0 +1,21 @@
+{
+  "name": "@dev/eslint-config",
+  "type": "module",
+  "private": true,
+  "exports": {
+    "./*": "./*.js"
+  },
+  "devDependencies": {
+    "eslint": "^10.1.0",
+    "typescript": "^6.0.2"
+  },
+  "peerDependencies": {
+    "eslint": "^10.1.0",
+    "typescript": "^6.0.2"
+  },
+  "dependencies": {
+    "@eslint/js": "^10.0.1",
+    "globals": "^17.4.0",
+    "typescript-eslint": "^8.57.2"
+  }
+}

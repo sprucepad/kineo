@@ -1,19 +1,8 @@
-export { kineo, type Kineo, type InferClient } from "./client";
-export {
-  defineSchema,
-  model,
-  field,
-  relation,
-  ModelDef,
-  type Schema,
-  type InferSchema,
-  type InferModelDef,
-  type InferModelShape,
-} from "./schema";
-export { Model, GraphModel } from "./model";
-export {
-  defineAdapter,
-  defineEmitter,
-  type Adapter,
-  type Emitter,
-} from "./adapter";
+export function greet(...names: string[]) {
+  for (const name of names) {
+    console.log(`Hello, ${name}!`);
+  }
+}
+
+export * from "./schema";
+export type * as IR from "./ir";

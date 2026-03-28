@@ -1,79 +1,124 @@
 {
   "name": "kineo",
-  "version": "0.11.3",
   "type": "module",
-  "description": "Declarive, TypeScript-first Object-Relation/Graph Mapper (ORM/OGM).",
+  "version": "0.12.0",
+  "description": "Declarative, TypeScript-first Object-Relation Mapper",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sprucepad/kineo"
   },
   "engines": {
-    "node": ">= 20.19.0"
+    "node": ">=22.22.2"
   },
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs"
     },
-    "./schema": {
-      "types": "./dist/schema/index.d.mts",
-      "import": "./dist/schema/index.mjs"
-    },
-    "./model": {
-      "types": "./dist/model/index.d.mts",
-      "import": "./dist/model/index.mjs"
+    "./runtime": {
+      "types": "./dist/runtime/index.d.mts",
+      "import": "./dist/runtime/index.mjs"
     },
     "./adapter": {
-      "types": "./dist/adapter.d.mts",
-      "import": "./dist/adapter.mjs"
+      "types": "./dist/adapter/index.d.mts",
+      "import": "./dist/adapter/index.mjs"
     },
-    "./ir": {
-      "types": "./dist/ir.d.mts",
-      "import": "./dist/import.mjs"
+    "./adapter/postgres": {
+      "types": "./dist/adapter/postgres/index.d.mts",
+      "import": "./dist/adapter/postgres/index.mjs"
     },
-    "./client": {
-      "types": "./dist/client.d.mts",
-      "import": "./dist/client.mjs"
+    "./adapter/postgres/runtime": {
+      "types": "./dist/adapter/postgres/runtime.d.mts",
+      "import": "./dist/adapter/postgres/runtime.mjs"
     },
-    "./adapters/neo4j": {
-      "types": "./dist/adapters/neo4j.d.mts",
-      "import": "./dist/adapters/neo4j.mjs"
+    "./adapter/sqlite3": {
+      "types": "./dist/adapter/sqlite3/index.d.mts",
+      "import": "./dist/adapter/sqlite3/index.mjs"
     },
-    "./emitters/cypher": {
-      "types": "./dist/emitters/cypher.d.mts",
-      "import": "./dist/emitters/cypher.mjs"
+    "./adapter/sqlite3/runtime": {
+      "types": "./dist/adapter/sqlite3/runtime.d.mts",
+      "import": "./dist/adapter/sqlite3/runtime.mjs"
     },
-    "./emitters/sql": {
-      "types": "./dist/emitters/sql.d.mts",
-      "import": "./dist/emitters/sql.mjs"
+    "./adapter/libsql": {
+      "types": "./dist/adapter/libsql/index.d.mts",
+      "import": "./dist/adapter/libsql/index.mjs"
+    },
+    "./adapter/libsql/runtime": {
+      "types": "./dist/adapter/libsql/runtime.d.mts",
+      "import": "./dist/adapter/libsql/runtime.mjs"
+    },
+    "./adapter/mysql2": {
+      "types": "./dist/adapter/mysql2/index.d.mts",
+      "import": "./dist/adapter/mysql2/index.mjs"
+    },
+    "./adapter/mysql2/runtime": {
+      "types": "./dist/adapter/mysql2/runtime.d.mts",
+      "import": "./dist/adapter/mysql2/runtime.mjs"
+    },
+    "./adapter/mssql": {
+      "types": "./dist/adapter/mssql/index.d.mts",
+      "import": "./dist/adapter/mssql/index.mjs"
+    },
+    "./adapter/mssql/runtime": {
+      "types": "./dist/adapter/mssql/runtime.d.mts",
+      "import": "./dist/adapter/mssql/runtime.mjs"
     }
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "check": "tsc",
     "prepare": "tsdown",
-    "test": "vitest"
+    "lint": "eslint"
   },
   "keywords": [
-    "ogm",
     "orm",
-    "object-graph-mapper",
     "object-relation-mapper"
+  ],
+  "files": [
+    "src",
+    "dist"
   ],
   "author": "sprucepad",
   "license": "MIT",
-  "devDependencies": {
-    "neo4j-driver": "^6.0.0",
-    "@testcontainers/neo4j": "^11.11.0"
+  "packageManager": "pnpm@10.33.0",
+  "dependencies": {
+    "convoker": "^0.5.2",
+    "jiti": "^2.6.1"
   },
   "peerDependencies": {
-    "neo4j-driver": "^6.0.0"
+    "@libsql/client": "^0.17.2",
+    "better-sqlite3": "^12.8.0",
+    "mssql": "^12.2.1",
+    "mysql2": "^3.20.0",
+    "postgres": "^3.4.8"
   },
   "peerDependenciesMeta": {
-    "neo4j-driver": {
+    "@libsql/client": {
+      "optional": true
+    },
+    "better-sqlite3": {
+      "optional": true
+    },
+    "mssql": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    },
+    "postgres": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "@dev/eslint-config": "workspace:*",
+    "@dev/tsconfig": "workspace:*",
+    "@libsql/client": "^0.17.2",
+    "@types/node": "^22.15.22",
+    "better-sqlite3": "^12.8.0",
+    "eslint": "^10.1.0",
+    "mssql": "^12.2.1",
+    "mysql2": "^3.20.0",
+    "postgres": "^3.4.8",
+    "testcontainers": "^11.13.0",
+    "tsdown": "^0.21.6",
+    "typescript": "^6.0.2"
   }
 }

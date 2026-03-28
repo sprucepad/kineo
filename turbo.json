@@ -10,21 +10,20 @@
     "check": {
       "dependsOn": ["^prepare", "^check"]
     },
-    "test": {
-      "dependsOn": ["^prepare"],
-      "persistent": true,
-      "cache": false
+    "lint": {
+      "dependsOn": ["^prepare", "^lint"]
     },
-    // apps
+    // apps / examples
     "dev": {
       "persistent": true,
       "cache": false
     },
     "build": {
-      "dependsOn": ["^prepare", "^build"]
+      "dependsOn": ["^prepare", "^build"],
+      "outputs": ["dist/**/*"]
     },
     "serve": {
-      "dependsOn": ["^prepare", "^build", "build"],
+      "dependsOn": ["^prepare", "build"],
       "persistent": true,
       "cache": false
     }
