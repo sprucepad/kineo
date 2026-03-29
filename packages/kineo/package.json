@@ -10,6 +10,9 @@
   "engines": {
     "node": ">=22.22.2"
   },
+  "bin": {
+    "kineo": "./dist/main.mjs"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",

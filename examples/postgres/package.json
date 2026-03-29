@@ -1,0 +1,16 @@
+{
+  "name": "@kineojs/example-postgres",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "postinstall": "kineo generate"
+  },
+  "dependencies": {
+    "kineo": "workspace:*"
+  },
+  "devDependencies": {
+    "@dev/eslint-config": "workspace:*",
+    "@dev/tsconfig": "workspace:*",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  }
+}

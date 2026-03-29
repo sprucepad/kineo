@@ -1,30 +1,38 @@
 import { defineConfig } from "tsdown";
 
-export default defineConfig({
-  entry: [
-    "./src/index.ts",
-    "./src/adapter/index.ts",
-    "./src/runtime/index.ts",
+export default defineConfig([
+  {
+    entry: [
+      "./src/index.ts",
+      "./src/adapter/index.ts",
+      "./src/runtime/index.ts",
 
-    // PostgreSQL (`postgres`)
-    "./src/adapter/postgres/index.ts",
-    "./src/adapter/postgres/runtime.ts",
-    // TODO SQLite (`better-sqlite3`)
-    // "./src/adapter/sqlite3/index.ts",
-    // "./src/adapter/sqlite3/runtime.ts",
-    // TODO libSQL (`@libsql/client`)
-    // "./src/adapter/libsql/index.ts",
-    // "./src/adapter/libsql/runtime.ts",
-    // TODO MySQL (`mysql2`)
-    // "./src/adapter/mysql2/index.ts",
-    // "./src/adapter/mysql2/runtime.ts",
-    // TODO SQL Server (`mssql`)
-    // "./src/adapter/mssql/index.ts",
-    // "./src/adapter/mssql/runtime.ts",
-  ],
-  minify: true,
-  sourcemap: true,
-  dts: {
+      // PostgreSQL (`postgres`)
+      "./src/adapter/postgres/index.ts",
+      "./src/adapter/postgres/runtime.ts",
+      // TODO SQLite (`better-sqlite3`)
+      // "./src/adapter/sqlite3/index.ts",
+      // "./src/adapter/sqlite3/runtime.ts",
+      // TODO libSQL (`@libsql/client`)
+      // "./src/adapter/libsql/index.ts",
+      // "./src/adapter/libsql/runtime.ts",
+      // TODO MySQL (`mysql2`)
+      // "./src/adapter/mysql2/index.ts",
+      // "./src/adapter/mysql2/runtime.ts",
+      // TODO SQL Server (`mssql`)
+      // "./src/adapter/mssql/index.ts",
+      // "./src/adapter/mssql/runtime.ts",
+    ],
+    minify: true,
     sourcemap: true,
+    dts: {
+      sourcemap: true,
+    },
   },
-});
+  {
+    entry: ["./src/cli/main.ts"],
+    minify: true,
+    sourcemap: false,
+    dts: false,
+  },
+]);

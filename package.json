@@ -8,7 +8,8 @@
   "scripts": {
     "test": "vitest",
     "dev": "turbo run dev",
-    "serve": "turbo run check",
+    "serve": "turbo run serve",
+    "check": "turbo run check",
     "build:pkg": "turbo run prepare",
     "build:app": "turbo run build",
     "build:all": "turbo run prepare build",
