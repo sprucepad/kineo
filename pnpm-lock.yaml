@@ -23,6 +23,9 @@ importers:
       kineo:
         specifier: workspace:*
         version: link:../../packages/kineo
+      postgres:
+        specifier: ^3.4.8
+        version: 3.4.8
     devDependencies:
       '@dev/eslint-config':
         specifier: workspace:*

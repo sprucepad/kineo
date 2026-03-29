@@ -1,39 +1,150 @@
-import type { FieldBuilder, RelationBuilder, RelationOpts } from "./property";
+import {
+  s,
+  type FieldBuilder,
+  type RelationBuilder,
+  type RelationOpts,
+} from "./property";
 
-export type Schema = Record<string, ModelBuilder>;
-export type ModelShape = Record<string, FieldBuilder | RelationBuilder>;
-export type ModelFn = (ctx: ModelContext) => ModelShape;
+export type Schema = Record<string, ModelBuilder<any>>;
 
-export interface ModelContext {
-  string(name?: string): FieldBuilder;
-  int(name?: string): FieldBuilder;
-  bigint(name?: string): FieldBuilder;
-  float(name?: string): FieldBuilder;
-  // TODO exact precision decimal(name?: string): FieldBuilder;
-  boolean(name?: string): FieldBuilder;
-  datetime(name?: string): FieldBuilder;
-  json(name?: string): FieldBuilder;
-  bytes(name?: string): FieldBuilder;
+export interface ModelContext<S extends ModelProps> {
+  string(name?: string): FieldBuilder<"string">;
+  int(name?: string): FieldBuilder<"int">;
+  bigint(name?: string): FieldBuilder<"bigint">;
+  float(name?: string): FieldBuilder<"float">;
+  // TODO exact precision decimal(name?: string): FieldBuilder<"decimal">;
+  boolean(name?: string): FieldBuilder<"boolean">;
+  datetime(name?: string): FieldBuilder<"datetime">;
+  json(name?: string): FieldBuilder<"json">;
+  bytes(name?: string): FieldBuilder<"bytes">;
 
-  relation(to: ModelBuilder, name?: string): RelationBuilder;
-  relation(
-    to: ModelBuilder,
-    opts: RelationOpts,
+  relation<P extends ModelProps>(
+    to: ModelBuilder<P, any>,
     name?: string,
-  ): RelationBuilder;
+  ): RelationBuilder<P>;
+  relation<P extends ModelProps>(
+    to: ModelBuilder<P, any>,
+    opts: RelationOpts<P, S>,
+    name?: string,
+  ): RelationBuilder<P>;
 }
 
-export class ModelBuilder {
+export type ModelProps = Record<string, FieldBuilder<any>>;
+export type ModelPropsFn<T extends ModelProps> = (
+  s: Omit<ModelContext<any>, "relation">,
+) => T;
+export type ModelRelations = Record<string, RelationBuilder<any>>;
+export type ModelRelationsFn<R extends ModelRelations, S extends ModelProps> = (
+  s: Pick<ModelContext<S>, "relation">,
+) => R;
+
+export class ModelBuilder<
+  T extends ModelProps,
+  R extends ModelRelationsFn<any, T> | undefined = undefined,
+> {
   constructor(
-    public readonly $fn: ModelFn,
+    public readonly $props: T,
     public $name?: string,
   ) {}
+  public $relationFn!: R;
+  public $indexes: IndexProps<T>[] = [];
+
+  public index(
+    ...props: (IndexProps<T> | (keyof T | FieldProps<T>)[])[]
+  ): this {
+    this.$indexes.push(
+      ...props.map((prop) => {
+        if (Array.isArray(prop)) return { fields: prop };
+        else return prop;
+      }),
+    );
+    return this;
+  }
+
+  public relate<R extends ModelRelationsFn<any, T>>(r: R): ModelBuilder<T, R> {
+    this.$relationFn = r as any;
+    return this as any;
+  }
 }
 
-export function model(nameOrFn: string | ModelFn, fnOrName?: ModelFn | string) {
+export type IndexProps<T extends ModelProps> = {
+  /**
+   * The fields this index applies to.
+   */
+  fields: (keyof T | FieldProps<T>)[];
+  /**
+   * Custom name for index.
+   */
+  name?: string;
+  /**
+   * Maps Kineo name to actual database index name.
+   */
+  map?: string;
+  /**
+   * Unique indexes.
+   */
+  unique?: boolean;
+  /**
+   * Full-text indexes, for MySQL and PostgreSQL.
+   */
+  fulltext?: boolean;
+} & (
+  | {
+      /**
+       * The type of index, for PostgreSQL.
+       */
+      type?: "B-tree" | "Hash" | "GiST" | "SP-GiST" | "GIN" | "BRIN";
+    }
+  | {
+      /**
+       * The type of index, for PostgreSQL.
+       */
+      type: "bloom";
+      /**
+       * The length of each index entry in bits, rounded up to the nearest multiple of 16, maximum being 4096.
+       */
+      length: number;
+      /**
+       * Number of bits generated for each index colums. Can be from 1-32 entries, with bits being u to 4095.
+       */
+      cols: number[];
+    }
+);
+
+export interface FieldProps<T extends ModelProps> {
+  /**
+   * The field name.
+   */
+  name: keyof T;
+  /**
+   * Per-field sort order.
+   */
+  sort?: "asc" | "desc";
+  /**
+   * Length, for MySQL.
+   */
+  length?: number;
+  /**
+   * Operator classes, for PostgreSQL.
+   */
+  ops?: string[];
+}
+
+export function model<T extends ModelProps>(
+  name: string,
+  fn: ModelPropsFn<T>,
+): ModelBuilder<T>;
+export function model<T extends ModelProps>(
+  fn: ModelPropsFn<T>,
+): ModelBuilder<T>;
+
+export function model(
+  nameOrFn: string | ModelPropsFn<any>,
+  fnOrName?: ModelPropsFn<any> | string,
+) {
   if (typeof nameOrFn === "string")
-    return new ModelBuilder(fnOrName as ModelFn, nameOrFn);
-  return new ModelBuilder(nameOrFn);
+    return new ModelBuilder((fnOrName as ModelPropsFn<any>)(s), nameOrFn);
+  return new ModelBuilder(nameOrFn(s));
 }
 
 export * from "./property";

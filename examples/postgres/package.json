@@ -5,7 +5,8 @@
     "postinstall": "kineo generate"
   },
   "dependencies": {
-    "kineo": "workspace:*"
+    "kineo": "workspace:*",
+    "postgres": "^3.4.8"
   },
   "devDependencies": {
     "@dev/eslint-config": "workspace:*",
