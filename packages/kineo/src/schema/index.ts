@@ -29,7 +29,7 @@ export interface ModelContext<S extends ModelProps> {
   ): RelationBuilder<P>;
 }
 
-export type ModelProps = Record<string, FieldBuilder<any>>;
+export type ModelProps = Record<string, FieldBuilder<any, any, any, any, any>>;
 export type ModelPropsFn<T extends ModelProps> = (
   s: Omit<ModelContext<any>, "relation">,
 ) => T;

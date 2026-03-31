@@ -69,7 +69,8 @@
   },
   "scripts": {
     "prepare": "tsdown",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check": "tsc"
   },
   "keywords": [
     "orm",
