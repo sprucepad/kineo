@@ -1,5 +1,8 @@
+import Decimal from "decimal.js";
 import type { IndexProps, ModelBuilder, ModelContext, ModelProps } from ".";
 import type { StandardSchemaV1 } from "./standard";
+
+export { default as Decimal } from "decimal.js";
 
 export type InlineIndexProps = Omit<IndexProps<any>, "fields">;
 
@@ -92,16 +95,17 @@ export type TypeOf<T extends Kind> = T extends "string"
   ? string
   : T extends "int" | "float"
     ? number
-    : // TODO T extends "decimal" ? Decimal :
-      T extends "boolean"
-      ? boolean
-      : T extends "datetime"
-        ? Date
-        : T extends "json"
-          ? any
-          : T extends "bytes"
-            ? ArrayBuffer
-            : never;
+    : T extends "decimal"
+      ? Decimal
+      : T extends "boolean"
+        ? boolean
+        : T extends "datetime"
+          ? Date
+          : T extends "json"
+            ? any
+            : T extends "bytes"
+              ? ArrayBuffer
+              : never;
 
 export interface RelationOpts<T extends ModelProps, S extends ModelProps> {
   fields: (keyof S)[];
@@ -192,7 +196,7 @@ export const s: ModelContext<any> = {
   int: (name) => new FieldBuilder("int", name),
   bigint: (name) => new FieldBuilder("bigint", name),
   float: (name) => new FieldBuilder("float", name),
-  // TODO decimal: (name) => new FieldBuilder("decimal", name),
+  decimal: (name) => new FieldBuilder("decimal", name),
   boolean: (name) => new FieldBuilder("boolean", name),
   bytes: (name) => new FieldBuilder("bytes", name),
   datetime: (name) => new FieldBuilder("datetime", name),

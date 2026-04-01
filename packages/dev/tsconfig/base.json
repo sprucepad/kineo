@@ -1,7 +1,6 @@
 {
   "$schema": "https://www.schemastore.org/tsconfig",
   "compilerOptions": {
-    // Base options
     "target": "es2022",
     "moduleDetection": "force",
     "verbatimModuleSyntax": true,
@@ -10,20 +9,8 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "isolatedModules": true,
-
-    // Strictness
     "strict": true,
     "noImplicitOverride": true,
-    "noUncheckedIndexedAccess": true,
-
-    // Monorepo
-    "composite": true,
-
-    // Bundling
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-    "noEmit": true,
-    "module": "preserve"
+    "noUncheckedIndexedAccess": true
   }
 }

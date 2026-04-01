@@ -1,5 +1,5 @@
 {
-  "extends": "@dev/tsconfig/base",
+  "extends": "@dev/tsconfig/lib",
   "compilerOptions": {
     "rootDirs": ["src", "tests"],
     "paths": {

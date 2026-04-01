@@ -1,0 +1,10 @@
+# pnpm
+.pnpm-store/
+pnpm-lock.yaml
+
+# frameworks
+node_modules/
+.turbo/
+
+# build output
+dist/

@@ -4,5 +4,5 @@ export function greet(...names: string[]) {
   }
 }
 
-export * from "./schema";
-export type * as IR from "./ir";
+export { defineConfig, env, loadEnv, type KineoConfig } from "./config";
+export { model, s, Decimal } from "./schema";

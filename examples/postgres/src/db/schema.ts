@@ -3,7 +3,7 @@ import { model } from "kineo";
 export const user = model((s) => ({
   id: s.int().id(),
 })).relate((s) => ({
-  posts: s.relation(post),
+  posts: s.relation(post).many().required(),
 }));
 
 export const post = model((s) => ({
@@ -11,9 +11,11 @@ export const post = model((s) => ({
   authorId: s.int().required(),
 }))
   .relate((s) => ({
-    author: s.relation(user, {
-      fields: ["authorId"],
-      refs: ["id"],
-    }),
+    author: s
+      .relation(user, {
+        fields: ["authorId"],
+        refs: ["id"],
+      })
+      .required(),
   }))
   .index(["authorId"]);

@@ -4,8 +4,11 @@ export default defineConfig([
   {
     entry: [
       "./src/index.ts",
-      "./src/adapter/index.ts",
+      "./src/config/index.ts",
+      "./src/schema/index.ts",
+      "./src/ir/index.ts",
       "./src/runtime/index.ts",
+      "./src/adapter/index.ts",
 
       // PostgreSQL (`postgres`)
       "./src/adapter/postgres/index.ts",

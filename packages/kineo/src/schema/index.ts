@@ -12,7 +12,7 @@ export interface ModelContext<S extends ModelProps> {
   int(name?: string): FieldBuilder<"int">;
   bigint(name?: string): FieldBuilder<"bigint">;
   float(name?: string): FieldBuilder<"float">;
-  // TODO exact precision decimal(name?: string): FieldBuilder<"decimal">;
+  decimal(name?: string): FieldBuilder<"decimal">;
   boolean(name?: string): FieldBuilder<"boolean">;
   datetime(name?: string): FieldBuilder<"datetime">;
   json(name?: string): FieldBuilder<"json">;
@@ -33,7 +33,10 @@ export type ModelProps = Record<string, FieldBuilder<any, any, any, any, any>>;
 export type ModelPropsFn<T extends ModelProps> = (
   s: Omit<ModelContext<any>, "relation">,
 ) => T;
-export type ModelRelations = Record<string, RelationBuilder<any>>;
+export type ModelRelations = Record<
+  string,
+  RelationBuilder<any, any, any, any>
+>;
 export type ModelRelationsFn<R extends ModelRelations, S extends ModelProps> = (
   s: Pick<ModelContext<S>, "relation">,
 ) => R;

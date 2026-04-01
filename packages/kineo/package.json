@@ -18,9 +18,21 @@
       "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs"
     },
+    "./config": {
+      "types": "./dist/config/index.d.mts",
+      "import": "./dist/config/index.mjs"
+    },
+    "./schema": {
+      "types": "./dist/schema/index.d.mts",
+      "import": "./dist/schema/index.mjs"
+    },
     "./runtime": {
       "types": "./dist/runtime/index.d.mts",
       "import": "./dist/runtime/index.mjs"
+    },
+    "./ir": {
+      "types": "./dist/ir/index.d.mts",
+      "import": "./dist/ir/index.mjs"
     },
     "./adapter": {
       "types": "./dist/adapter/index.d.mts",
@@ -85,6 +97,7 @@
   "packageManager": "pnpm@10.33.0",
   "dependencies": {
     "convoker": "^0.5.2",
+    "decimal.js": "^10.6.0",
     "jiti": "^2.6.1"
   },
   "peerDependencies": {

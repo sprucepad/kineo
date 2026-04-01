@@ -1,5 +1,5 @@
 import { defineConfig } from "eslint/config";
-import base from "./base";
+import base from "./base.js";
 
 const config = defineConfig([
   base,
