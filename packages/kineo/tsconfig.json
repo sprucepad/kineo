@@ -1,6 +1,7 @@
 {
   "extends": "@dev/tsconfig/lib",
   "compilerOptions": {
+    "types": ["node"],
     "rootDirs": ["src", "tests"],
     "paths": {
       "@/*": ["./src/*"],
