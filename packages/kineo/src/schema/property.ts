@@ -1,5 +1,11 @@
 import Decimal from "decimal.js";
-import type { IndexProps, ModelBuilder, ModelContext, ModelProps } from ".";
+import type {
+  IndexProps,
+  ModelBuilder,
+  ModelContext,
+  ModelProps,
+  ModelRelationsFn,
+} from ".";
 import type { StandardSchemaV1 } from "./standard";
 
 export { default as Decimal } from "decimal.js";
@@ -150,12 +156,13 @@ type IsSingleKey<T> = keyof T extends infer K
 
 export class RelationBuilder<
   T extends ModelProps,
+  R extends ModelRelationsFn<any, any> | undefined,
   TRequired extends boolean = false,
   TMany extends boolean = false,
   TDefault extends FindTypeOfIds<T> | undefined = undefined,
 > {
   constructor(
-    public readonly $to: ModelBuilder<T>,
+    public readonly $to: ModelBuilder<T, R>,
     public $opts?: RelationOpts<T, any>,
     public $name?: string,
   ) {}
@@ -163,29 +170,29 @@ export class RelationBuilder<
   public $many: TMany = false as any;
   public $default: TDefault = undefined as any;
 
-  public required(): RelationBuilder<T, true, TMany, TDefault> {
+  public required(): RelationBuilder<T, R, true, TMany, TDefault> {
     this.$required = true as any;
     return this as any;
   }
 
-  public optional(): RelationBuilder<T, false, TMany, TDefault> {
+  public optional(): RelationBuilder<T, R, false, TMany, TDefault> {
     this.$required = false as any;
     return this as any;
   }
 
-  public many(): RelationBuilder<T, TRequired, true, TDefault> {
+  public many(): RelationBuilder<T, R, TRequired, true, TDefault> {
     this.$many = true as any;
     return this as any;
   }
 
-  public single(): RelationBuilder<T, TRequired, false, TDefault> {
+  public single(): RelationBuilder<T, R, TRequired, false, TDefault> {
     this.$many = false as any;
     return this as any;
   }
 
   public default(
     def: FindTypeOfIds<T>,
-  ): RelationBuilder<T, TRequired, TMany, FindTypeOfIds<T>> {
+  ): RelationBuilder<T, R, TRequired, TMany, FindTypeOfIds<T>> {
     this.$default = def as any;
     return this as any;
   }

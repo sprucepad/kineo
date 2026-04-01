@@ -16,15 +16,15 @@ export interface ModelContext<S extends ModelProps> {
   json(name?: string): FieldBuilder<"json">;
   bytes(name?: string): FieldBuilder<"bytes">;
 
-  relation<P extends ModelProps>(
-    to: ModelBuilder<P, any>,
+  relation<P extends ModelProps, R extends ModelRelationsFn<any, any>>(
+    to: ModelBuilder<P, R>,
     name?: string,
-  ): RelationBuilder<P>;
-  relation<P extends ModelProps>(
-    to: ModelBuilder<P, any>,
+  ): RelationBuilder<P, R>;
+  relation<P extends ModelProps, R extends ModelRelationsFn<any, any>>(
+    to: ModelBuilder<P, R>,
     opts: RelationOpts<P, S>,
     name?: string,
-  ): RelationBuilder<P>;
+  ): RelationBuilder<P, R>;
 }
 
 export type ModelProps = Record<string, FieldBuilder<any, any, any, any, any>>;
@@ -33,7 +33,7 @@ export type ModelPropsFn<T extends ModelProps> = (
 ) => T;
 export type ModelRelations = Record<
   string,
-  RelationBuilder<any, any, any, any>
+  RelationBuilder<any, any, any, any, any>
 >;
 export type ModelRelationsFn<R extends ModelRelations, S extends ModelProps> = (
   s: Pick<ModelContext<S>, "relation">,
