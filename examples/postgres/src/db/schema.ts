@@ -1,10 +1,9 @@
-import { model } from "kineo";
-import type { InferModel } from "kineo/schema";
+import { model, type InferModel } from "kineo";
 
 export const user = model((s) => ({
   id: s.int().id(),
 })).relate((s) => ({
-  posts: s.relation(post).many().required(),
+  posts: s.relation(post).many().default([]),
 }));
 
 export type User = InferModel<typeof user>;

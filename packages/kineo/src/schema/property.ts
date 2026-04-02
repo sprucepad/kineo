@@ -80,9 +80,10 @@ export class FieldBuilder<
   }
 
   public default(
-    def: TypeOf<T>,
-  ): FieldBuilder<T, TId, TRequired, TMany, TypeOf<T>> {
-    this.$default = def;
+    def: TMany extends true ? TypeOf<T>[] : TypeOf<T>,
+  ): FieldBuilder<T, TId, true, TMany, TypeOf<T>> {
+    this.$default = def as any;
+    this.$required = true as any;
     return this as any;
   }
 
@@ -191,9 +192,10 @@ export class RelationBuilder<
   }
 
   public default(
-    def: FindTypeOfIds<T>,
-  ): RelationBuilder<T, R, TRequired, TMany, FindTypeOfIds<T>> {
+    def: TMany extends true ? FindTypeOfIds<T>[] : FindTypeOfIds<T>,
+  ): RelationBuilder<T, R, true, TMany, FindTypeOfIds<T>> {
     this.$default = def as any;
+    this.$required = true as any;
     return this as any;
   }
 }

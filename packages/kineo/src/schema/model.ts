@@ -16,11 +16,17 @@ export interface ModelContext<S extends ModelProps> {
   json(name?: string): FieldBuilder<"json">;
   bytes(name?: string): FieldBuilder<"bytes">;
 
-  relation<P extends ModelProps, R extends ModelRelationsFn<any, any>>(
+  relation<
+    P extends ModelProps,
+    R extends ModelRelationsFn<any, any> | undefined,
+  >(
     to: ModelBuilder<P, R>,
     name?: string,
   ): RelationBuilder<P, R>;
-  relation<P extends ModelProps, R extends ModelRelationsFn<any, any>>(
+  relation<
+    P extends ModelProps,
+    R extends ModelRelationsFn<any, any> | undefined,
+  >(
     to: ModelBuilder<P, R>,
     opts: RelationOpts<P, S>,
     name?: string,

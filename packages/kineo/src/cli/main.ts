@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 import process from "node:process";
 import { Command, i } from "convoker";
-import { greet, loadEnv } from "..";
-import { resolveConfig, type ResolvedConfig } from "@/config";
+import { loadEnv, resolveConfig, type ResolvedConfig } from "@/config";
 
 let config: ResolvedConfig;
 
@@ -45,6 +44,8 @@ const program = new Command("kineo")
     ]);
   });
 
+// TODO
+
 program.subCommand("greet", (c) =>
   c
     .input({
@@ -54,7 +55,9 @@ program.subCommand("greet", (c) =>
         .list(),
     })
     .action(({ names }) => {
-      greet(...names);
+      for (const name of names) {
+        console.log(`Hello, ${name}!`);
+      }
     }),
 );
 
