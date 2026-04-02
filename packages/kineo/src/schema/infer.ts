@@ -8,7 +8,7 @@ import type { FieldBuilder, RelationBuilder, TypeOf } from "./property";
 
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
-type NormalizeOptional<T> = Prettify<
+export type NormalizeOptional<T> = Prettify<
   {
     [K in keyof T as undefined extends T[K] ? never : K]: T[K];
   } & {
@@ -85,21 +85,21 @@ export type InferRelationship<
 export type InferRelations<
   T extends ModelRelations,
   DefaultMeansOptional extends boolean = false,
-> = NormalizeOptional<{
+> = Prettify<{
   [K in keyof T]: InferRelationship<T[K], DefaultMeansOptional>;
 }>;
 
 export type InferProps<
   T extends ModelProps,
   DefaultMeansOptional extends boolean = false,
-> = NormalizeOptional<{
+> = Prettify<{
   [K in keyof T]: InferField<T[K], DefaultMeansOptional>;
 }>;
 
 export type InferModel<
   T extends ModelBuilder<any, any>,
   DefaultMeansOptional extends boolean = false,
-> = Prettify<
+> = NormalizeOptional<
   T extends ModelBuilder<infer Props, infer RelationsFn>
     ? RelationsFn extends ModelRelationsFn<infer Relations, any>
       ? InferProps<Props, DefaultMeansOptional> &

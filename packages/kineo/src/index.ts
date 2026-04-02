@@ -7,5 +7,6 @@ export {
   type InferRelationship,
   type InferProps,
   type InferRelations,
+  type NormalizeOptional,
   type InferModel,
 } from "./schema";
