@@ -3,7 +3,7 @@ import {
   resolveConfig,
   resolveSchema,
   UnresolvedConfigError,
-} from "@/config/resolver";
+} from "./resolver";
 
 vi.mock("jiti", () => {
   return {
@@ -13,7 +13,7 @@ vi.mock("jiti", () => {
   };
 });
 
-import { jiti } from "@/config/resolver";
+import { jiti } from "./resolver";
 import { model } from "@/schema";
 
 describe("resolveConfig", () => {

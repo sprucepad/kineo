@@ -1,1 +1,3 @@
-// TODO
+export interface Statement {
+  // TODO
+}

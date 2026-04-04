@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseSchema } from "@/schema/parser";
-import { model } from "@/schema";
+import { model, parseSchema } from ".";
 
 describe("parseSchema", () => {
   it("parses models and fields correctly", () => {

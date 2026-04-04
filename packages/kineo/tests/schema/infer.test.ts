@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars -- it's easier to do `s.string` over `typeof FieldBuilder<"string"> */
 import { describe, it, expectTypeOf } from "vitest";
-import type { InferField, InferModel, InferRelations } from "@/schema";
-import { model, s } from "@/schema";
+import type { InferField, InferModel, InferRelations } from "./infer";
+import { model, s } from ".";
 
 describe("InferField", () => {
   it("infers required field", () => {

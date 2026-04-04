@@ -1,5 +1,5 @@
 import { describe, it, expect, expectTypeOf } from "vitest";
-import { model, s } from "@/schema";
+import { model, s } from ".";
 
 describe("ModelBuilder", () => {
   it("creates a model with props", () => {

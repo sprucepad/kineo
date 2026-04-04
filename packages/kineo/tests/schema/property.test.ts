@@ -1,5 +1,5 @@
 import { describe, it, expect, expectTypeOf } from "vitest";
-import { s, FieldBuilder } from "@/schema";
+import { s, FieldBuilder } from ".";
 
 describe("FieldBuilder", () => {
   it("sets required and optional correctly", () => {

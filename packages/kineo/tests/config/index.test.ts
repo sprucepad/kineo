@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { defineConfig } from "@/config";
+import { defineConfig } from ".";
 
 describe("defineConfig", () => {
   it("should return the same config object", () => {

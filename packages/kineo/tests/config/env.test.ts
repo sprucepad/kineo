@@ -1,6 +1,6 @@
 import process from "node:process";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { env, UndefinedEnvError, loadEnv } from "@/config/env";
+import { env, UndefinedEnvError, loadEnv } from "./env";
 
 describe("env", () => {
   beforeEach(() => {
