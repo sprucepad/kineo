@@ -26,7 +26,7 @@ export type ModelPropsFn<T extends ModelProps> = (
 ) => T;
 export type ModelRelations = Record<
   string,
-  RelationBuilder<any, any, any, any, any, any, any, any>
+  RelationBuilder<any, any, any, any, any>
 >;
 export type ModelRelationsFn<R extends ModelRelations, S extends ModelProps> = (
   s: Pick<ModelContext<S>, "relation">,

@@ -46,18 +46,15 @@ export type InferField<
     : never;
 
 export type InferRelationship<
-  T extends RelationBuilder<any, any, any, any, any, any, any, any>,
+  T extends RelationBuilder<any, any, any, any, any>,
   DefaultMeansOptional extends boolean = false,
 > = Prettify<
   T extends RelationBuilder<
     infer To,
     infer OutsideRelationsFn,
     any,
-    any,
-    any,
     infer Required,
-    infer Many,
-    infer Default
+    infer Many
   >
     ? (
         OutsideRelationsFn extends ModelRelationsFn<infer Relations, any>
@@ -67,13 +64,7 @@ export type InferRelationship<
       ? (
           Many extends true
             ? (WithRelations & InferProps<To, DefaultMeansOptional>)[]
-            : DefaultMeansOptional extends true
-              ? Default extends undefined
-                ? WithRelations & InferProps<To, DefaultMeansOptional>
-                :
-                    | (WithRelations & InferProps<To, DefaultMeansOptional>)
-                    | undefined
-              : WithRelations & InferProps<To, DefaultMeansOptional>
+            : WithRelations & InferProps<To, DefaultMeansOptional>
         ) extends infer Type
         ? Required extends true
           ? Type
