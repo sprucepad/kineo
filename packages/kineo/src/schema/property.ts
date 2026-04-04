@@ -115,56 +115,110 @@ export type TypeOf<T extends Kind> = T extends "string"
               ? ArrayBuffer
               : never;
 
-export interface RelationOpts<
-  T extends ModelProps,
-  S extends ModelProps,
-  TFields extends readonly (keyof S)[],
-  TRefs extends readonly (keyof T)[],
-> {
-  fields: TFields;
-  refs: TRefs;
-}
-
 export class RelationBuilder<
-  T extends ModelProps,
-  R extends ModelRelationsFn<any, any> | undefined,
-  O extends RelationOpts<T, any, any, any> = any,
+  TP extends ModelProps,
+  TR extends ModelRelationsFn<any, any> | undefined,
+  TSelf extends ModelProps,
+  TRefs extends (keyof TP)[] | undefined = undefined,
+  TFields extends (keyof TSelf)[] | undefined = undefined,
   TRequired extends boolean = false,
   TMany extends boolean = false,
-  TDefault extends InferReferences<O, T> | undefined = undefined,
+  TDefault extends InferReferences<TP, TRefs> | undefined = undefined,
 > {
   constructor(
-    public readonly $to: ModelBuilder<T, R>,
-    public $opts?: O,
+    public readonly $to: ModelBuilder<TP, TR>,
     public $name?: string,
   ) {}
   public $required: TRequired = false as any;
   public $many: TMany = false as any;
   public $default: TDefault = undefined as any;
+  public $fields: TFields = undefined as any;
+  public $refs: TRefs = undefined as any;
 
-  public required(): RelationBuilder<T, R, O, true, TMany, TDefault> {
+  public refs<T extends (keyof TP)[]>(
+    ...fields: T
+  ): RelationBuilder<TP, TR, TSelf, T, TFields, TRequired, TMany, any> {
+    this.$refs = fields as any;
+    return this as any;
+  }
+
+  public fields<T extends (keyof TSelf)[]>(
+    ...fields: T
+  ): RelationBuilder<TP, TR, TSelf, TRefs, T, TRequired, TMany, TDefault> {
+    this.$fields = fields as any;
+    return this as any;
+  }
+
+  public required(): RelationBuilder<
+    TP,
+    TR,
+    TSelf,
+    TRefs,
+    TFields,
+    true,
+    TMany,
+    TDefault
+  > {
     this.$required = true as any;
     return this as any;
   }
 
-  public optional(): RelationBuilder<T, R, O, false, TMany, TDefault> {
+  public optional(): RelationBuilder<
+    TP,
+    TR,
+    TSelf,
+    TRefs,
+    TFields,
+    false,
+    TMany,
+    TDefault
+  > {
     this.$required = false as any;
     return this as any;
   }
 
-  public many(): RelationBuilder<T, R, O, TRequired, true, TDefault> {
+  public many(): RelationBuilder<
+    TP,
+    TR,
+    TSelf,
+    TRefs,
+    TFields,
+    TRequired,
+    true,
+    TDefault
+  > {
     this.$many = true as any;
     return this as any;
   }
 
-  public single(): RelationBuilder<T, R, O, TRequired, false, TDefault> {
+  public single(): RelationBuilder<
+    TP,
+    TR,
+    TSelf,
+    TRefs,
+    TFields,
+    TRequired,
+    false,
+    TDefault
+  > {
     this.$many = false as any;
     return this as any;
   }
 
   public default(
-    def: TMany extends true ? InferReferences<O, T>[] : InferReferences<O, T>,
-  ): RelationBuilder<T, R, O, true, TMany, InferReferences<O, T>> {
+    def: TMany extends true
+      ? InferReferences<TP, TRefs>[]
+      : InferReferences<TP, TRefs>,
+  ): RelationBuilder<
+    TP,
+    TR,
+    TSelf,
+    TRefs,
+    TFields,
+    true,
+    TMany,
+    InferReferences<TP, TRefs>
+  > {
     this.$default = def as any;
     this.$required = true as any;
     return this as any;
@@ -172,22 +226,22 @@ export class RelationBuilder<
 }
 
 export type InferReferences<
-  O extends RelationOpts<any, any, any, any>,
-  T extends ModelProps,
-> =
-  O extends RelationOpts<infer Refs, any, any, infer RefKeys>
-    ? RefKeys extends readonly [
-        infer OnlyKey extends keyof TypeOfReferences<Refs, RefKeys>,
-      ]
-      ? TypeOfReferences<Refs, RefKeys>[OnlyKey]
-      : TypeOfReferences<Refs, RefKeys>
-    : InferProps<T>;
+  Props extends ModelProps,
+  R extends (keyof Props)[] | undefined,
+> = (R extends undefined ? never : R) extends infer Refs extends
+  readonly (keyof Props)[]
+  ? Refs extends readonly [
+      infer OnlyKey extends keyof TypeOfReferences<Props, Refs>,
+    ]
+    ? TypeOfReferences<Props, Refs>[OnlyKey]
+    : TypeOfReferences<Props, Refs>
+  : InferProps<Props>;
 
 export type TypeOfReferences<
-  Refs extends ModelProps,
-  RefKeys extends readonly (keyof Refs)[],
+  Props extends ModelProps,
+  Refs extends readonly (keyof Props)[],
 > = {
-  [K in RefKeys[number]]: Refs[K] extends FieldBuilder<
+  [K in Refs[number]]: Props[K] extends FieldBuilder<
     infer K,
     any,
     any,
@@ -245,14 +299,6 @@ export const s: ModelContext<any> = {
   bytes: (name) => new FieldBuilder("bytes", name),
   datetime: (name) => new FieldBuilder("datetime", name),
   json: (name) => new FieldBuilder("json", name),
-  relation: (
-    to: ModelBuilder<any, any>,
-    optsOrName?: RelationOpts<any, any, any, any> | string,
-    name?: string,
-  ) =>
-    new RelationBuilder(
-      to,
-      typeof optsOrName === "string" ? undefined : optsOrName,
-      name ?? (optsOrName as string),
-    ),
+  relation: (to: ModelBuilder<any, any>, name?: string) =>
+    new RelationBuilder(to, name),
 };

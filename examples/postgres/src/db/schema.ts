@@ -13,12 +13,7 @@ export const post = model((s) => ({
   authorId: s.int().required(),
 }))
   .relate((s) => ({
-    author: s
-      .relation(user, {
-        fields: ["authorId"],
-        refs: ["id"],
-      })
-      .default({ id: 0 }),
+    author: s.relation(user).fields("authorId").refs("id").default(0),
   }))
   .index(["authorId"]);
 
