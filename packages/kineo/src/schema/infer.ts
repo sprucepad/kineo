@@ -46,7 +46,7 @@ export type InferField<
     : never;
 
 export type InferRelationship<
-  T extends RelationBuilder<any, any, any, any, any>,
+  T extends RelationBuilder<any, any, any, any, any, any>,
   DefaultMeansOptional extends boolean = false,
 > = Prettify<
   T extends RelationBuilder<

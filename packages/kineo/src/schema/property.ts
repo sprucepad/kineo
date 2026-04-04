@@ -5,8 +5,9 @@ import type {
   ModelContext,
   ModelProps,
   ModelRelationsFn,
-} from ".";
+} from "./model";
 import type { StandardSchemaV1 } from "./standard";
+import type { InferProps } from "./infer";
 
 export { default as Decimal } from "decimal.js";
 
@@ -114,91 +115,125 @@ export type TypeOf<T extends Kind> = T extends "string"
               ? ArrayBuffer
               : never;
 
-export interface RelationOpts<T extends ModelProps, S extends ModelProps> {
-  fields: (keyof S)[];
-  refs: (keyof T)[];
+export interface RelationOpts<
+  T extends ModelProps,
+  S extends ModelProps,
+  TFields extends readonly (keyof S)[],
+  TRefs extends readonly (keyof T)[],
+> {
+  fields: TFields;
+  refs: TRefs;
 }
-
-type FindTypeOfIds<T extends ModelProps> = keyof IdFieldTypes<T> extends infer K
-  ? K extends keyof IdFieldTypes<T>
-    ? [K] extends [never]
-      ? never
-      : IsSingleKey<IdFieldTypes<T>> extends true
-        ? IdFieldTypes<T>[K] // single -> just the type
-        : IdFieldTypes<T> // multiple -> object
-    : never
-  : never;
-
-type IdFields<T extends ModelProps> = {
-  [K in keyof T as T[K] extends FieldBuilder<any, true, any, any, any>
-    ? K
-    : never]: T[K];
-};
-
-type IdFieldTypes<T extends ModelProps> = {
-  [K in keyof IdFields<T>]: IdFields<T>[K] extends FieldBuilder<
-    infer KKind,
-    true,
-    any,
-    any,
-    any
-  >
-    ? TypeOf<KKind>
-    : never;
-};
-
-type IsSingleKey<T> = keyof T extends infer K
-  ? K extends any
-    ? [K] extends [keyof T]
-      ? true
-      : false
-    : never
-  : never;
 
 export class RelationBuilder<
   T extends ModelProps,
   R extends ModelRelationsFn<any, any> | undefined,
+  O extends RelationOpts<T, any, any, any> = any,
   TRequired extends boolean = false,
   TMany extends boolean = false,
-  TDefault extends FindTypeOfIds<T> | undefined = undefined,
+  TDefault extends InferReferences<O, T> | undefined = undefined,
 > {
   constructor(
     public readonly $to: ModelBuilder<T, R>,
-    public $opts?: RelationOpts<T, any>,
+    public $opts?: O,
     public $name?: string,
   ) {}
   public $required: TRequired = false as any;
   public $many: TMany = false as any;
   public $default: TDefault = undefined as any;
 
-  public required(): RelationBuilder<T, R, true, TMany, TDefault> {
+  public required(): RelationBuilder<T, R, O, true, TMany, TDefault> {
     this.$required = true as any;
     return this as any;
   }
 
-  public optional(): RelationBuilder<T, R, false, TMany, TDefault> {
+  public optional(): RelationBuilder<T, R, O, false, TMany, TDefault> {
     this.$required = false as any;
     return this as any;
   }
 
-  public many(): RelationBuilder<T, R, TRequired, true, TDefault> {
+  public many(): RelationBuilder<T, R, O, TRequired, true, TDefault> {
     this.$many = true as any;
     return this as any;
   }
 
-  public single(): RelationBuilder<T, R, TRequired, false, TDefault> {
+  public single(): RelationBuilder<T, R, O, TRequired, false, TDefault> {
     this.$many = false as any;
     return this as any;
   }
 
   public default(
-    def: TMany extends true ? FindTypeOfIds<T>[] : FindTypeOfIds<T>,
-  ): RelationBuilder<T, R, true, TMany, FindTypeOfIds<T>> {
+    def: TMany extends true ? InferReferences<O, T>[] : InferReferences<O, T>,
+  ): RelationBuilder<T, R, O, true, TMany, InferReferences<O, T>> {
     this.$default = def as any;
     this.$required = true as any;
     return this as any;
   }
 }
+
+export type InferReferences<
+  O extends RelationOpts<any, any, any, any>,
+  T extends ModelProps,
+> =
+  O extends RelationOpts<infer Refs, any, any, infer RefKeys>
+    ? RefKeys extends readonly [
+        infer OnlyKey extends keyof TypeOfReferences<Refs, RefKeys>,
+      ]
+      ? TypeOfReferences<Refs, RefKeys>[OnlyKey]
+      : TypeOfReferences<Refs, RefKeys>
+    : InferProps<T>;
+
+export type TypeOfReferences<
+  Refs extends ModelProps,
+  RefKeys extends readonly (keyof Refs)[],
+> = {
+  [K in RefKeys[number]]: Refs[K] extends FieldBuilder<
+    infer K,
+    any,
+    any,
+    any,
+    any
+  >
+    ? TypeOf<K>
+    : never;
+};
+
+// TODO delete (this might be necessary)
+// type FindTypeOfIds<T extends ModelProps> = keyof IdFieldTypes<T> extends infer K
+//   ? K extends keyof IdFieldTypes<T>
+//     ? [K] extends [never]
+//       ? never
+//       : IsSingleKey<IdFieldTypes<T>> extends true
+//         ? IdFieldTypes<T>[K] // single -> just the type
+//         : IdFieldTypes<T> // multiple -> object
+//     : never
+//   : never;
+
+// type IdFields<T extends ModelProps> = {
+//   [K in keyof T as T[K] extends FieldBuilder<any, true, any, any, any>
+//     ? K
+//     : never]: T[K];
+// };
+
+// type IdFieldTypes<T extends ModelProps> = {
+//   [K in keyof IdFields<T>]: IdFields<T>[K] extends FieldBuilder<
+//     infer KKind,
+//     true,
+//     any,
+//     any,
+//     any
+//   >
+//     ? TypeOf<KKind>
+//     : never;
+// };
+
+// type IsSingleKey<T> = keyof T extends infer K
+//   ? K extends any
+//     ? [K] extends [keyof T]
+//       ? true
+//       : false
+//     : never
+//   : never;
 
 export const s: ModelContext<any> = {
   string: (name) => new FieldBuilder("string", name),
@@ -212,7 +247,7 @@ export const s: ModelContext<any> = {
   json: (name) => new FieldBuilder("json", name),
   relation: (
     to: ModelBuilder<any, any>,
-    optsOrName?: RelationOpts<any, any> | string,
+    optsOrName?: RelationOpts<any, any, any, any> | string,
     name?: string,
   ) =>
     new RelationBuilder(

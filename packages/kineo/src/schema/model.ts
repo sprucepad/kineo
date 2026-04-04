@@ -26,11 +26,13 @@ export interface ModelContext<S extends ModelProps> {
   relation<
     P extends ModelProps,
     R extends ModelRelationsFn<any, any> | undefined,
+    TFields extends readonly (keyof S)[],
+    TRefs extends readonly (keyof P)[],
   >(
     to: ModelBuilder<P, R>,
-    opts: RelationOpts<P, S>,
+    opts: RelationOpts<P, S, TFields, TRefs>,
     name?: string,
-  ): RelationBuilder<P, R>;
+  ): RelationBuilder<P, R, RelationOpts<P, S, TFields, TRefs>>;
 }
 
 export type ModelProps = Record<string, FieldBuilder<any, any, any, any, any>>;
@@ -39,7 +41,7 @@ export type ModelPropsFn<T extends ModelProps> = (
 ) => T;
 export type ModelRelations = Record<
   string,
-  RelationBuilder<any, any, any, any, any>
+  RelationBuilder<any, any, any, any, any, any>
 >;
 export type ModelRelationsFn<R extends ModelRelations, S extends ModelProps> = (
   s: Pick<ModelContext<S>, "relation">,

@@ -18,7 +18,7 @@ export const post = model((s) => ({
         fields: ["authorId"],
         refs: ["id"],
       })
-      .required(),
+      .default({ id: 0 }),
   }))
   .index(["authorId"]);
 
