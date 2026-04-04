@@ -52,12 +52,12 @@ export type InferRelationship<
   T extends RelationBuilder<
     infer To,
     infer OutsideRelationsFn,
+    any,
+    any,
+    any,
     infer Required,
     infer Many,
-    infer Default,
-    any,
-    any,
-    any
+    infer Default
   >
     ? (
         OutsideRelationsFn extends ModelRelationsFn<infer Relations, any>
@@ -67,19 +67,19 @@ export type InferRelationship<
       ? (
           Many extends true
             ? (WithRelations & InferProps<To, DefaultMeansOptional>)[]
-            : WithRelations & InferProps<To, DefaultMeansOptional>
-        ) extends infer Type
-        ? (
-            DefaultMeansOptional extends true
+            : DefaultMeansOptional extends true
               ? Default extends undefined
-                ? Type
-                : Type | undefined
-              : Type
-          ) extends infer DefaultAppliedType
-          ? Required extends true
-            ? DefaultAppliedType
-            : DefaultAppliedType | undefined
-          : never
+                ? WithRelations & InferProps<To, DefaultMeansOptional>
+                :
+                    | (WithRelations & InferProps<To, DefaultMeansOptional>)
+                    | undefined
+              : WithRelations & InferProps<To, DefaultMeansOptional>
+        ) extends infer Type
+        ? Required extends true
+          ? Type
+          : Many extends true
+            ? Type
+            : Type | undefined
         : never
       : never
     : never
