@@ -1,4 +1,4 @@
-import { s, type FieldBuilder, type RelationBuilder } from "./property";
+import type { FieldBuilder, RelationBuilder } from "./property";
 
 export interface ModelContext<S extends ModelProps> {
   string(name?: string): FieldBuilder<"string">;
@@ -37,7 +37,7 @@ export class ModelBuilder<
   R extends ModelRelationsFn<any, T> | undefined = undefined,
 > {
   constructor(
-    public readonly $props: T,
+    public readonly $props: ModelPropsFn<T>,
     public $name?: string,
   ) {}
   public $relationFn!: R;
@@ -70,10 +70,6 @@ export type IndexProps<T extends ModelProps> = {
    * Custom name for index.
    */
   name?: string;
-  /**
-   * Maps Kineo name to actual database index name.
-   */
-  map?: string;
   /**
    * Unique indexes.
    */
@@ -137,6 +133,6 @@ export function model(
   fnOrName?: ModelPropsFn<any> | string,
 ) {
   if (typeof nameOrFn === "string")
-    return new ModelBuilder((fnOrName as ModelPropsFn<any>)(s), nameOrFn);
-  return new ModelBuilder(nameOrFn(s));
+    return new ModelBuilder(fnOrName as ModelPropsFn<any>, nameOrFn);
+  return new ModelBuilder(nameOrFn);
 }
