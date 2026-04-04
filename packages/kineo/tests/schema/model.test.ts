@@ -1,5 +1,5 @@
 import { describe, it, expect, expectTypeOf } from "vitest";
-import { model } from "@/schema";
+import { model, s } from "@/schema";
 
 describe("ModelBuilder", () => {
   it("creates a model with props", () => {
@@ -9,8 +9,8 @@ describe("ModelBuilder", () => {
     }));
 
     expect(User.$name).toBe("User");
-    expect(User.$props.id).toBeDefined();
-    expect(User.$props.name).toBeDefined();
+    expect(User.$props(s).id).toBeDefined();
+    expect(User.$props(s).name).toBeDefined();
   });
 
   it("supports indexes", () => {
@@ -42,11 +42,11 @@ describe("ModelBuilder", () => {
       name: s.string(),
     }));
 
-    expectTypeOf(User.$props.id).toExtend<{
+    expectTypeOf(User.$props(s).id).toExtend<{
       $kind: "int";
     }>();
 
-    expectTypeOf(User.$props.name).toExtend<{
+    expectTypeOf(User.$props(s).name).toExtend<{
       $kind: "string";
     }>();
   });

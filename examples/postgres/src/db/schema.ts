@@ -23,7 +23,7 @@ export const post = model((s) => ({
     author: s.relation(user).fields("authorId").refs("id"),
     categories: s.relation(category).many(),
   }))
-  .index(["authorId"]);
+  .index("authorId");
 
 export type Post = InferModel<typeof post>;
 

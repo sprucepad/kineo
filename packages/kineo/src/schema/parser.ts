@@ -1,5 +1,5 @@
 import type { Schema } from ".";
-import { FieldBuilder, s, type Kind } from "./property";
+import { FieldBuilder, RelationBuilder, s, type Kind } from "./property";
 import {
   ModelBuilder,
   type ModelProps,
@@ -28,52 +28,50 @@ export interface ParsedField {
   validator?: StandardSchemaV1;
 }
 
-export type ParsedRelation = {
+export interface ParsedRelation {
   from: string;
   to: string;
-} & (
-  | {
-      virtual: true;
-    }
-  | {
-      virtual: false;
-      fields: string[];
-      refs: string[];
-    }
-);
+  virtual: boolean;
+  fields?: (keyof any)[];
+  refs?: (keyof any)[];
+}
 
-export type ParsedIndex = {
-  fields: Map<
-    string,
-    {
-      sort: "asc" | "desc";
-      length?: number;
-      ops?: string[];
-    }
-  >;
+export interface ParsedIndex {
+  fields: Map<string, ParsedIndexField>;
   name: string;
   unique: boolean;
   fulltext: boolean;
-} & (
-  | {
-      type: "B-tree" | "Hash" | "GiST" | "SP-GiST" | "GIN" | "BRIN";
-    }
-  | {
-      type: "bloom";
-      length: number;
-      cols: number[];
-    }
-);
+  type: "B-tree" | "Hash" | "GiST" | "SP-GiST" | "GIN" | "BRIN" | "bloom";
+  length?: number;
+  cols?: number[];
+}
+
+export interface ParsedIndexField {
+  name: string;
+  sort: "asc" | "desc";
+  length?: number;
+  ops?: string[];
+}
 
 export function parseSchema(schema: Schema): ParsedSchema {
   const models = new Map<string, ParsedModel>();
+
+  const modelNameMap = new Map<ModelBuilder<any, any>, string>();
+  for (const key in schema) {
+    const rawModel = schema[key];
+    if (rawModel instanceof ModelBuilder) {
+      const modelName = rawModel.$name ?? key;
+      modelNameMap.set(rawModel, modelName);
+    }
+  }
+
   for (const key in schema) {
     const rawModel = schema[key] as
       | ModelBuilder<ModelProps, ModelRelationsFn<ModelRelations, ModelProps>>
       | undefined;
     if (!(rawModel instanceof ModelBuilder)) continue;
 
-    const name = rawModel.$name ?? key;
+    const modelName = rawModel.$name ?? key;
     const fields = new Map<string, ParsedField>();
     const relations = new Map<string, ParsedRelation>();
     const indexes = new Map<string, ParsedIndex>();
@@ -93,7 +91,7 @@ export function parseSchema(schema: Schema): ParsedSchema {
       });
 
       if (typeof prop.$index === "object" || prop.$unique) {
-        const defaultIndexName = `__kidx_${name}__`;
+        const defaultIndexName = `${name}_${modelName}_idx`;
 
         const baseIndex = {
           type: "B-tree",
@@ -121,13 +119,57 @@ export function parseSchema(schema: Schema): ParsedSchema {
       }
     }
 
-    const relationObj = rawModel.$relationFn(s);
-    // TODO relations
+    const relationObj = rawModel.$relationFn?.(s) ?? {};
+    for (const key in relationObj) {
+      const relation = relationObj[key];
+      if (!(relation instanceof RelationBuilder)) continue;
+
+      const name = relation.$name ?? key;
+      relations.set(name, {
+        from: modelName,
+        to:
+          relation.$to.$name ??
+          modelNameMap.get(relation.$to) ??
+          (() => {
+            throw new Error(
+              "Unknown Kineo error: relation model is undefined. This branch shouldn't be reached if the types are followed correctly, so report this at `https://github.com/sprucepad/kineo/issues` if this is unexpected.",
+            );
+          })(),
+        virtual: relation.$fields != null || relation.$refs != null,
+        fields: relation.$fields,
+        refs: relation.$refs,
+      });
+    }
 
     const indexObj = rawModel.$indexes;
-    // TODO indexes
+    for (const index of indexObj) {
+      const name = index.name ?? `${index.fields.join("__")}_${modelName}_idx`;
+      indexes.set(name, {
+        name,
+        unique: index.unique ?? false,
+        fields: new Map(
+          index.fields.map((field): [string, ParsedIndexField] => {
+            if (typeof field === "object")
+              return [
+                field.name,
+                {
+                  name: field.name,
+                  sort: field.sort ?? "asc",
+                  length: field.length,
+                  ops: field.ops,
+                },
+              ];
+            else return [field, { name: field, sort: "asc" }];
+          }),
+        ),
+        fulltext: index.fulltext ?? false,
+        type: index.type ?? "B-tree",
+        length: "length" in index ? index.length : (undefined as any),
+        cols: "cols" in index ? index.cols : (undefined as any),
+      });
+    }
 
-    models.set(name, { name, key, fields, relations, indexes });
+    models.set(modelName, { name: modelName, key, fields, relations, indexes });
   }
 
   return { models };

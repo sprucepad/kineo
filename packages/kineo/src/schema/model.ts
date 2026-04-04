@@ -44,12 +44,13 @@ export class ModelBuilder<
   public $indexes: IndexProps<T>[] = [];
 
   public index(
-    ...props: (IndexProps<T> | (keyof T | FieldProps<T>)[])[]
+    ...props: (IndexProps<T> | (keyof T | FieldProps<T>)[] | keyof T)[]
   ): this {
     this.$indexes.push(
       ...props.map((prop) => {
         if (Array.isArray(prop)) return { fields: prop };
-        else return prop;
+        else if (typeof prop === "object") return prop;
+        else return { fields: [prop] };
       }),
     );
     return this;
