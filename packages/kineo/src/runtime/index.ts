@@ -1,3 +1,2 @@
-// TODO kineo runtime
-
-export * from "./Model";
+export * from "./client";
+export * from "./model";

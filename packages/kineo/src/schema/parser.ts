@@ -53,6 +53,8 @@ export interface ParsedIndexField {
   ops?: string[];
 }
 
+// TODO detect implicit many-to-many relationships and add implicit models for them
+
 export function parseSchema(schema: Schema): ParsedSchema {
   const models = new Map<string, ParsedModel>();
 

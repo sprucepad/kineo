@@ -5,7 +5,7 @@
     "rootDir": "./src",
     "paths": {
       "@/*": ["./src/*"],
-      "#kineo/*": ["./generated/kineo/*"]
+      "#*": ["./generated/*"]
     }
   },
   "include": ["src"]
