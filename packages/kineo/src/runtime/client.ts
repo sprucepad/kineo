@@ -3,12 +3,7 @@ import type {
   EmitResult,
   RuntimeAdapter,
 } from "@/adapter";
-import {
-  parseSchema,
-  type ModelBuilder,
-  type ModelRelationsFn,
-  type Schema,
-} from "@/schema";
+import { parseSchema, type Schema } from "@/schema";
 import { Model } from "./model";
 
 export type Kineo<T extends Schema> = {
@@ -23,12 +18,7 @@ export type Kineo<T extends Schema> = {
 } & ModelsForSchema<T>;
 
 export type ModelsForSchema<T extends Schema> = {
-  [K in keyof T]: T[K] extends ModelBuilder<
-    infer Props,
-    ModelRelationsFn<infer Relations, any>
-  >
-    ? Model<Props, Relations>
-    : never;
+  [K in keyof T]: Model<T[K]>;
 };
 
 export function kineo<T extends Schema>(
@@ -40,7 +30,7 @@ export function kineo<T extends Schema>(
   if (adapter instanceof Promise) adapter.then((a) => a.extend?.(Model));
   else adapter.extend?.(Model);
 
-  const modelsForSchema: Record<string, Model<any, any, any, any>> = {};
+  const modelsForSchema: Record<string, Model<any, any, any>> = {};
   for (const [modelName, parsedModel] of parsedSchema.models) {
     modelsForSchema[modelName] = new Model(
       parsedSchema,

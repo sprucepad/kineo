@@ -25,6 +25,7 @@ export interface ParsedField {
   name: string;
   key: string;
   required: boolean;
+  id?: boolean;
   validator?: StandardSchemaV1;
 }
 
@@ -87,6 +88,7 @@ export function parseSchema(schema: Schema): ParsedSchema {
       fields.set(name, {
         type: prop.$kind,
         required: prop.$required,
+        id: prop.$id,
         validator: prop.$validator,
         name,
         key,
