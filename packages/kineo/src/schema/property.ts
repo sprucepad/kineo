@@ -114,6 +114,8 @@ export type TypeOf<T extends Kind> = T extends "string"
               ? ArrayBuffer
               : never;
 
+export type Scalar = TypeOf<Kind>;
+
 export class RelationBuilder<
   TP extends ModelProps,
   TR extends ModelRelationsFn<any, any> | undefined,

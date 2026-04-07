@@ -62,7 +62,7 @@ export function kineo<T extends Schema>(
 
 export function templateToParams(
   strings: TemplateStringsArray,
-  values: any[],
+  ...values: any[]
 ): EmitResult {
   let command = "";
   const params: any[] = [];
@@ -79,7 +79,9 @@ export function templateToParams(
           // Edge case: empty IN ()
           command += "(NULL)";
         } else {
-          const placeholders = value.map(() => `$${params.length + 1}`);
+          const placeholders = value.map(
+            (_, index) => `$${params.length + index + 1}`,
+          );
           command += placeholders.join(",");
           params.push(...value);
         }

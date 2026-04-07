@@ -2,6 +2,8 @@
 // Utility Types
 // ============================================================================
 
+import type { Scalar } from "@/schema";
+
 export type Prettify<T> = {
   [K in keyof T]: T[K];
 } & {};
@@ -119,19 +121,12 @@ export type UpdateData<T> = Prettify<{
  * Type-safe creation data for a model - makes 'id' optional generically
  */
 export type CreateData<T> = Prettify<
-  Omit<
-    {
-      [K in keyof T]?: T[K] extends object
+  {
+    [K in keyof T]?: T[K] extends object
+      ? never
+      : T[K] extends any[]
         ? never
-        : T[K] extends any[]
-          ? never
-          : T[K];
-    },
-    "id" | "ID" | "Id"
-  > & {
-    id?: any;
-    ID?: any;
-    Id?: any;
+        : T[K];
   } & {
     [K in keyof T as T[K] extends object
       ? T[K] extends (infer U)[]
@@ -159,13 +154,13 @@ export type WhereInput<T> = Prettify<
     {
       [K in keyof T]: T[K] extends any[]
         ? ArrayFilterCondition<T[K]>
-        : T[K] extends string
+        : T[K] extends string | (string | undefined)
           ? StringFilterCondition
-          : T[K] extends number
+          : T[K] extends number | (number | undefined)
             ? NumberFilterCondition
-            : T[K] extends boolean
+            : T[K] extends boolean | (boolean | undefined)
               ? BooleanFilterCondition
-              : T[K] extends Date
+              : T[K] extends Date | (Date | undefined)
                 ? DateFilterCondition
                 : T[K] extends object
                   ? WhereInput<T[K]>
@@ -257,12 +252,12 @@ export type OrderByInput<T> = Prettify<
   Partial<
     {
       [K in keyof T]: T[K] extends (infer U)[]
-        ? U extends object
-          ? OrderByRelation<U>
-          : "asc" | "desc"
-        : T[K] extends object
-          ? OrderByRelation<T[K]>
-          : "asc" | "desc";
+        ? U extends Scalar
+          ? "asc" | "desc"
+          : OrderByRelation<U>
+        : NonNullable<T[K]> extends Scalar
+          ? "asc" | "desc"
+          : OrderByRelation<NonNullable<T[K]>>;
     } & {
       _relevance?: {
         fields: (keyof T)[];
@@ -395,12 +390,17 @@ export type RelationCreateMany<T> =
 // ============================================================================
 
 /**
- * Options for find (single result)
+ * Options for find (single result) - matching Prisma's findUnique/findFirst structure
  */
 export type FindOpts<T, IO = T> = {
   where?: WhereInput<IO>;
   select?: FieldSelection<T>;
   include?: RelationInclusion<T>;
+  orderBy?: OrderByInput<IO> | OrderByInput<IO>[];
+  take?: number;
+  skip?: number;
+  cursor?: CursorInput<IO>;
+  distinct?: (keyof T)[];
   rejectOnNotFound?: boolean;
 };
 
@@ -538,8 +538,8 @@ export type UpdateReturn<
 /**
  * Options for updateReturn
  */
-export type UpdateReturnOpts<T> = {
-  where: Partial<T>;
+export type UpdateReturnOpts<T, IO = T> = {
+  where: WhereInput<IO>;
   data: UpdateData<T>;
   select?: FieldSelection<T>;
 };
@@ -623,12 +623,15 @@ export type DeleteReturn<
 /**
  * Options for count
  */
-export type CountOpts<IO> = {
+export type CountOpts<T, IO = T> = {
   where?: WhereInput<IO>;
-  orderBy?: OrderByInput<IO>;
+  orderBy?: OrderByInput<IO> | OrderByInput<IO>[];
   take?: number;
   skip?: number;
   cursor?: CursorInput<IO>;
+  select?: Partial<{
+    [K in keyof T as T[K] extends any[] ? K : never]: true;
+  }>;
 };
 
 /**
@@ -641,33 +644,52 @@ export type CountReturn = number;
  */
 export type AggregateOpts<T, IO = T> = {
   where?: WhereInput<IO>;
-  orderBy?: OrderByInput<IO>;
+  by?: (keyof T)[];
+  orderBy?: OrderByInput<IO> | OrderByInput<IO>[];
   take?: number;
   skip?: number;
   cursor?: CursorInput<IO>;
   _count?:
     | boolean
     | {
-        select?: FieldSelection<T>;
+        select?: Partial<{
+          [K in keyof T]: true;
+        }>;
       };
   _min?: {
     select?: Partial<{
-      [K in keyof T as T[K] extends string | number | Date ? K : never]: true;
+      [K in keyof T as T[K] extends string | number | Date | null | undefined
+        ? string extends T[K]
+          ? never
+          : K
+        : never]: true;
     }>;
   };
   _max?: {
     select?: Partial<{
-      [K in keyof T as T[K] extends string | number | Date ? K : never]: true;
+      [K in keyof T as T[K] extends string | number | Date | null | undefined
+        ? string extends T[K]
+          ? never
+          : K
+        : never]: true;
     }>;
   };
   _avg?: {
     select?: Partial<{
-      [K in keyof T as T[K] extends number ? K : never]: true;
+      [K in keyof T as T[K] extends number | null | undefined
+        ? number extends T[K]
+          ? K
+          : never
+        : never]: true;
     }>;
   };
   _sum?: {
     select?: Partial<{
-      [K in keyof T as T[K] extends number ? K : never]: true;
+      [K in keyof T as T[K] extends number | null | undefined
+        ? number extends T[K]
+          ? K
+          : never
+        : never]: true;
     }>;
   };
 };
@@ -716,17 +738,20 @@ export type GroupByOpts<T, IO = T> = {
   by: (keyof T)[];
   where?: WhereInput<IO>;
   orderBy?: OrderByInput<IO>;
-  having?:
-    | {
-        _count?:
-          | number
-          | { gt?: number; gte?: number; lt?: number; lte?: number };
-      }
-    | {
-        [K in keyof T]?: T[K] extends string | number | Date
-          ? T[K] | { lt?: T[K]; lte?: T[K]; gt?: T[K]; gte?: T[K] }
-          : never;
-      };
+  having?: {
+    _count?: number | { gt?: number; gte?: number; lt?: number; lte?: number };
+  } & {
+    [K in keyof T as NonNullable<T[K]> extends string | number | Date
+      ? K
+      : never]?:
+      | T[K]
+      | {
+          lt?: T[K];
+          lte?: T[K];
+          gt?: T[K];
+          gte?: T[K];
+        };
+  };
   take?: number;
   skip?: number;
 };

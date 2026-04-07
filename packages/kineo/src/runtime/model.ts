@@ -88,13 +88,13 @@ export class Model<
     throw new Error("Not implemented", { cause: opts });
   }
 
-  public async updateReturn<O extends UpdateReturnOpts<I>>(
+  public async updateReturn<O extends UpdateReturnOpts<I, IO>>(
     opts?: O,
   ): Promise<UpdateReturnReturn<I>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
-  public async updateManyReturn<O extends UpdateReturnOpts<I>>(
+  public async updateManyReturn<O extends UpdateReturnOpts<I, IO>>(
     opts?: O,
   ): Promise<UpdateReturnReturn<I, true>> {
     throw new Error("Not implemented", { cause: opts });
@@ -106,7 +106,7 @@ export class Model<
     throw new Error("Not implemented", { cause: opts });
   }
 
-  public async upsertMany<O extends UpsertOpts<I, IO>>(
+  public async upsertMany<O extends UpsertOpts<I, IO, true>>(
     opts?: O,
   ): Promise<UpsertReturn<I, O, true>> {
     throw new Error("Not implemented", { cause: opts });
@@ -124,7 +124,9 @@ export class Model<
     throw new Error("Not implemented", { cause: opts });
   }
 
-  public async count<O extends CountOpts<IO>>(opts?: O): Promise<CountReturn> {
+  public async count<O extends CountOpts<I, IO>>(
+    opts?: O,
+  ): Promise<CountReturn> {
     throw new Error("Not implemented", { cause: opts });
   }
 

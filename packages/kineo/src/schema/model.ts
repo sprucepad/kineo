@@ -131,9 +131,8 @@ export function model<T extends ModelProps>(
 
 export function model(
   nameOrFn: string | ModelPropsFn<any>,
-  fnOrName?: ModelPropsFn<any> | string,
+  fn?: ModelPropsFn<any>,
 ) {
-  if (typeof nameOrFn === "string")
-    return new ModelBuilder(fnOrName as ModelPropsFn<any>, nameOrFn);
+  if (typeof nameOrFn === "string") return new ModelBuilder(fn!, nameOrFn);
   return new ModelBuilder(nameOrFn);
 }
