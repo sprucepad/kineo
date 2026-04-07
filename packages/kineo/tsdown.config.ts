@@ -10,6 +10,9 @@ export default defineConfig([
       "./src/runtime/index.ts",
       "./src/adapter/index.ts",
 
+      // SQL emitter
+      "./src/emitter/sql.ts",
+
       // PostgreSQL (`postgres`)
       "./src/adapter/postgres/index.ts",
       "./src/adapter/postgres/runtime.ts",

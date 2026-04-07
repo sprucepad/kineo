@@ -48,7 +48,7 @@ describe("parseSchema", () => {
     expect(relation).toBeDefined();
     expect(relation?.from).toBe("post");
     expect(relation?.to).toBe("user");
-    expect(relation?.virtual).toBe(true);
+    expect(relation?.virtual).toBe(false);
     expect(relation?.fields).toEqual(["authorId"]);
     expect(relation?.refs).toEqual(["id"]);
   });
@@ -73,7 +73,7 @@ describe("parseSchema", () => {
     expect(relation).toBeDefined();
     expect(relation?.from).toBe("user");
     expect(relation?.to).toBe("post");
-    expect(relation?.virtual).toBe(false);
+    expect(relation?.virtual).toBe(true);
   });
 
   it("creates implicit indexes for unique/id fields", () => {
@@ -165,5 +165,146 @@ describe("parseSchema", () => {
     const parsed = parseSchema(schema as any);
 
     expect(parsed.models.size).toBe(0);
+  });
+
+  it("creates a join model for implicit many-to-many relations", () => {
+    const post = model((s) => ({
+      id: s.int().id(),
+    })).relate((s) => ({
+      categories: s.relation(category).many(),
+    }));
+
+    const category = model((s) => ({
+      id: s.int().id(),
+    })).relate((s) => ({
+      posts: s.relation(post).many(),
+    }));
+
+    const schema = { post, category };
+
+    const parsed = parseSchema(schema);
+
+    // join model name is deterministic: alphabetical or insertion-based
+    const joinModel = parsed.models.get("post_category");
+
+    expect(joinModel).toBeDefined();
+    expect(joinModel?.fields.has("postId")).toBe(true);
+    expect(joinModel?.fields.has("categoryId")).toBe(true);
+  });
+
+  it("adds relations from join model back to both sides", () => {
+    const post = model((s) => ({
+      id: s.int().id(),
+    })).relate((s) => ({
+      categories: s.relation(category).many(),
+    }));
+
+    const category = model((s) => ({
+      id: s.int().id(),
+    })).relate((s) => ({
+      posts: s.relation(post).many(),
+    }));
+
+    const parsed = parseSchema({ post, category });
+
+    const joinModel = parsed.models.get("post_category")!;
+
+    const rels = joinModel.relations;
+
+    expect(rels.get("post")).toMatchObject({
+      to: "post",
+      fields: ["postId"],
+    });
+
+    expect(rels.get("category")).toMatchObject({
+      to: "category",
+      fields: ["categoryId"],
+    });
+  });
+
+  it("creates a composite unique index on join table", () => {
+    const post = model((s) => ({
+      id: s.int().id(),
+    })).relate((s) => ({
+      categories: s.relation(category).many(),
+    }));
+
+    const category = model((s) => ({
+      id: s.int().id(),
+    })).relate((s) => ({
+      posts: s.relation(post).many(),
+    }));
+
+    const parsed = parseSchema({ post, category });
+
+    const joinModel = parsed.models.get("post_category")!;
+
+    const indexes = [...joinModel.indexes.values()];
+    expect(indexes.length).toBe(1);
+
+    const index = indexes[0];
+    expect(index?.unique).toBe(true);
+
+    const fieldNames = [...index!.fields.keys()];
+    expect(fieldNames).toEqual(
+      expect.arrayContaining(["postId", "categoryId"]),
+    );
+  });
+
+  it("does not create join model for one-to-many relations", () => {
+    const user = model((s) => ({
+      id: s.int().id(),
+    })).relate((s) => ({
+      posts: s.relation(post).many(),
+    }));
+
+    const post = model((s) => ({
+      id: s.int().id(),
+      authorId: s.int().required(),
+    })).relate((s) => ({
+      author: s.relation(user).fields("authorId").refs("id"),
+    }));
+
+    const parsed = parseSchema({ user, post });
+
+    expect(parsed.models.has("user_post")).toBe(false);
+  });
+
+  it("does not duplicate join models", () => {
+    const post = model((s) => ({
+      id: s.int().id(),
+    })).relate((s) => ({
+      categories: s.relation(category).many(),
+    }));
+
+    const category = model((s) => ({
+      id: s.int().id(),
+    })).relate((s) => ({
+      posts: s.relation(post).many(),
+    }));
+
+    const parsed = parseSchema({ post, category });
+
+    const joinModels = [...parsed.models.keys()].filter(
+      (name) => name.includes("post") && name.includes("category"),
+    );
+
+    expect(joinModels.length).toBe(1);
+  });
+
+  it("throws if either side of m-n lacks an id field", () => {
+    const post = model((s) => ({
+      id: s.int().id(),
+    })).relate((s) => ({
+      categories: s.relation(category).many(),
+    }));
+
+    const category = model((s) => ({
+      name: s.string(), // no id
+    })).relate((s) => ({
+      posts: s.relation(post).many(),
+    }));
+
+    expect(() => parseSchema({ post, category })).toThrow();
   });
 });

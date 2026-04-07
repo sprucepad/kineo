@@ -77,6 +77,10 @@
     "./adapter/mssql/runtime": {
       "types": "./dist/adapter/mssql/runtime.d.mts",
       "import": "./dist/adapter/mssql/runtime.mjs"
+    },
+    "./emitter/sql": {
+      "types": "./dist/emitter/sql/index.d.mts",
+      "import": "./dist/emitter/sql/index.mjs"
     }
   },
   "scripts": {

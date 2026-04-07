@@ -32,6 +32,7 @@ export interface ParsedField {
 export interface ParsedRelation {
   from: string;
   to: string;
+  many: boolean;
   virtual: boolean;
   fields?: (keyof any)[];
   refs?: (keyof any)[];
@@ -53,8 +54,6 @@ export interface ParsedIndexField {
   length?: number;
   ops?: string[];
 }
-
-// TODO detect implicit many-to-many relationships and add implicit models for them
 
 export function parseSchema(schema: Schema): ParsedSchema {
   const models = new Map<string, ParsedModel>();
@@ -139,7 +138,8 @@ export function parseSchema(schema: Schema): ParsedSchema {
               "Unknown Kineo error: relation model is undefined. This branch shouldn't be reached if the types are followed correctly, so report this at `https://github.com/sprucepad/kineo/issues` if this is unexpected.",
             );
           })(),
-        virtual: relation.$fields != null || relation.$refs != null,
+        many: relation.$many,
+        virtual: relation.$fields == null && relation.$refs == null,
         fields: relation.$fields,
         refs: relation.$refs,
       });
@@ -174,6 +174,105 @@ export function parseSchema(schema: Schema): ParsedSchema {
     }
 
     models.set(modelName, { name: modelName, key, fields, relations, indexes });
+  }
+
+  // --- generate implicit many-to-many join tables ---
+  const seen = new Set<string>();
+
+  for (const [modelAName, modelA] of models) {
+    for (const [, relA] of modelA.relations) {
+      // Many-to-many relations are always virtual (no explicit fields/refs)
+      if (!relA.virtual || !relA.many) continue;
+
+      const modelB = models.get(relA.to);
+      if (!modelB) continue;
+
+      for (const [, relB] of modelB.relations) {
+        const isReciprocal =
+          relB.to === modelAName && relB.virtual && relB.many;
+
+        if (!isReciprocal) continue;
+
+        // prevent duplicates
+        const pairKey = [modelAName, modelB.name].sort().join("_");
+        if (seen.has(pairKey)) continue;
+        seen.add(pairKey);
+
+        // deterministic join table name
+        const joinName = `${modelAName}_${modelB.name}`;
+
+        const fields = new Map<string, ParsedField>();
+        const relations = new Map<string, ParsedRelation>();
+        const indexes = new Map<string, ParsedIndex>();
+
+        const aIdField = [...modelA.fields.values()].find((f) => f.id);
+        const bIdField = [...modelB.fields.values()].find((f) => f.id);
+
+        if (!aIdField || !bIdField) {
+          throw new Error(
+            `Cannot create join table for ${modelAName} and ${modelB.name} without id fields`,
+          );
+        }
+
+        const aFieldName = `${modelAName}Id`;
+        const bFieldName = `${modelB.name}Id`;
+
+        // fields
+        fields.set(aFieldName, {
+          name: aFieldName,
+          key: aFieldName,
+          type: aIdField.type,
+          required: true,
+        });
+
+        fields.set(bFieldName, {
+          name: bFieldName,
+          key: bFieldName,
+          type: bIdField.type,
+          required: true,
+        });
+
+        // relations
+        relations.set(modelAName, {
+          from: joinName,
+          to: modelAName,
+          virtual: false,
+          many: false,
+          fields: [aFieldName],
+          refs: [aIdField.name],
+        });
+
+        relations.set(modelB.name, {
+          from: joinName,
+          to: modelB.name,
+          virtual: false,
+          many: false,
+          fields: [bFieldName],
+          refs: [bIdField.name],
+        });
+
+        // composite unique index
+        const indexName = `${joinName}_unique`;
+        indexes.set(indexName, {
+          name: indexName,
+          unique: true,
+          fulltext: false,
+          type: "B-tree",
+          fields: new Map([
+            [aFieldName, { name: aFieldName, sort: "asc" }],
+            [bFieldName, { name: bFieldName, sort: "asc" }],
+          ]),
+        });
+
+        models.set(joinName, {
+          name: joinName,
+          key: joinName,
+          fields,
+          relations,
+          indexes,
+        });
+      }
+    }
   }
 
   return { models };

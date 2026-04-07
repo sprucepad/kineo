@@ -6,8 +6,13 @@ export type Resolvable<T> = T | Promise<T>;
 
 export interface EmitResult {
   command: string;
-  params: Record<string, any>;
+  params: any[];
 }
+
+export type Emitter<T = any> = (
+  ir: Statement[],
+  dialect: T,
+) => Resolvable<EmitResult>;
 
 export interface ExecResult {
   rows?: Record<string, any>[];
