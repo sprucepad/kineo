@@ -13,6 +13,7 @@ import type {
   CountOpts,
   AggregateOpts,
   GroupByOpts,
+  ApplySelection,
   FieldUpdate,
 } from "./types";
 
@@ -146,6 +147,54 @@ describe("Type Tests - WhereInput", () => {
     expectTypeOf<UserWhereInput>().toHaveProperty("isActive");
     expectTypeOf<UserWhereInput>().toHaveProperty("AND");
     expectTypeOf<UserWhereInput>().toHaveProperty("OR");
+  });
+
+  it("allows nested filters inside not clauses", () => {
+    type UsernameFilter = WhereInput<{ username: string }>;
+
+    const filter: UsernameFilter = {
+      username: {
+        startsWith: "ann",
+        not: {
+          endsWith: "e",
+        },
+      },
+    };
+
+    expectTypeOf(filter.username).toMatchTypeOf<UsernameFilter["username"]>();
+  });
+});
+
+describe("Type Tests - Selection / Include", () => {
+  it("excludes non-included relations when using include", () => {
+    type NestedModel = {
+      posts: {
+        id: number;
+        title: string;
+        author: {
+          id: number;
+          name: string;
+        };
+      }[];
+    };
+
+    type Selected = ApplySelection<
+      NestedModel,
+      {
+        include: {
+          posts: {
+            select: {
+              id: true;
+            };
+          };
+        };
+      }
+    >;
+
+    expectTypeOf<Selected["posts"][number]["id"]>().toEqualTypeOf<number>();
+    // @ts-expect-error Missing non-included relation field should not exist
+    const missingAuthor: Selected["posts"][number]["author"] = undefined as any;
+    void missingAuthor;
   });
 });
 

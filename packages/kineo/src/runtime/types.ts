@@ -8,38 +8,6 @@ export type Prettify<T> = {
   [K in keyof T]: T[K];
 } & {};
 
-export type UnionToIntersection<U> = (
-  U extends any ? (k: U) => void : never
-) extends (k: infer I) => void
-  ? I
-  : never;
-
-export type DeepPartial<T> = T extends object
-  ? {
-      [P in keyof T]?: DeepPartial<T[P]>;
-    }
-  : T;
-
-export type DeepRequired<T> = T extends object
-  ? {
-      [P in keyof T]-?: DeepRequired<T[P]>;
-    }
-  : T;
-
-export type SelectionWithInclude<T> =
-  | {
-      select: FieldSelection<T>;
-      include?: never;
-    }
-  | {
-      select?: never;
-      include: RelationInclusion<T>;
-    }
-  | {
-      select?: never;
-      include?: never;
-    };
-
 /**
  * DeepDive type - allows selecting specific fields
  */
@@ -176,13 +144,15 @@ export type WhereInput<T> = Prettify<
 /**
  * Filter conditions for different types
  */
-export type FilterCondition<T> = T | { equals?: T; not?: T };
+export type FilterCondition<T> =
+  | T
+  | { equals?: T; not?: T | FilterCondition<T> };
 
 export type StringFilterCondition =
   | string
   | {
       equals?: string;
-      not?: string;
+      not?: StringFilterCondition;
       in?: string[];
       notIn?: string[];
       lt?: string;
@@ -199,7 +169,7 @@ export type NumberFilterCondition =
   | number
   | {
       equals?: number;
-      not?: number;
+      not?: NumberFilterCondition;
       in?: number[];
       notIn?: number[];
       lt?: number;
@@ -212,14 +182,14 @@ export type BooleanFilterCondition =
   | boolean
   | {
       equals?: boolean;
-      not?: boolean;
+      not?: BooleanFilterCondition;
     };
 
 export type DateFilterCondition =
   | Date
   | {
       equals?: Date;
-      not?: Date;
+      not?: DateFilterCondition;
       in?: Date[];
       notIn?: Date[];
       lt?: Date;
@@ -423,11 +393,13 @@ export type FindReturn<
 export type ApplySelection<
   T,
   O extends { include?: any; select?: any },
-> = O extends { include: infer I }
-  ? T & ApplyInclusion<T, I>
-  : O extends { select: infer S }
-    ? ApplySelectiveFields<T, S>
-    : T;
+> = O extends { include: infer I; select: infer S }
+  ? ApplySelectiveFields<T, S> & ApplyInclusion<T, I>
+  : O extends { include: infer I }
+    ? DefaultSelection<T> & ApplyInclusion<T, I>
+    : O extends { select: infer S }
+      ? ApplySelectiveFields<T, S>
+      : T;
 
 export type ApplyInclusion<T, I> = Prettify<
   I extends { [K in string]: true }
@@ -449,8 +421,34 @@ export type ApplyInclusion<T, I> = Prettify<
       : object
 >;
 
+export type DefaultSelection<T> = Prettify<{
+  [K in keyof T as T[K] extends any[]
+    ? T[K] extends Array<infer U>
+      ? U extends object
+        ? never
+        : K
+      : K
+    : T[K] extends object
+      ? never
+      : K]: T[K];
+}>;
+
 export type ApplySelectiveFields<T, S> = Prettify<{
-  [K in keyof S & keyof T as S[K] extends true ? K : never]: T[K];
+  [K in keyof S & keyof T as S[K] extends true
+    ? K
+    : S[K] extends object
+      ? K
+      : never]: S[K] extends true
+    ? T[K]
+    : S[K] extends { include?: any; select?: any }
+      ? T[K] extends (infer U)[]
+        ? U extends object
+          ? ApplySelection<U, S[K]>[]
+          : T[K]
+        : T[K] extends object
+          ? ApplySelection<T[K], S[K]>
+          : T[K]
+      : T[K];
 }>;
 
 /**

@@ -15,11 +15,15 @@
     "build:all": "turbo run prepare build",
     "lint": "turbo run lint",
     "format:check": "prettier --check .",
-    "format:write": "prettier --write ."
+    "format:write": "prettier --write .",
+    "knip": "knip"
   },
   "devDependencies": {
+    "@types/node": "^22.19.15",
+    "knip": "^6.4.1",
     "prettier": "^3.8.1",
     "turbo": "^2.9.3",
+    "typescript": "^6.0.2",
     "vitest": "^4.1.2"
   }
 }

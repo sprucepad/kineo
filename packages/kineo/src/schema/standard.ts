@@ -5,7 +5,7 @@
 // ###   Standard Typed  ###
 // #########################
 
-/** The Standard Typed interface. This is a base type extended by other specs. */
+/** The Standard Typed interface. This is a base type extended by other specs. @lintignore */
 export interface StandardTypedV1<Input = unknown, Output = Input> {
   /** The Standard properties. */
   readonly "~standard": StandardTypedV1.Props<Input, Output>;
@@ -45,7 +45,7 @@ export declare namespace StandardTypedV1 {
 // ###   Standard Schema  ###
 // ##########################
 
-/** The Standard Schema interface. */
+/** The Standard Schema interface. @lintignore */
 export interface StandardSchemaV1<Input = unknown, Output = Input> {
   /** The Standard Schema properties. */
   readonly "~standard": StandardSchemaV1.Props<Input, Output>;
@@ -119,7 +119,7 @@ export declare namespace StandardSchemaV1 {
 // ###   Standard JSON Schema  ###
 // ###############################
 
-/** The Standard JSON Schema interface. */
+/** The Standard JSON Schema interface. @lintignore */
 export interface StandardJSONSchemaV1<Input = unknown, Output = Input> {
   /** The Standard JSON Schema properties. */
   readonly "~standard": StandardJSONSchemaV1.Props<Input, Output>;

@@ -3,6 +3,10 @@ import db from "./db/client.js";
 export async function queryExample() {
   return await db.user.findMany({
     where: {
+      username: {
+        startsWith: "ann",
+        not: { endsWith: "e" },
+      },
       posts: {
         some: {
           published: true,
