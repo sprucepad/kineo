@@ -9,10 +9,9 @@ export interface EmitResult {
   params: any[];
 }
 
-export type Emitter<T = any> = (
-  ir: Statement[],
-  dialect: T,
-) => Resolvable<EmitResult>;
+export type Emitter<T = undefined> = T extends undefined
+  ? (ir: Statement[]) => Resolvable<EmitResult>
+  : (ir: Statement[], dialect: T) => Resolvable<EmitResult>;
 
 export interface ExecResult {
   rows?: Record<string, any>[];
@@ -53,12 +52,17 @@ export interface Adapter extends RuntimeAdapter {
 
 export type AsyncAdapter = Promise<Adapter>;
 
-export const enum MigrationStatus {
-  Deployed,
-  Pending,
-}
-
 export type MigrationEntry = MigrationCommand | MigrationNote;
+
+export interface MigrationStatus {
+  status: "deployed" | "pending";
+  meta: {
+    id: string;
+    hash: string;
+    appliedAt: Date;
+    [key: PropertyKey]: any;
+  };
+}
 
 export interface MigrationCommand {
   type: "command";

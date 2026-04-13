@@ -34,8 +34,8 @@ export interface ParsedRelation {
   to: string;
   many: boolean;
   virtual: boolean;
-  fields?: (keyof any)[];
-  refs?: (keyof any)[];
+  fields?: PropertyKey[];
+  refs?: PropertyKey[];
 }
 
 export interface ParsedIndex {

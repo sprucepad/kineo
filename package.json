@@ -13,13 +13,11 @@
     "build:pkg": "turbo run prepare",
     "build:app": "turbo run build",
     "build:all": "turbo run prepare build",
-    "lint": "turbo run lint",
+    "lint": "turbo run lint && knip",
     "format:check": "prettier --check .",
-    "format:write": "prettier --write .",
-    "knip": "knip"
+    "format:write": "prettier --write ."
   },
   "devDependencies": {
-    "@types/node": "^22.19.15",
     "knip": "^6.4.1",
     "prettier": "^3.8.1",
     "turbo": "^2.9.3",
