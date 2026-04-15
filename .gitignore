@@ -1,10 +1,9 @@
-# dependencies
+# node modules
 node_modules/
+
+# turborepo
 .turbo/
 
-# build output
+# build outout
 dist/
 *.tsbuildinfo
-
-# environment files
-.env*

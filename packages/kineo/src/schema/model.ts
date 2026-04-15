@@ -1,205 +1,138 @@
-import { FieldDef, RelationDef, type Kind } from "./field";
-import type { StandardSchemaV1 } from "./standard-schema";
-import type { Schema } from ".";
+import type { FieldBuilder, RelationBuilder } from "./property";
 
-/**
- * The shape of a model.
- */
-export interface ModelShape {
-  [key: string]:
-    | FieldDef<any, any, any, any, any>
-    | RelationDef<any, any, any, any>;
+export interface ModelContext<S extends ModelProps> {
+  string(name?: string): FieldBuilder<"string">;
+  int(name?: string): FieldBuilder<"int">;
+  bigint(name?: string): FieldBuilder<"bigint">;
+  float(name?: string): FieldBuilder<"float">;
+  decimal(name?: string): FieldBuilder<"decimal">;
+  boolean(name?: string): FieldBuilder<"boolean">;
+  datetime(name?: string): FieldBuilder<"datetime">;
+  json(name?: string): FieldBuilder<"json">;
+  bytes(name?: string): FieldBuilder<"bytes">;
+
+  relation<
+    P extends ModelProps,
+    R extends ModelRelationsFn<any, any> | undefined,
+  >(
+    to: ModelBuilder<P, R>,
+    name?: string,
+  ): RelationBuilder<P, R, S>;
 }
 
-/**
- * A model definition.
- */
-export class ModelDef<S extends ModelShape> {
-  /**
-   * The indexed fields.
-   */
-  $indexes = new Map<string, IndexOptions<S>>();
-  /**
-   * The validators for properties.
-   */
-  $schemas = new Map<string, StandardSchemaV1>();
+export type ModelProps = Record<string, FieldBuilder<any, any, any, any, any>>;
+export type ModelPropsFn<T extends ModelProps> = (
+  s: Omit<ModelContext<any>, "relation">,
+) => T;
+export type ModelRelations = Record<
+  string,
+  RelationBuilder<any, any, any, any, any>
+>;
+export type ModelRelationsFn<R extends ModelRelations, S extends ModelProps> = (
+  s: Pick<ModelContext<S>, "relation">,
+) => R;
 
-  /**
-   * Creates a new model definition.
-   * @param $shape The model shape.
-   * @param $name The internal model name.
-   */
+export class ModelBuilder<
+  T extends ModelProps,
+  R extends ModelRelationsFn<any, T> | undefined = undefined,
+> {
   constructor(
-    public $shape: S,
+    public readonly $props: ModelPropsFn<T>,
     public $name?: string,
   ) {}
+  public $relationFn!: R;
+  public $indexes: IndexProps<T>[] = [];
 
-  /**
-   * Sets the model name.
-   * @param name The new model name.
-   * @returns `this`
-   */
-  name(name?: string): this {
-    this.$name = name;
+  public index(
+    ...props: (IndexProps<T> | (keyof T | FieldProps<T>)[] | keyof T)[]
+  ): this {
+    this.$indexes.push(
+      ...props.map((prop) => {
+        if (Array.isArray(prop)) return { fields: prop };
+        else if (typeof prop === "object") return prop;
+        else return { fields: [prop] };
+      }),
+    );
     return this;
   }
 
-  // TODO timestamping
-
-  /**
-   * Creates an index on fields.
-   * @param name The index name.
-   * @param opts The index options.
-   */
-  index(name: string, opts: IndexOptions<S>) {
-    this.$indexes.set(name, opts);
-  }
-
-  /**
-   * Adds validators to properties.
-   * @param props The properties to validate.
-   */
-  validate(props: { [Key in keyof S]: StandardSchemaV1 }) {
-    for (const key in props) {
-      this.$schemas.set(key, props[key]);
-    }
-  }
-
-  /**
-   * Updates indexes and validators, by adding individual field indexes/schemas to this model's index/schema map respectively.
-   */
-  update() {
-    for (const key in this.$shape) {
-      const property = this.$shape[key]!;
-      if (property.$indexName && !this.$indexes.has(property.$indexName)) {
-        this.$indexes.set(property.$indexName, { fields: [key] });
-      }
-
-      if (property.$schema) {
-        this.$schemas.set(key, property.$schema);
-      }
-    }
+  public relate<R extends ModelRelationsFn<any, T>>(r: R): ModelBuilder<T, R> {
+    this.$relationFn = r as any;
+    return this as any;
   }
 }
 
-export interface IndexOptions<S extends ModelShape> {
-  fields: (keyof S)[];
-  where?: {
-    [Key in keyof S]: S[Key] extends FieldDef<any, any, any, any, any>
-      ? InferField<S[Key]>
-      : S[Key] extends RelationDef<any, any, any, any>
-        ? InferRelationship<S[Key], any>
-        : never;
-  };
+export type IndexProps<T extends ModelProps> = {
+  /**
+   * The fields this index applies to.
+   */
+  fields: (keyof T | FieldProps<T>)[];
+  /**
+   * Custom name for index.
+   */
+  name?: string;
+  /**
+   * Unique indexes.
+   */
+  unique?: boolean;
+  /**
+   * Full-text indexes, for MySQL and PostgreSQL.
+   */
+  fulltext?: boolean;
+} & (
+  | {
+      /**
+       * The type of index, for PostgreSQL.
+       */
+      type?: "B-tree" | "Hash" | "GiST" | "SP-GiST" | "GIN" | "BRIN";
+    }
+  | {
+      /**
+       * The type of index, for PostgreSQL.
+       */
+      type: "bloom";
+      /**
+       * The length of each index entry in bits, rounded up to the nearest multiple of 16, maximum being 4096.
+       */
+      length: number;
+      /**
+       * Number of bits generated for each index colums. Can be from 1-32 entries, with bits being u to 4095.
+       */
+      cols: number[];
+    }
+);
+
+export interface FieldProps<T extends ModelProps> {
+  /**
+   * The field name.
+   */
+  name: keyof T;
+  /**
+   * Per-field sort order.
+   */
+  sort?: "asc" | "desc";
+  /**
+   * Length, for MySQL.
+   */
+  length?: number;
+  /**
+   * Operator classes, for PostgreSQL.
+   */
+  ops?: string[];
 }
 
-/**
- * Infers a type from a field definition.
- */
-export type InferField<TField extends FieldDef<any, any, any, any, any>> =
-  TField extends FieldDef<
-    infer Type,
-    infer IsId,
-    infer IsRequired,
-    infer IsArray,
-    infer Default
-  >
-    ? // base value (array or single)
-      (IsArray extends true ? TypeOf<Type>[] : TypeOf<Type>) extends infer Base
-      ? // if id, required or has a default => definitely Base, otherwise allow undefined
-        IsRequired extends true
-        ? Base
-        : IsId extends true
-          ? Base
-          : Default extends undefined
-            ? Base | undefined
-            : Base
-      : never
-    : never;
-
-/**
- * Converts a `Kind` string into a TypeScript type.
- */
-export type TypeOf<K extends Kind> = K extends "string" | "char"
-  ? string
-  : K extends "bigint"
-    ? bigint
-    : K extends "int" | "float"
-      ? number
-      : K extends "date" | "time" | "datetime" | "timestamp"
-        ? Date
-        : K extends "bool"
-          ? boolean
-          : K extends "blob"
-            ? Blob
-            : never;
-
-/**
- * Infer a single model's properties.
- */
-export type InferModelShape<
-  TDef extends ModelShape,
-  TSchema extends Schema = Schema,
-> = {
-  [P in keyof TDef]: TDef[P] extends FieldDef<any, any, any, any, any>
-    ? InferField<TDef[P]>
-    : TDef[P] extends RelationDef<any, any, any, any>
-      ? InferRelationship<TDef[P], TSchema>
-      : never;
-};
-
-/**
- * Infers a type from a relationship definition.
- */
-export type InferRelationship<
-  TRelation extends RelationDef<any, any, any, any>,
-  TSchema extends Schema,
-> =
-  TRelation extends RelationDef<
-    infer To,
-    infer IsRequired,
-    infer IsArray,
-    infer Default
-  >
-    ? TSchema[To] extends ModelDef<infer Shape>
-      ? (
-          IsArray extends true
-            ? InferModelShape<Shape, TSchema>[]
-            : InferModelShape<Shape, TSchema>
-        ) extends infer Base
-        ? IsRequired extends true
-          ? Base
-          : Default extends undefined
-            ? Base | undefined
-            : Base
-        : never
-      : never
-    : never;
-
-/**
- * Infers types from a model definition.
- */
-export type InferModelDef<T, TSchema extends Schema = Schema> =
-  T extends ModelDef<infer Shape> ? InferModelShape<Shape, TSchema> : never;
-
-/**
- * Creates a new model.
- * @param name The model name in the database. This does not change the model name in your schema.
- * @param model The model definition.
- * @returns The created model;
- */
-export function model<S extends ModelShape>(
+export function model<T extends ModelProps>(
   name: string,
-  shape: S,
-): ModelDef<S>;
-/**
- * Creates a new model.
- * @param model The model definition.
- * @returns The created model.
- */
-export function model<S extends ModelShape>(shape: S): ModelDef<S>;
+  fn: ModelPropsFn<T>,
+): ModelBuilder<T>;
+export function model<T extends ModelProps>(
+  fn: ModelPropsFn<T>,
+): ModelBuilder<T>;
 
-export function model(shapeOrName: ModelShape | string, shape?: ModelShape) {
-  if (typeof shapeOrName === "string") return new ModelDef(shape!, shapeOrName);
-  return new ModelDef(shapeOrName);
+export function model(
+  nameOrFn: string | ModelPropsFn<any>,
+  fn?: ModelPropsFn<any>,
+) {
+  if (typeof nameOrFn === "string") return new ModelBuilder(fn!, nameOrFn);
+  return new ModelBuilder(nameOrFn);
 }

@@ -1,8 +1,0 @@
-{
-  "files": [],
-  "references": [
-    { "path": "./packages/kineo" },
-    { "path": "./packages/kineokit" },
-    { "path": "./packages/better-auth" }
-  ]
-}

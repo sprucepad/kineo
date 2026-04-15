@@ -1,14 +1,10 @@
 # pnpm
-pnpm-lock.yaml
 .pnpm-store/
+pnpm-lock.yaml
 
-# framework stuff
-.docusaurus/
+# frameworks
+node_modules/
 .turbo/
 
-# build
+# build output
 dist/
-build/
-
-# templates for examples
-*.ejs

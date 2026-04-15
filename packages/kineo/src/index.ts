@@ -1,19 +1,13 @@
-export { kineo, type Kineo, type InferClient } from "./client";
+export { kineo, type Kineo } from "./runtime";
+export { defineConfig, env, loadEnv, type KineoConfig } from "./config";
 export {
-  defineSchema,
   model,
-  field,
-  relation,
-  ModelDef,
-  type Schema,
-  type InferSchema,
-  type InferModelDef,
-  type InferModelShape,
+  s,
+  Decimal,
+  type InferField,
+  type InferRelationship,
+  type InferProps,
+  type InferRelations,
+  type NormalizeOptional,
+  type InferModel,
 } from "./schema";
-export { Model, GraphModel } from "./model";
-export {
-  defineAdapter,
-  defineEmitter,
-  type Adapter,
-  type Emitter,
-} from "./adapter";

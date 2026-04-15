@@ -1,0 +1,12 @@
+{
+  "extends": "@dev/tsconfig/example",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@/*": ["./src/*"],
+      "#*": ["./generated/*"]
+    }
+  },
+  "include": ["src"]
+}

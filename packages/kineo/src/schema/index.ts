@@ -1,27 +1,12 @@
-import type { InferModelDef, ModelDef } from "./model";
+import type { ModelBuilder } from "./model";
 
-/**
- * A schema. Contains model definitions.
- */
-export type Schema = {
-  [Key in string]: ModelDef<any>;
-};
+export type Schema = Record<string, ModelBuilder<any, any>>;
 
-/**
- * Infers a whole schema.
- */
-export type InferSchema<TSchema extends Schema> = {
-  [M in keyof TSchema]: InferModelDef<TSchema[M], TSchema>;
-};
-
-/**
- * Adds schema type definitions to an object.
- * @param schema The object.
- * @returns The same object.
- */
-export function defineSchema<T extends Schema>(obj: T): T {
-  return obj;
+export function defineSchema<T extends Schema>(s: T): T {
+  return s;
 }
 
 export * from "./model";
-export * from "./field";
+export * from "./property";
+export * from "./infer";
+export * from "./parser";

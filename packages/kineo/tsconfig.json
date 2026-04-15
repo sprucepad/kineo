@@ -1,11 +1,12 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "@dev/tsconfig/lib",
   "compilerOptions": {
-    "baseUrl": ".",
+    "types": ["node"],
+    "rootDirs": ["src", "tests"],
     "paths": {
-      "@/*": ["src/*"],
-      "@tests/*": ["tests/*"]
+      "@/*": ["./src/*"],
+      "@tests/*": ["./tests/*"]
     }
   },
-  "exclude": ["dist"]
+  "include": ["src", "tests"]
 }
