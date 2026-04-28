@@ -129,8 +129,7 @@
     }
   },
   "devDependencies": {
-    "@dev/eslint-config": "workspace:*",
-    "@dev/tsconfig": "workspace:*",
+    "@dev/configs": "workspace:*",
     "@libsql/client": "^0.17.3",
     "@types/node": "^22.15.22",
     "better-sqlite3": "^12.9.0",

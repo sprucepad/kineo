@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import sqlEmitter, { SQLDialect } from "@/emitter/sql";
+import sqlEmitter, { type SQLDialect } from "@/emitter/sql";
 
 describe("SQL emitter", () => {
   const dialect: SQLDialect = {

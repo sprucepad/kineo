@@ -14,8 +14,7 @@
     "postgres": "^3.4.9"
   },
   "devDependencies": {
-    "@dev/eslint-config": "workspace:*",
-    "@dev/tsconfig": "workspace:*",
+    "@dev/configs": "workspace:*",
     "eslint": "^10.2.1",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"

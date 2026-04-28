@@ -42,9 +42,9 @@ const program = new Command("kineo")
       ".config/kineo.cjs",
       ...(configs ?? []),
     ]);
-  });
 
-// TODO
+    console.log(config); // TODO
+  });
 
 program.subCommand("greet", (c) =>
   c

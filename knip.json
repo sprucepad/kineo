@@ -2,8 +2,8 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "tags": ["-lintignore"],
   "workspaces": {
-    "packages/*": {
-      "entry": ["src/index.ts", "*.config.{js,ts}"],
+    "packages/!(configs)": {
+      "entry": ["*.config.{js,ts}"],
       "project": ["src/**/*.{js,ts,tsx}"]
     },
     "examples/*": {

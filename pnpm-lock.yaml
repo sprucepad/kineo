@@ -33,12 +33,9 @@ importers:
         specifier: ^3.4.9
         version: 3.4.9
     devDependencies:
-      '@dev/eslint-config':
+      '@dev/configs':
         specifier: workspace:*
-        version: link:../../packages/dev/eslint-config
-      '@dev/tsconfig':
-        specifier: workspace:*
-        version: link:../../packages/dev/tsconfig
+        version: link:../../packages/configs
       eslint:
         specifier: ^10.2.1
         version: 10.2.1(jiti@2.6.1)
@@ -49,7 +46,7 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
-  packages/dev/eslint-config:
+  packages/configs:
     dependencies:
       '@eslint/js':
         specifier: ^10.0.1
@@ -68,12 +65,6 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
-  packages/dev/tsconfig:
-    devDependencies:
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
-
   packages/kineo:
     dependencies:
       convoker:
@@ -86,18 +77,15 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
     devDependencies:
-      '@dev/eslint-config':
+      '@dev/configs':
         specifier: workspace:*
-        version: link:../dev/eslint-config
-      '@dev/tsconfig':
-        specifier: workspace:*
-        version: link:../dev/tsconfig
+        version: link:../configs
       '@libsql/client':
         specifier: ^0.17.3
         version: 0.17.3
       '@types/node':
-        specifier: ^25.6.0
-        version: 25.6.0
+        specifier: ^22.15.22
+        version: 22.19.17
       better-sqlite3:
         specifier: ^12.9.0
         version: 12.9.0
@@ -109,7 +97,7 @@ importers:
         version: 12.5.0(@azure/core-client@1.10.1)
       mysql2:
         specifier: ^3.22.3
-        version: 3.22.3(@types/node@25.6.0)
+        version: 3.22.3(@types/node@22.19.17)
       postgres:
         specifier: ^3.4.9
         version: 3.4.9
@@ -1124,6 +1112,9 @@ packages:
 
   '@types/node@18.19.130':
     resolution: {integrity: sha512-GRaXQx6jGfL8sKfaIDD6OupbIHBr9jv7Jnaml9tB7l4v068PAOXqfcujMMo5PhbIs6ggR1XODELqahT2R8v0fg==}
+
+  '@types/node@22.19.17':
+    resolution: {integrity: sha512-wGdMcf+vPYM6jikpS/qhg6WiqSV/OhG+jeeHT/KlVqxYfD40iYJf9/AE1uQxVWFvU7MipKRkRv8NSHiCGgPr8Q==}
 
   '@types/node@25.6.0':
     resolution: {integrity: sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ==}
@@ -2465,6 +2456,9 @@ packages:
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
 
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+
   undici-types@7.19.2:
     resolution: {integrity: sha512-qYVnV5OEm2AW8cJMCpdV20CDyaN3g0AjDlOGf1OW4iaDEx8MwdtChUp4zu4H0VP3nDRF/8RKWH+IPp9uW0YGZg==}
 
@@ -3426,13 +3420,13 @@ snapshots:
 
   '@types/docker-modem@3.0.6':
     dependencies:
-      '@types/node': 25.6.0
+      '@types/node': 22.19.17
       '@types/ssh2': 1.15.5
 
   '@types/dockerode@4.0.1':
     dependencies:
       '@types/docker-modem': 3.0.6
-      '@types/node': 25.6.0
+      '@types/node': 22.19.17
       '@types/ssh2': 1.15.5
 
   '@types/esrecurse@4.3.1': {}
@@ -3447,21 +3441,26 @@ snapshots:
     dependencies:
       undici-types: 5.26.5
 
+  '@types/node@22.19.17':
+    dependencies:
+      undici-types: 6.21.0
+
   '@types/node@25.6.0':
     dependencies:
       undici-types: 7.19.2
+    optional: true
 
   '@types/readable-stream@4.0.23':
     dependencies:
-      '@types/node': 25.6.0
+      '@types/node': 22.19.17
 
   '@types/ssh2-streams@0.1.13':
     dependencies:
-      '@types/node': 25.6.0
+      '@types/node': 22.19.17
 
   '@types/ssh2@0.5.52':
     dependencies:
-      '@types/node': 25.6.0
+      '@types/node': 22.19.17
       '@types/ssh2-streams': 0.1.13
 
   '@types/ssh2@1.15.5':
@@ -3470,7 +3469,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 25.6.0
+      '@types/node': 22.19.17
 
   '@typescript-eslint/eslint-plugin@8.59.1(@typescript-eslint/parser@8.59.1(eslint@10.2.1(jiti@2.6.1))(typescript@6.0.3))(eslint@10.2.1(jiti@2.6.1))(typescript@6.0.3)':
     dependencies:
@@ -4386,9 +4385,9 @@ snapshots:
       - '@azure/core-client'
       - supports-color
 
-  mysql2@3.22.3(@types/node@25.6.0):
+  mysql2@3.22.3(@types/node@22.19.17):
     dependencies:
-      '@types/node': 25.6.0
+      '@types/node': 22.19.17
       aws-ssl-profiles: 1.1.2
       denque: 2.1.0
       generate-function: 2.3.1
@@ -4575,7 +4574,7 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.1
-      '@types/node': 25.6.0
+      '@types/node': 22.19.17
       long: 5.3.2
 
   pump@3.0.4:
@@ -4835,7 +4834,7 @@ snapshots:
       '@azure/identity': 4.13.1
       '@azure/keyvault-keys': 4.10.0(@azure/core-client@1.10.1)
       '@js-joda/core': 5.7.0
-      '@types/node': 25.6.0
+      '@types/node': 22.19.17
       bl: 6.1.6
       iconv-lite: 0.7.2
       js-md4: 0.3.2
@@ -4977,7 +4976,10 @@ snapshots:
 
   undici-types@5.26.5: {}
 
-  undici-types@7.19.2: {}
+  undici-types@6.21.0: {}
+
+  undici-types@7.19.2:
+    optional: true
 
   undici@7.25.0: {}
 

@@ -34,9 +34,12 @@ export default defineConfig([
     dts: {
       sourcemap: true,
     },
+    outputOptions: {
+      sourcemapExcludeSources: true,
+    },
   },
   {
-    entry: ["./src/cli/main.ts"],
+    entry: ["./src/main.ts"],
     minify: true,
     sourcemap: false,
     dts: false,

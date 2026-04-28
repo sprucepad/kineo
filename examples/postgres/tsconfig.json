@@ -1,5 +1,5 @@
 {
-  "extends": "@dev/tsconfig/example",
+  "extends": "@dev/configs/typescript/example",
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",

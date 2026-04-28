@@ -1,5 +1,5 @@
 {
-  "extends": "@dev/tsconfig/lib",
+  "extends": "@dev/configs/typescript/lib",
   "compilerOptions": {
     "types": ["node"],
     "rootDirs": ["src", "tests"],
