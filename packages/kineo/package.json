@@ -98,7 +98,6 @@
   ],
   "author": "sprucepad",
   "license": "MIT",
-  "packageManager": "pnpm@10.33.0",
   "dependencies": {
     "convoker": "^0.5.3",
     "decimal.js": "^10.6.0",
