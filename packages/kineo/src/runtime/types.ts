@@ -4,58 +4,128 @@
 
 import type { Scalar } from "@/schema";
 
-export type Prettify<T> = {
+type Prettify<T> = {
   [K in keyof T]: T[K];
 } & {};
 
+type MaybeNull<V, T> = null extends V ? T | null : T;
+
+type ArrayElement<T> = T extends readonly (infer U)[] ? U : never;
+
+export type RelationCountMap<T> = {
+  [K in keyof T as T[K] extends readonly (infer U)[]
+    ? U extends object
+      ? K
+      : never
+    : never]: number;
+};
+
+export type ScalarListFilter<T> =
+  | T[]
+  | {
+      equals?: T[] | null;
+      has?: T;
+      hasEvery?: T[];
+      hasSome?: T[];
+      isEmpty?: boolean;
+    };
+
+export type ListRelationFilter<T> = {
+  every?: WhereInput<T>;
+  some?: WhereInput<T>;
+  none?: WhereInput<T>;
+};
+
+export type SingularRelationFilter<T> = {
+  is?: WhereInput<T> | null;
+  isNot?: WhereInput<T> | null;
+};
+
+type RelationSelectionValue<V> = V extends readonly (infer U)[]
+  ? U extends object
+    ? true | NestedListQueryOptions<U, U, U, U>
+    : true
+  : NonNullable<V> extends object
+    ?
+        | true
+        | NestedSingleQueryOptions<
+            NonNullable<V>,
+            NonNullable<V>,
+            NonNullable<V>,
+            NonNullable<V>
+          >
+    : true;
+
+type RelationInclusionValue<V> = V extends readonly (infer U)[]
+  ? U extends object
+    ? true | NestedListQueryOptions<U, U, U, U>
+    : never
+  : NonNullable<V> extends object
+    ?
+        | true
+        | NestedSingleQueryOptions<
+            NonNullable<V>,
+            NonNullable<V>,
+            NonNullable<V>,
+            NonNullable<V>
+          >
+    : never;
+
 /**
- * DeepDive type - allows selecting specific fields
+ * Field selection - supports scalar fields and nested relation selections
  */
-export type FieldSelection<T> = Partial<{
-  [K in keyof T as T[K] extends object ? never : K]: true;
-}>;
+export type FieldSelection<Props, Rels = never> = Prettify<
+  Partial<{
+    [K in keyof Props]: K extends keyof Rels
+      ? RelationSelectionValue<Rels[K]>
+      : true;
+  }>
+>;
 
 /**
  * Relation inclusion - allows including related models
+ * Each relation's nested options should accept the full combined model type
  */
-export type RelationInclusion<T> = Prettify<
+export type RelationInclusion<Rels> = Prettify<
   Partial<
     {
-      [K in keyof T as T[K] extends (infer U)[]
-        ? U extends object
-          ? K
-          : never
-        : T[K] extends object
-          ? K
-          : never]: T[K] extends (infer U)[]
-        ? U extends object
-          ? NestedQueryOptions<U> | true
-          : never
-        : T[K] extends object
-          ? NestedQueryOptions<T[K]> | true
-          : never;
+      [K in keyof Rels]: RelationInclusionValue<Rels[K]>;
     } & {
-      _count?: {
-        select?: Partial<{
-          [K in keyof T as T[K] extends any[] ? K : never]: true;
-        }>;
-      };
+      _count?:
+        | true
+        | {
+            select?: Partial<{
+              [K in keyof Rels as Rels[K] extends any[] ? K : never]: true;
+            }>;
+          };
     }
   >
 >;
 
+export type NestedListQueryOptions<Props, PropsOpt, Rels, RelsOpt> = {
+  where?: WhereInput<PropsOpt & RelsOpt>;
+  orderBy?:
+    | OrderByInput<PropsOpt & RelsOpt>
+    | OrderByInput<PropsOpt & RelsOpt>[];
+  take?: number;
+  skip?: number;
+  cursor?: CursorInput<PropsOpt>;
+  include?: RelationInclusion<Rels>;
+  select?: FieldSelection<Props, Rels>;
+};
+
+export type NestedSingleQueryOptions<Props, PropsOpt, Rels, RelsOpt> = {
+  include?: RelationInclusion<Rels>;
+  select?: FieldSelection<Props, Rels>;
+};
+
 /**
  * Options for nested queries (where, orderBy, take, skip, etc.)
  */
-export type NestedQueryOptions<T> = {
-  where?: WhereInput<T>;
-  orderBy?: OrderByInput<T> | OrderByInput<T>[];
-  take?: number;
-  skip?: number;
-  cursor?: CursorInput<T>;
-  include?: RelationInclusion<T>;
-  select?: FieldSelection<T>;
-};
+
+export type NestedQueryOptions<Props, PropsOpt, Rels, RelsOpt> =
+  | NestedListQueryOptions<Props, PropsOpt, Rels, RelsOpt>
+  | NestedSingleQueryOptions<Props, PropsOpt, Rels, RelsOpt>;
 
 /**
  * Field-level atomic operations (increment, decrement, multiply, divide, set)
@@ -76,13 +146,15 @@ export type FieldUpdate<T> =
  * Type-safe update data for a model
  */
 export type UpdateData<T> = Prettify<{
-  [K in keyof T]?: T[K] extends (infer U)[]
+  [K in keyof T]?: T[K] extends readonly (infer U)[]
     ? U extends object
       ? RelationUpdateMany<U>
       : FieldUpdate<T[K]>
-    : T[K] extends object
-      ? RelationUpdate<T[K]>
-      : FieldUpdate<T[K]>;
+    : T[K] extends Date
+      ? FieldUpdate<T[K]>
+      : T[K] extends object
+        ? RelationUpdate<T[K]>
+        : FieldUpdate<T[K]>;
 }>;
 
 /**
@@ -90,21 +162,25 @@ export type UpdateData<T> = Prettify<{
  */
 export type CreateData<T> = Prettify<
   {
-    [K in keyof T]?: T[K] extends object
-      ? never
-      : T[K] extends any[]
+    [K in keyof T]?: T[K] extends readonly (infer U)[]
+      ? U extends object
         ? never
-        : T[K];
+        : T[K]
+      : T[K] extends Date
+        ? T[K]
+        : T[K] extends object
+          ? never
+          : T[K];
   } & {
-    [K in keyof T as T[K] extends object
-      ? T[K] extends (infer U)[]
-        ? U extends object
+    [K in keyof T as T[K] extends readonly (infer U)[]
+      ? U extends object
+        ? K
+        : never
+      : T[K] extends Date
+        ? never
+        : T[K] extends object
           ? K
-          : never
-        : T[K] extends object | null | undefined
-          ? K
-          : never
-      : never]?: T[K] extends (infer U)[]
+          : never]?: T[K] extends readonly (infer U)[]
       ? U extends object
         ? RelationCreateMany<U>
         : never
@@ -114,25 +190,29 @@ export type CreateData<T> = Prettify<
   }
 >;
 
+type WhereValue<V> = V extends readonly (infer U)[]
+  ? U extends object
+    ? ListRelationFilter<U>
+    : ScalarListFilter<U>
+  : NonNullable<V> extends string
+    ? StringFilterCondition
+    : NonNullable<V> extends number
+      ? NumberFilterCondition
+      : NonNullable<V> extends boolean
+        ? BooleanFilterCondition
+        : NonNullable<V> extends Date
+          ? DateFilterCondition
+          : NonNullable<V> extends object
+            ? SingularRelationFilter<NonNullable<V>>
+            : FilterCondition<V>;
+
 /**
- * Where input for filtering - supports nested filtering, logical operators
+ * Where input for filtering - supports nested filtering, logical operators for both properties and relations
  */
 export type WhereInput<T> = Prettify<
   Partial<
     {
-      [K in keyof T]: T[K] extends any[]
-        ? ArrayFilterCondition<T[K]>
-        : T[K] extends string | (string | undefined)
-          ? StringFilterCondition
-          : T[K] extends number | (number | undefined)
-            ? NumberFilterCondition
-            : T[K] extends boolean | (boolean | undefined)
-              ? BooleanFilterCondition
-              : T[K] extends Date | (Date | undefined)
-                ? DateFilterCondition
-                : T[K] extends object
-                  ? WhereInput<T[K]>
-                  : FilterCondition<T[K]>;
+      [K in keyof T]: WhereValue<T[K]>;
     } & {
       AND?: WhereInput<T> | WhereInput<T>[];
       OR?: WhereInput<T> | WhereInput<T>[];
@@ -198,22 +278,17 @@ export type DateFilterCondition =
       gte?: Date;
     };
 
-export type ArrayFilterCondition<T extends any[]> =
-  | {
-      every?: WhereInput<T[number]>;
-    }
-  | {
-      some?: WhereInput<T[number]>;
-    }
-  | {
-      none?: WhereInput<T[number]>;
-    }
-  | {
-      is?: WhereInput<T[number]>;
-    }
-  | {
-      isNot?: WhereInput<T[number]>;
-    };
+export type ArrayFilterCondition<T extends any[]> = T[number] extends object
+  ? ListRelationFilter<T[number]>
+  : ScalarListFilter<T[number]>;
+
+type OrderByValue<V> = V extends readonly (infer U)[]
+  ? U extends object
+    ? OrderByRelation<U> | { _count?: "asc" | "desc" }
+    : "asc" | "desc"
+  : NonNullable<V> extends object
+    ? OrderByRelation<NonNullable<V>>
+    : "asc" | "desc";
 
 /**
  * Order by input - can order by fields or nested relations
@@ -221,13 +296,7 @@ export type ArrayFilterCondition<T extends any[]> =
 export type OrderByInput<T> = Prettify<
   Partial<
     {
-      [K in keyof T]: T[K] extends (infer U)[]
-        ? U extends Scalar
-          ? "asc" | "desc"
-          : OrderByRelation<U>
-        : NonNullable<T[K]> extends Scalar
-          ? "asc" | "desc"
-          : OrderByRelation<NonNullable<T[K]>>;
+      [K in keyof T]: OrderByValue<T[K]>;
     } & {
       _relevance?: {
         fields: (keyof T)[];
@@ -239,16 +308,31 @@ export type OrderByInput<T> = Prettify<
   >
 >;
 
-export type OrderByRelation<T> = {
-  _count?: "asc" | "desc";
-} & Partial<{
-  [K in keyof T]: T[K] extends object ? never : "asc" | "desc";
-}>;
+export type OrderByRelation<T> = Prettify<
+  Partial<
+    {
+      [K in keyof T]: OrderByValue<T[K]>;
+    } & {
+      _count?: "asc" | "desc";
+    }
+  >
+>;
 
 /**
  * Cursor-based pagination
  */
 export type CursorInput<T> = Partial<T>;
+
+/**
+ * Applies nested select/include logic recursively
+ */
+export type ApplySelection<
+  T,
+  O extends { include?: any; select?: any },
+> = Prettify<
+  (O extends { select: infer S } ? ApplySelectiveFields<T, S> : T) &
+    (O extends { include: infer I } ? ApplyInclusion<T, I> : {})
+>;
 
 /**
  * Relation operations for updates (connect, disconnect, create, update, upsert, set, etc.)
@@ -362,15 +446,17 @@ export type RelationCreateMany<T> =
 /**
  * Options for find (single result) - matching Prisma's findUnique/findFirst structure
  */
-export type FindOpts<T, IO = T> = {
-  where?: WhereInput<IO>;
-  select?: FieldSelection<T>;
-  include?: RelationInclusion<T>;
-  orderBy?: OrderByInput<IO> | OrderByInput<IO>[];
+export type FindOpts<Props, PropsOpt, Rels, RelsOpt> = {
+  where?: WhereInput<PropsOpt & RelsOpt>;
+  select?: FieldSelection<Props & Rels, Rels>;
+  include?: RelationInclusion<Rels>;
+  orderBy?:
+    | OrderByInput<PropsOpt & RelsOpt>
+    | OrderByInput<PropsOpt & RelsOpt>[];
   take?: number;
   skip?: number;
-  cursor?: CursorInput<IO>;
-  distinct?: (keyof T)[];
+  cursor?: CursorInput<PropsOpt>;
+  distinct?: (keyof Props)[];
   rejectOnNotFound?: boolean;
 };
 
@@ -378,257 +464,328 @@ export type FindOpts<T, IO = T> = {
  * Return type for find
  */
 export type FindReturn<
-  T,
-  O extends FindOpts<T, any>,
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
+  O extends FindOpts<Props, PropsOpt, Rels, RelsOpt>,
   Many extends boolean = false,
 > = Many extends true
-  ? T[]
-  : O extends { include: any } | { select: any }
-    ? ApplySelection<T, O>
-    : T;
+  ? FindReturnSingle<Props, PropsOpt, Rels, RelsOpt, O>[]
+  : FindReturnSingle<Props, PropsOpt, Rels, RelsOpt, O>;
+
+export type FindReturnSingle<
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
+  O extends FindOpts<Props, PropsOpt, Rels, RelsOpt>,
+> = ApplySelection<Props & Rels, O>;
 
 /**
- * Apply include/select to result type
+ * Apply inclusion to result type
  */
-export type ApplySelection<
-  T,
-  O extends { include?: any; select?: any },
-> = O extends { include: infer I; select: infer S }
-  ? ApplySelectiveFields<T, S> & ApplyInclusion<T, I>
-  : O extends { include: infer I }
-    ? DefaultSelection<T> & ApplyInclusion<T, I>
-    : O extends { select: infer S }
-      ? ApplySelectiveFields<T, S>
-      : T;
-
 export type ApplyInclusion<T, I> = Prettify<
-  I extends { [K in string]: true }
+  I extends object
     ? {
-        [K in keyof I & keyof T as I[K] extends true ? K : never]: T[K];
-      }
-    : I extends { [K in string]: any }
-      ? {
-          [K in keyof I & keyof T]: T[K] extends (infer U)[]
-            ? U extends object
-              ? (ApplySelection<U, I[K]> & {
-                  _count?: { [key: string]: number };
-                })[]
-              : T[K]
-            : T[K] extends object
-              ? ApplySelection<T[K], I[K]>
-              : T[K];
-        }
-      : object
+        [K in keyof I & keyof T as K extends "_count"
+          ? never
+          : K]: I[K] extends true
+          ? T[K]
+          : I[K] extends { include?: any; select?: any }
+            ? T[K] extends readonly (infer U)[]
+              ? U extends object
+                ? ApplySelection<U, I[K]>[]
+                : T[K]
+              : T[K] extends object
+                ? MaybeNull<T[K], ApplySelection<NonNullable<T[K]>, I[K]>>
+                : T[K]
+            : T[K];
+      } & (I extends { _count: infer C }
+        ? {
+            _count: C extends true
+              ? {
+                  [K in keyof T as T[K] extends readonly (infer U)[]
+                    ? U extends object
+                      ? K
+                      : never
+                    : never]: number;
+                }
+              : C extends { select: infer S }
+                ? {
+                    [K in keyof S & keyof T as T[K] extends readonly (infer U)[]
+                      ? U extends object
+                        ? K
+                        : never
+                      : never]: number;
+                  }
+                : never;
+          }
+        : {})
+    : {}
 >;
 
-export type DefaultSelection<T> = Prettify<{
-  [K in keyof T as T[K] extends any[]
-    ? T[K] extends Array<infer U>
-      ? U extends object
-        ? never
-        : K
-      : K
-    : T[K] extends object
-      ? never
-      : K]: T[K];
-}>;
+export type DefaultSelection<Props> = Props;
 
-export type ApplySelectiveFields<T, S> = Prettify<{
-  [K in keyof S & keyof T as S[K] extends true
+/**
+ * Applies select recursively, including relation selects
+ */
+
+export type ApplySelectiveFields<Props, S> = Prettify<{
+  [K in keyof S & keyof Props as S[K] extends true | object
     ? K
-    : S[K] extends object
-      ? K
-      : never]: S[K] extends true
-    ? T[K]
+    : never]: S[K] extends true
+    ? Props[K]
     : S[K] extends { include?: any; select?: any }
-      ? T[K] extends (infer U)[]
+      ? Props[K] extends readonly (infer U)[]
         ? U extends object
           ? ApplySelection<U, S[K]>[]
-          : T[K]
-        : T[K] extends object
-          ? ApplySelection<T[K], S[K]>
-          : T[K]
-      : T[K];
+          : Props[K]
+        : Props[K] extends object
+          ? MaybeNull<Props[K], ApplySelection<NonNullable<Props[K]>, S[K]>>
+          : Props[K]
+      : Props[K];
 }>;
 
 /**
  * Options for create (single)
  */
 export type CreateOpts<
-  T,
-  IO = T,
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
   Many extends boolean = false,
 > = Many extends true
   ? {
-      data: CreateData<IO>[];
-      include?: RelationInclusion<T>;
-      select?: FieldSelection<T>;
+      data: CreateData<PropsOpt & RelsOpt>[];
+      include?: RelationInclusion<Rels>;
+      select?: FieldSelection<Props & Rels, Rels>;
     }
   : {
-      data: CreateData<IO>;
-      include?: RelationInclusion<T>;
-      select?: FieldSelection<T>;
+      data: CreateData<PropsOpt & RelsOpt>;
+      include?: RelationInclusion<Rels>;
+      select?: FieldSelection<Props & Rels, Rels>;
     };
 
 /**
  * Return type for create
  */
 export type CreateReturn<
-  T,
-  O extends CreateOpts<T, any, any>,
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
+  O extends CreateOpts<Props, PropsOpt, Rels, RelsOpt, any>,
   Many extends boolean = false,
 > = Many extends true
-  ? T[]
-  : O extends { include: any } | { select: any }
-    ? ApplySelection<T, O>
-    : T;
+  ? CreateReturnSingle<Props, PropsOpt, Rels, RelsOpt, O>[]
+  : CreateReturnSingle<Props, PropsOpt, Rels, RelsOpt, O>;
+
+export type CreateReturnSingle<
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
+  O extends CreateOpts<Props, PropsOpt, Rels, RelsOpt, any>,
+> = ApplySelection<Props & Rels, O>;
 
 /**
  * Options for createReturn (returning specific fields)
  */
-export type CreateReturnOpts<T> = {
-  data: CreateData<T>[] | CreateData<T>;
-  select?: FieldSelection<T>;
+export type CreateReturnOpts<Props, PropsOpt, Rels, RelsOpt> = {
+  data: CreateData<PropsOpt & RelsOpt>[] | CreateData<PropsOpt & RelsOpt>;
+  select?: FieldSelection<Props & Rels, Rels>;
+  include?: RelationInclusion<Rels>;
 };
 
 /**
  * Return type for createReturn
  */
 export type CreateReturnReturn<
-  T,
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
+  O extends CreateReturnOpts<Props, PropsOpt, Rels, RelsOpt>,
   Many extends boolean = false,
-> = Many extends true ? T[] : T;
+> = Many extends true
+  ? ApplySelection<Props & Rels, O>[]
+  : ApplySelection<Props & Rels, O>;
 
 /**
  * Options for update
  */
 export type UpdateOpts<
-  T,
-  IO = T,
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
   Many extends boolean = false,
 > = Many extends true
   ? {
-      where: WhereInput<IO>;
-      data: UpdateData<IO>;
-      include?: RelationInclusion<T>;
-      select?: FieldSelection<T>;
+      where: WhereInput<PropsOpt & RelsOpt>;
+      data: UpdateData<PropsOpt & RelsOpt>;
+      include?: RelationInclusion<Rels>;
+      select?: FieldSelection<Props & Rels, Rels>;
     }
   : {
-      where: WhereInput<IO>;
-      data: UpdateData<IO>;
-      include?: RelationInclusion<T>;
-      select?: FieldSelection<T>;
+      where: WhereInput<PropsOpt & RelsOpt>;
+      data: UpdateData<PropsOpt & RelsOpt>;
+      include?: RelationInclusion<Rels>;
+      select?: FieldSelection<Props & Rels, Rels>;
     };
 
 /**
  * Return type for update
  */
 export type UpdateReturn<
-  T,
-  O extends UpdateOpts<T, any, any>,
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
+  O extends UpdateOpts<Props, PropsOpt, Rels, RelsOpt, any>,
   Many extends boolean = false,
 > = Many extends true
-  ? T[]
-  : O extends { include: any } | { select: any }
-    ? ApplySelection<T, O>
-    : T;
+  ? UpdateReturnSingle<Props, PropsOpt, Rels, RelsOpt, O>[]
+  : UpdateReturnSingle<Props, PropsOpt, Rels, RelsOpt, O>;
+
+export type UpdateReturnSingle<
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
+  O extends UpdateOpts<Props, PropsOpt, Rels, RelsOpt, any>,
+> = ApplySelection<Props & Rels, O>;
 
 /**
  * Options for updateReturn
  */
-export type UpdateReturnOpts<T, IO = T> = {
-  where: WhereInput<IO>;
-  data: UpdateData<T>;
-  select?: FieldSelection<T>;
+export type UpdateReturnOpts<Props, PropsOpt, Rels, RelsOpt> = {
+  where: WhereInput<PropsOpt & RelsOpt>;
+  data: UpdateData<PropsOpt & RelsOpt>;
+  select?: FieldSelection<Props & Rels, Rels>;
+  include?: RelationInclusion<Rels>;
 };
 
 /**
  * Return type for updateReturn
  */
 export type UpdateReturnReturn<
-  T,
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
+  O extends UpdateReturnOpts<Props, PropsOpt, Rels, RelsOpt>,
   Many extends boolean = false,
-> = Many extends true ? T[] : T;
+> = Many extends true
+  ? ApplySelection<Props & Rels, O>[]
+  : ApplySelection<Props & Rels, O>;
 
 /**
  * Options for upsert
  */
 export type UpsertOpts<
-  T,
-  IO = T,
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
   Many extends boolean = false,
 > = Many extends true
   ? {
-      where: WhereInput<IO>[];
-      create: CreateData<IO>[];
-      update: UpdateData<IO>;
-      include?: RelationInclusion<T>;
-      select?: FieldSelection<T>;
+      where: WhereInput<PropsOpt & RelsOpt>[];
+      create: CreateData<PropsOpt & RelsOpt>[];
+      update: UpdateData<PropsOpt & RelsOpt>;
+      include?: RelationInclusion<Rels>;
+      select?: FieldSelection<Props & Rels, Rels>;
     }
   : {
-      where: WhereInput<IO>;
-      create: CreateData<IO>;
-      update: UpdateData<IO>;
-      include?: RelationInclusion<T>;
-      select?: FieldSelection<T>;
+      where: WhereInput<PropsOpt & RelsOpt>;
+      create: CreateData<PropsOpt & RelsOpt>;
+      update: UpdateData<PropsOpt & RelsOpt>;
+      include?: RelationInclusion<Rels>;
+      select?: FieldSelection<Props & Rels, Rels>;
     };
 
 /**
  * Return type for upsert
  */
 export type UpsertReturn<
-  T,
-  O extends UpsertOpts<T, any, any>,
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
+  O extends UpsertOpts<Props, PropsOpt, Rels, RelsOpt, any>,
   Many extends boolean = false,
 > = Many extends true
-  ? T[]
-  : O extends { include: any } | { select: any }
-    ? ApplySelection<T, O>
-    : T;
+  ? UpsertReturnSingle<Props, PropsOpt, Rels, RelsOpt, O>[]
+  : UpsertReturnSingle<Props, PropsOpt, Rels, RelsOpt, O>;
+
+export type UpsertReturnSingle<
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
+  O extends UpsertOpts<Props, PropsOpt, Rels, RelsOpt, any>,
+> = ApplySelection<Props & Rels, O>;
 
 /**
  * Options for delete
  */
+
 export type DeleteOpts<
-  T,
-  IO = T,
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
   Many extends boolean = false,
 > = Many extends true
   ? {
-      where: WhereInput<IO>;
-      include?: RelationInclusion<T>;
-      select?: FieldSelection<T>;
+      where: WhereInput<PropsOpt & RelsOpt>;
+      include?: RelationInclusion<Rels>;
+      select?: FieldSelection<Props & Rels, Rels>;
     }
   : {
-      where: WhereInput<IO>;
-      include?: RelationInclusion<T>;
-      select?: FieldSelection<T>;
+      where: WhereInput<PropsOpt & RelsOpt>;
+      include?: RelationInclusion<Rels>;
+      select?: FieldSelection<Props & Rels, Rels>;
     };
 
 /**
  * Return type for delete
  */
 export type DeleteReturn<
-  T,
-  O extends DeleteOpts<T, any, any>,
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
+  O extends DeleteOpts<Props, PropsOpt, Rels, RelsOpt, any>,
   Many extends boolean = false,
 > = Many extends true
-  ? T[]
-  : O extends { include: any } | { select: any }
-    ? ApplySelection<T, O>
-    : T;
+  ? DeleteReturnSingle<Props, PropsOpt, Rels, RelsOpt, O>[]
+  : DeleteReturnSingle<Props, PropsOpt, Rels, RelsOpt, O>;
+
+export type DeleteReturnSingle<
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
+  O extends DeleteOpts<Props, PropsOpt, Rels, RelsOpt, any>,
+> = ApplySelection<Props & Rels, O>;
 
 /**
  * Options for count
  */
-export type CountOpts<T, IO = T> = {
-  where?: WhereInput<IO>;
-  orderBy?: OrderByInput<IO> | OrderByInput<IO>[];
+export type CountOpts<Props, PropsOpt, Rels, RelsOpt> = {
+  where?: WhereInput<PropsOpt & RelsOpt>;
+  orderBy?:
+    | OrderByInput<PropsOpt & RelsOpt>
+    | OrderByInput<PropsOpt & RelsOpt>[];
   take?: number;
   skip?: number;
-  cursor?: CursorInput<IO>;
+  cursor?: CursorInput<PropsOpt>;
   select?: Partial<{
-    [K in keyof T as T[K] extends any[] ? K : never]: true;
+    [K in keyof Rels as Rels[K] extends any[] ? K : never]: true;
   }>;
 };
 
@@ -640,24 +797,31 @@ export type CountReturn = number;
 /**
  * Options for aggregate - supports min, max, sum, avg, count
  */
-export type AggregateOpts<T, IO = T> = {
-  where?: WhereInput<IO>;
-  by?: (keyof T)[];
-  orderBy?: OrderByInput<IO> | OrderByInput<IO>[];
+export type AggregateOpts<Props, PropsOpt, Rels, RelsOpt> = {
+  where?: WhereInput<PropsOpt & RelsOpt>;
+  by?: (keyof Props)[];
+  orderBy?:
+    | OrderByInput<PropsOpt & RelsOpt>
+    | OrderByInput<PropsOpt & RelsOpt>[];
   take?: number;
   skip?: number;
-  cursor?: CursorInput<IO>;
+  cursor?: CursorInput<PropsOpt>;
   _count?:
     | boolean
     | {
         select?: Partial<{
-          [K in keyof T]: true;
+          [K in keyof Props | keyof Rels]: true;
         }>;
       };
   _min?: {
     select?: Partial<{
-      [K in keyof T as T[K] extends string | number | Date | null | undefined
-        ? string extends T[K]
+      [K in keyof Props as Props[K] extends
+        | string
+        | number
+        | Date
+        | null
+        | undefined
+        ? string extends Props[K]
           ? never
           : K
         : never]: true;
@@ -665,8 +829,13 @@ export type AggregateOpts<T, IO = T> = {
   };
   _max?: {
     select?: Partial<{
-      [K in keyof T as T[K] extends string | number | Date | null | undefined
-        ? string extends T[K]
+      [K in keyof Props as Props[K] extends
+        | string
+        | number
+        | Date
+        | null
+        | undefined
+        ? string extends Props[K]
           ? never
           : K
         : never]: true;
@@ -674,8 +843,8 @@ export type AggregateOpts<T, IO = T> = {
   };
   _avg?: {
     select?: Partial<{
-      [K in keyof T as T[K] extends number | null | undefined
-        ? number extends T[K]
+      [K in keyof Props as Props[K] extends number | null | undefined
+        ? number extends Props[K]
           ? K
           : never
         : never]: true;
@@ -683,8 +852,8 @@ export type AggregateOpts<T, IO = T> = {
   };
   _sum?: {
     select?: Partial<{
-      [K in keyof T as T[K] extends number | null | undefined
-        ? number extends T[K]
+      [K in keyof Props as Props[K] extends number | null | undefined
+        ? number extends Props[K]
           ? K
           : never
         : never]: true;
@@ -695,7 +864,13 @@ export type AggregateOpts<T, IO = T> = {
 /**
  * Return type for aggregate
  */
-export type AggregateReturn<T, O extends AggregateOpts<T, any>> = Prettify<{
+export type AggregateReturn<
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
+  O extends AggregateOpts<Props, PropsOpt, Rels, RelsOpt>,
+> = Prettify<{
   _count?: O extends { _count: true }
     ? number
     : O extends { _count: { select: any } }
@@ -703,28 +878,36 @@ export type AggregateReturn<T, O extends AggregateOpts<T, any>> = Prettify<{
       : undefined;
   _min?: O extends { _min: any }
     ? {
-        [K in keyof O["_min"]["select"]]: T[K] extends string | number | Date
-          ? T[K] | null
+        [K in keyof O["_min"]["select"]]: Props[K] extends
+          | string
+          | number
+          | Date
+          ? Props[K] | null
           : never;
       }
     : undefined;
   _max?: O extends { _max: any }
     ? {
-        [K in keyof O["_max"]["select"]]: T[K] extends string | number | Date
-          ? T[K] | null
+        [K in keyof O["_max"]["select"]]: Props[K] extends
+          | string
+          | number
+          | Date
+          ? Props[K] | null
           : never;
       }
     : undefined;
   _avg?: O extends { _avg: any }
     ? {
-        [K in keyof O["_avg"]["select"]]: T[K] extends number
+        [K in keyof O["_avg"]["select"]]: Props[K] extends number
           ? number | null
           : never;
       }
     : undefined;
   _sum?: O extends { _sum: any }
     ? {
-        [K in keyof O["_sum"]["select"]]: T[K] extends number ? number : never;
+        [K in keyof O["_sum"]["select"]]: Props[K] extends number
+          ? number
+          : never;
       }
     : undefined;
 }>;
@@ -732,22 +915,22 @@ export type AggregateReturn<T, O extends AggregateOpts<T, any>> = Prettify<{
 /**
  * Options for groupBy
  */
-export type GroupByOpts<T, IO = T> = {
-  by: (keyof T)[];
-  where?: WhereInput<IO>;
-  orderBy?: OrderByInput<IO>;
+export type GroupByOpts<Props, PropsOpt, Rels, RelsOpt> = {
+  by: (keyof Props)[];
+  where?: WhereInput<PropsOpt & RelsOpt>;
+  orderBy?: OrderByInput<PropsOpt & RelsOpt>;
   having?: {
     _count?: number | { gt?: number; gte?: number; lt?: number; lte?: number };
   } & {
-    [K in keyof T as NonNullable<T[K]> extends string | number | Date
+    [K in keyof Props as NonNullable<Props[K]> extends string | number | Date
       ? K
       : never]?:
-      | T[K]
+      | Props[K]
       | {
-          lt?: T[K];
-          lte?: T[K];
-          gt?: T[K];
-          gte?: T[K];
+          lt?: Props[K];
+          lte?: Props[K];
+          gt?: Props[K];
+          gte?: Props[K];
         };
   };
   take?: number;
@@ -758,13 +941,20 @@ export type GroupByOpts<T, IO = T> = {
  * Return type for groupBy
  */
 export type GroupByReturn<
-  T,
-  IO = T,
-  O extends GroupByOpts<T, IO> = GroupByOpts<T, IO>,
+  Props,
+  PropsOpt,
+  Rels,
+  RelsOpt,
+  O extends GroupByOpts<Props, PropsOpt, Rels, RelsOpt> = GroupByOpts<
+    Props,
+    PropsOpt,
+    Rels,
+    RelsOpt
+  >,
 > = Array<
   Prettify<
     {
-      [K in O["by"][number]]: T[K];
+      [K in O["by"][number]]: Props[K];
     } & {
       _count?: number;
     }

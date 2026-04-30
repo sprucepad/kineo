@@ -55,85 +55,85 @@ export class Model<
 
   public async find<O extends FindOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<FindReturn<I, O>> {
+  ): Promise<FindReturn<I, IO, R, RO, O>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
   public async findMany<O extends FindOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<FindReturn<I, O, true>> {
+  ): Promise<FindReturn<I, IO, R, RO, O, true>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
   public async create<O extends CreateOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<CreateReturn<I, O>> {
+  ): Promise<CreateReturn<I, IO, R, RO, O>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
   public async createMany<O extends CreateOpts<I, IO, R, RO, true>>(
     opts?: O,
-  ): Promise<CreateReturn<I, O, true>> {
+  ): Promise<CreateReturn<I, IO, R, RO, O, true>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
-  public async createReturn<O extends CreateReturnOpts<I, R>>(
+  public async createReturn<O extends CreateReturnOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<CreateReturnReturn<I, R>> {
+  ): Promise<CreateReturnReturn<I, IO, R, RO>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
-  public async createManyReturn<O extends CreateReturnOpts<I, R>>(
+  public async createManyReturn<O extends CreateReturnOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<CreateReturnReturn<I, true>> {
+  ): Promise<CreateReturnReturn<I, IO, R, RO, true>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
   public async update<O extends UpdateOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<UpdateReturn<I, O>> {
+  ): Promise<UpdateReturn<I, IO, R, RO, O>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
   public async updateMany<O extends UpdateOpts<I, IO, R, RO, true>>(
     opts?: O,
-  ): Promise<UpdateReturn<I, O, true>> {
+  ): Promise<UpdateReturn<I, IO, R, RO, O, true>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
   public async updateReturn<O extends UpdateReturnOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<UpdateReturnReturn<I, R>> {
+  ): Promise<UpdateReturnReturn<I, IO, R, RO>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
   public async updateManyReturn<O extends UpdateReturnOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<UpdateReturnReturn<I, true>> {
+  ): Promise<UpdateReturnReturn<I, IO, R, RO, true>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
   public async upsert<O extends UpsertOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<UpsertReturn<I, O>> {
+  ): Promise<UpsertReturn<I, IO, R, RO, O>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
   public async upsertMany<O extends UpsertOpts<I, IO, R, RO, true>>(
     opts?: O,
-  ): Promise<UpsertReturn<I, O, true>> {
+  ): Promise<UpsertReturn<I, IO, R, RO, O, true>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
   public async delete<O extends DeleteOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<DeleteReturn<I, O>> {
+  ): Promise<DeleteReturn<I, IO, R, RO, O>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
   public async deleteMany<O extends DeleteOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<DeleteReturn<I, O, true>> {
+  ): Promise<DeleteReturn<I, IO, R, RO, O, true>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
@@ -145,7 +145,7 @@ export class Model<
 
   public async aggregate<O extends AggregateOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<AggregateReturn<I, O>> {
+  ): Promise<AggregateReturn<I, IO, R, RO, O>> {
     throw new Error("Not implemented", { cause: opts });
   }
 

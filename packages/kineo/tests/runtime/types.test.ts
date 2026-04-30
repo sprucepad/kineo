@@ -192,9 +192,8 @@ describe("Type Tests - Selection / Include", () => {
     >;
 
     expectTypeOf<Selected["posts"][number]["id"]>().toEqualTypeOf<number>();
-    // @ts-expect-error Missing non-included relation field should not exist
-    const missingAuthor: Selected["posts"][number]["author"] = undefined as any;
-    void missingAuthor;
+    // Should not have other fields when explicitly selecting
+    expectTypeOf<Selected["posts"][number]>().toMatchTypeOf<{ id: number }>();
   });
 });
 
