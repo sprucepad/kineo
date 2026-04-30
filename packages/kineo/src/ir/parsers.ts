@@ -373,7 +373,7 @@ const inferConflictTarget = (where: unknown): string[] | undefined => {
 
 export function parseFindStatement(
   table: string,
-  opts?: FindOpts<any, any>,
+  opts?: FindOpts<any, any, any, any>,
 ): IR.QueryStatement {
   return {
     type: "query",
@@ -393,7 +393,7 @@ export function parseFindStatement(
 
 export function parseInsertStatement(
   table: string,
-  opts: CreateOpts<any, any, any>,
+  opts: CreateOpts<any, any, any, any, any>,
 ): IR.InsertStatement {
   const rows = Array.isArray(opts.data) ? opts.data : [opts.data];
   const columns = Array.from(
@@ -417,7 +417,7 @@ export function parseInsertStatement(
 
 export function parseUpdateStatement(
   table: string,
-  opts: UpdateOpts<any, any, any>,
+  opts: UpdateOpts<any, any, any, any, any>,
 ): IR.UpdateStatement {
   return {
     type: "update",
@@ -432,7 +432,7 @@ export function parseUpdateStatement(
 
 export function parseDeleteStatement(
   table: string,
-  opts: DeleteOpts<any, any, any>,
+  opts: DeleteOpts<any, any, any, any, any>,
 ): IR.DeleteStatement {
   return {
     type: "delete",
@@ -446,7 +446,7 @@ export function parseDeleteStatement(
 
 export function parseUpsertStatement(
   table: string,
-  opts: UpsertOpts<any, any, any>,
+  opts: UpsertOpts<any, any, any, any, any>,
 ): IR.InsertStatement {
   const createRows = Array.isArray(opts.create) ? opts.create : [opts.create];
   const columns = Array.from(
@@ -480,7 +480,7 @@ export function parseUpsertStatement(
 
 export function parseCountStatement(
   table: string,
-  opts?: CountOpts<any, any>,
+  opts?: CountOpts<any, any, any, any>,
 ): IR.QueryStatement {
   return {
     type: "query",
@@ -504,7 +504,7 @@ export function parseCountStatement(
 }
 
 const parseAggregateSelect = (
-  opts: AggregateOpts<any, any>,
+  opts: AggregateOpts<any, any, any, any>,
 ): IR.SelectItem[] => {
   const select: IR.SelectItem[] = [];
 
@@ -571,7 +571,7 @@ const parseAggregateSelect = (
 
 export function parseAggregateStatement(
   table: string,
-  opts: AggregateOpts<any, any>,
+  opts: AggregateOpts<any, any, any, any>,
 ): IR.QueryStatement {
   return {
     type: "query",
@@ -588,7 +588,7 @@ export function parseAggregateStatement(
 }
 
 const parseGroupByHaving = (
-  having?: GroupByOpts<any, any>["having"],
+  having?: GroupByOpts<any, any, any, any>["having"],
 ): IR.Expression | undefined => {
   if (!having) return undefined;
 
@@ -669,7 +669,7 @@ const parseGroupByHaving = (
 
 export function parseGroupByStatement(
   table: string,
-  opts: GroupByOpts<any, any>,
+  opts: GroupByOpts<any, any, any, any>,
 ): IR.QueryStatement {
   const select: IR.SelectItem[] = [
     ...opts.by.map((column) =>

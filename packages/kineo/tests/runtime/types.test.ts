@@ -1,5 +1,5 @@
 import { describe, it, expectTypeOf } from "vitest";
-import type { InferModel } from "@/schema";
+import type { InferProps, InferRelations } from "@/schema";
 import { model } from "@/schema";
 import { kineo } from "./client";
 import type {
@@ -16,6 +16,7 @@ import type {
   ApplySelection,
   FieldUpdate,
 } from "./types";
+import type { BuilderProps, BuilderRelations } from ".";
 
 // Mock adapter for type testing
 const mockAdapter = {
@@ -66,9 +67,12 @@ const schema = { User, Post, Comment };
 // eslint-disable-next-line -- it's easier to create a client than to do `Kineo<typeof Schema>`
 const client = kineo(mockAdapter, schema);
 
-type UserModel = InferModel<typeof User>;
-type UserInput = InferModel<typeof User, true>;
-type PostInput = InferModel<typeof Post, true>;
+type UserProps = InferProps<BuilderProps<typeof User>>;
+type UserPropsOpt = InferProps<BuilderProps<typeof User>, true>;
+type UserRels = InferRelations<BuilderRelations<typeof User>>;
+type UserRelsOpt = InferRelations<BuilderRelations<typeof User>, true>;
+type PostPropsOpt = InferProps<BuilderProps<typeof Post>, true>;
+type PostRelsOpt = InferRelations<BuilderRelations<typeof Post>, true>;
 
 describe("Type Tests - Model Inference", () => {
   it("infers correct model types", () => {
@@ -88,7 +92,7 @@ describe("Type Tests - Model Inference", () => {
 
 describe("Type Tests - CreateData", () => {
   it("infers correct CreateData types for User", () => {
-    type UserCreateData = CreateData<UserInput>;
+    type UserCreateData = CreateData<UserPropsOpt>;
 
     expectTypeOf<UserCreateData["name"]>().toEqualTypeOf<string | undefined>();
     expectTypeOf<UserCreateData["email"]>().toEqualTypeOf<string | undefined>();
@@ -104,7 +108,7 @@ describe("Type Tests - CreateData", () => {
   });
 
   it("infers correct CreateData types for Post", () => {
-    type PostCreateData = CreateData<PostInput>;
+    type PostCreateData = CreateData<PostPropsOpt & PostRelsOpt>;
 
     expectTypeOf<PostCreateData["title"]>().toEqualTypeOf<string | undefined>();
     expectTypeOf<PostCreateData["authorId"]>().toEqualTypeOf<
@@ -121,7 +125,7 @@ describe("Type Tests - CreateData", () => {
 
 describe("Type Tests - UpdateData", () => {
   it("infers correct UpdateData types", () => {
-    type UserUpdateData = UpdateData<UserInput>;
+    type UserUpdateData = UpdateData<UserPropsOpt>;
 
     expectTypeOf<UserUpdateData["name"]>().toEqualTypeOf<
       FieldUpdate<string> | undefined
@@ -140,7 +144,7 @@ describe("Type Tests - UpdateData", () => {
 
 describe("Type Tests - WhereInput", () => {
   it("infers correct WhereInput types", () => {
-    type UserWhereInput = WhereInput<UserModel>;
+    type UserWhereInput = WhereInput<UserProps>;
 
     expectTypeOf<UserWhereInput>().toHaveProperty("name");
     expectTypeOf<UserWhereInput>().toHaveProperty("age");
@@ -199,7 +203,12 @@ describe("Type Tests - Selection / Include", () => {
 
 describe("Type Tests - Method Options", () => {
   it("infers correct FindOpts types", () => {
-    type UserFindOpts = FindOpts<UserModel, UserInput>;
+    type UserFindOpts = FindOpts<
+      UserProps,
+      UserPropsOpt,
+      UserRels,
+      UserRelsOpt
+    >;
 
     expectTypeOf<UserFindOpts>().toHaveProperty("where");
     expectTypeOf<UserFindOpts>().toHaveProperty("select");
@@ -210,56 +219,81 @@ describe("Type Tests - Method Options", () => {
   });
 
   it("infers correct CreateOpts types", () => {
-    type UserCreateOpts = CreateOpts<UserModel, UserInput>;
+    type UserCreateOpts = CreateOpts<
+      UserProps,
+      UserPropsOpt,
+      UserRels,
+      UserRelsOpt
+    >;
 
     expectTypeOf<UserCreateOpts["data"]>().toEqualTypeOf<
-      CreateData<UserInput>
+      CreateData<UserPropsOpt & UserRelsOpt>
     >();
     expectTypeOf<UserCreateOpts>().toHaveProperty("include");
     expectTypeOf<UserCreateOpts>().toHaveProperty("select");
   });
 
   it("infers correct UpdateOpts types", () => {
-    type UserUpdateOpts = UpdateOpts<UserModel, UserInput>;
+    type UserUpdateOpts = UpdateOpts<
+      UserProps,
+      UserPropsOpt,
+      UserRels,
+      UserRelsOpt
+    >;
 
     expectTypeOf<UserUpdateOpts["where"]>().toEqualTypeOf<
-      WhereInput<UserInput>
+      WhereInput<UserPropsOpt & UserRelsOpt>
     >();
     expectTypeOf<UserUpdateOpts["data"]>().toEqualTypeOf<
-      UpdateData<UserInput>
+      UpdateData<UserPropsOpt & UserRelsOpt>
     >();
     expectTypeOf<UserUpdateOpts>().toHaveProperty("include");
     expectTypeOf<UserUpdateOpts>().toHaveProperty("select");
   });
 
   it("infers correct DeleteOpts types", () => {
-    type UserDeleteOpts = DeleteOpts<UserModel, UserInput>;
+    type UserDeleteOpts = DeleteOpts<
+      UserProps,
+      UserPropsOpt,
+      UserRels,
+      UserRelsOpt
+    >;
 
     expectTypeOf<UserDeleteOpts["where"]>().toEqualTypeOf<
-      WhereInput<UserInput>
+      WhereInput<UserPropsOpt & UserRelsOpt>
     >();
     expectTypeOf<UserDeleteOpts>().toHaveProperty("include");
     expectTypeOf<UserDeleteOpts>().toHaveProperty("select");
   });
 
   it("infers correct CountOpts types", () => {
-    type UserCountOpts = CountOpts<UserInput>;
+    type UserCountOpts = CountOpts<
+      UserProps,
+      UserPropsOpt,
+      UserRels,
+      UserRelsOpt
+    >;
 
     expectTypeOf<UserCountOpts["where"]>().toEqualTypeOf<
-      WhereInput<UserInput> | undefined
+      WhereInput<UserPropsOpt & UserRelsOpt> | undefined
     >();
     expectTypeOf<UserCountOpts["take"]>().toEqualTypeOf<number | undefined>();
     expectTypeOf<UserCountOpts["skip"]>().toEqualTypeOf<number | undefined>();
     expectTypeOf<UserCountOpts["cursor"]>().toEqualTypeOf<
-      Partial<UserInput> | undefined
+      Partial<UserPropsOpt> | undefined
     >();
   });
 
   it("infers correct AggregateOpts types", () => {
-    type UserAggregateOpts = AggregateOpts<UserModel, UserInput>;
+    type UserAggregateOpts = AggregateOpts<
+      UserProps,
+      UserPropsOpt,
+      UserRels,
+      UserRelsOpt
+    >;
 
     expectTypeOf<UserAggregateOpts["where"]>().toEqualTypeOf<
-      WhereInput<UserInput> | undefined
+      WhereInput<UserPropsOpt & UserRelsOpt> | undefined
     >();
     expectTypeOf<UserAggregateOpts["_count"]>().toEqualTypeOf<
       // eslint-disable-next-line -- it's what the type is
@@ -280,11 +314,16 @@ describe("Type Tests - Method Options", () => {
   });
 
   it("infers correct GroupByOpts types", () => {
-    type UserGroupByOpts = GroupByOpts<UserModel, UserInput>;
+    type UserGroupByOpts = GroupByOpts<
+      UserProps,
+      UserPropsOpt,
+      UserRels,
+      UserRelsOpt
+    >;
 
-    expectTypeOf<UserGroupByOpts["by"]>().toEqualTypeOf<(keyof UserModel)[]>();
+    expectTypeOf<UserGroupByOpts["by"]>().toEqualTypeOf<(keyof UserProps)[]>();
     expectTypeOf<UserGroupByOpts["where"]>().toEqualTypeOf<
-      WhereInput<UserInput> | undefined
+      WhereInput<UserPropsOpt & UserRelsOpt> | undefined
     >();
     expectTypeOf<UserGroupByOpts["take"]>().toEqualTypeOf<number | undefined>();
   });

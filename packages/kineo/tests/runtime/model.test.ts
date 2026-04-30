@@ -4,7 +4,7 @@ import {
   type ParsedSchema,
   type ParsedModel,
   model,
-  type InferModel,
+  parseSchema,
 } from "@/schema";
 import { Model } from "@/runtime/model";
 
@@ -23,21 +23,6 @@ class MockAdapter implements RuntimeAdapter {
   }
 }
 
-// Mock schema and shape for testing
-const createMockSchema = (): ParsedSchema => ({
-  models: new Map(),
-});
-
-const createMockModel = (): ParsedModel => ({
-  name: "User",
-  key: "user",
-  fields: new Map(),
-  relations: new Map(),
-  indexes: new Map(),
-});
-
-// Test data type
-// eslint-disable-next-line -- it's better to create a model and use typeof
 const user = model("User", (s) => ({
   id: s.int().id(),
   name: s.string().unique().required(),
@@ -46,19 +31,16 @@ const user = model("User", (s) => ({
   createdAt: s.datetime().required(),
 }));
 
-type User = InferModel<typeof user>;
-type UserInput = InferModel<typeof user, true>;
-
 describe("Model", () => {
-  let model: Model<any, User, UserInput>;
+  let model: Model<typeof user>;
   let adapter: MockAdapter;
   let schema: ParsedSchema;
   let shape: ParsedModel;
 
   beforeEach(() => {
     adapter = new MockAdapter();
-    schema = createMockSchema();
-    shape = createMockModel();
+    schema = parseSchema({ user });
+    shape = schema.models.get("user")!;
     model = new Model(schema, shape, "User", adapter);
   });
 

@@ -33,10 +33,12 @@ import type {
 export type BuilderProps<Builder extends ModelBuilder<any, any>> =
   Builder extends ModelBuilder<infer Props, any> ? Props : never;
 export type BuilderRelations<Builder extends ModelBuilder<any, any>> =
-  Builder extends ModelBuilder<any, infer RelationFn>
-    ? RelationFn extends ModelRelationsFn<infer R, any>
-      ? R
-      : never
+  Builder extends ModelBuilder<any, infer RelationsFn>
+    ? RelationsFn extends undefined
+      ? {}
+      : RelationsFn extends ModelRelationsFn<infer R, any>
+        ? R
+        : never
     : never;
 
 export class Model<
@@ -44,7 +46,7 @@ export class Model<
   I = InferProps<BuilderProps<Builder>>,
   IO = InferProps<BuilderProps<Builder>, true>,
   R = InferRelations<BuilderRelations<Builder>>,
-  RO = InferRelations<BuilderRelations<Builder>, any>,
+  RO = InferRelations<BuilderRelations<Builder>, true>,
 > {
   constructor(
     public $schema: ParsedSchema,
@@ -79,13 +81,13 @@ export class Model<
 
   public async createReturn<O extends CreateReturnOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<CreateReturnReturn<I, IO, R, RO>> {
+  ): Promise<CreateReturnReturn<I, IO, R, RO, O>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
   public async createManyReturn<O extends CreateReturnOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<CreateReturnReturn<I, IO, R, RO, true>> {
+  ): Promise<CreateReturnReturn<I, IO, R, RO, O, true>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
@@ -103,13 +105,13 @@ export class Model<
 
   public async updateReturn<O extends UpdateReturnOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<UpdateReturnReturn<I, IO, R, RO>> {
+  ): Promise<UpdateReturnReturn<I, IO, R, RO, O>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
   public async updateManyReturn<O extends UpdateReturnOpts<I, IO, R, RO>>(
     opts?: O,
-  ): Promise<UpdateReturnReturn<I, IO, R, RO, true>> {
+  ): Promise<UpdateReturnReturn<I, IO, R, RO, O, true>> {
     throw new Error("Not implemented", { cause: opts });
   }
 
