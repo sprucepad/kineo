@@ -35,7 +35,8 @@ export type BuilderProps<Builder extends ModelBuilder<any, any>> =
 export type BuilderRelations<Builder extends ModelBuilder<any, any>> =
   Builder extends ModelBuilder<any, infer RelationsFn>
     ? RelationsFn extends undefined
-      ? {}
+      ? // eslint-disable-next-line -- this is always merged, so it's fine
+        {}
       : RelationsFn extends ModelRelationsFn<infer R, any>
         ? R
         : never

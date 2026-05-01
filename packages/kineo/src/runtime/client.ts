@@ -25,10 +25,10 @@ export function kineo<T extends Schema>(
   adapter: RuntimeAdapter | AsyncRuntimeAdapter,
   schema: T,
 ): Kineo<T> {
-  const parsedSchema = parseSchema(schema);
-
   if (adapter instanceof Promise) adapter.then((a) => a.extend?.(Model));
   else adapter.extend?.(Model);
+
+  const parsedSchema = parseSchema(schema);
 
   const modelsForSchema: Record<string, Model<any, any, any>> = {};
   for (const [modelName, parsedModel] of parsedSchema.models) {

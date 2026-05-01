@@ -260,7 +260,7 @@ describe("parseSchema", () => {
 
     const post = model((s) => ({
       id: s.int().id(),
-      authorId: s.int().required(),
+      authorId: s.int(),
     })).relate((s) => ({
       author: s.relation(user).fields("authorId").refs("id"),
     }));

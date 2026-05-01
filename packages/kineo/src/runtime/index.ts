@@ -1,3 +1,3 @@
 export * from "./client";
 export * from "./model";
-export * from "./types";
+export type * as ModelTypes from "./types";

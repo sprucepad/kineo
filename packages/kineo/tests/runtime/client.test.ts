@@ -26,27 +26,27 @@ class MockAdapter implements RuntimeAdapter {
 const createMockSchemas = () => {
   const User = model("User", (s) => ({
     id: s.int().id(),
-    name: s.string().required(),
-    email: s.string().required(),
+    name: s.string(),
+    email: s.string(),
     age: s.int().optional(),
     createdAt: s.datetime().default(new Date()),
   }));
 
   const Post = model("Post", (s) => ({
     id: s.int().id(),
-    title: s.string().required(),
+    title: s.string(),
     content: s.string().optional(),
     published: s.boolean().default(false),
-    authorId: s.int().required(),
+    authorId: s.int(),
   })).relate((s) => ({
     author: s.relation(User).fields("authorId").refs("id"),
   }));
 
   const Comment = model("Comment", (s) => ({
     id: s.int().id(),
-    text: s.string().required(),
-    postId: s.int().required(),
-    userId: s.int().required(),
+    text: s.string(),
+    postId: s.int(),
+    userId: s.int(),
   })).relate((s) => ({
     post: s.relation(Post).fields("postId").refs("id"),
     user: s.relation(User).fields("userId").refs("id"),

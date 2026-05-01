@@ -2,15 +2,11 @@
 // Utility Types
 // ============================================================================
 
-import type { Scalar } from "@/schema";
-
 type Prettify<T> = {
   [K in keyof T]: T[K];
 } & {};
 
 type MaybeNull<V, T> = null extends V ? T | null : T;
-
-type ArrayElement<T> = T extends readonly (infer U)[] ? U : never;
 
 export type RelationCountMap<T> = {
   [K in keyof T as T[K] extends readonly (infer U)[]
@@ -114,7 +110,7 @@ export type NestedListQueryOptions<Props, PropsOpt, Rels, RelsOpt> = {
   select?: FieldSelection<Props, Rels>;
 };
 
-export type NestedSingleQueryOptions<Props, PropsOpt, Rels, RelsOpt> = {
+export type NestedSingleQueryOptions<Props, _PropsOpt, Rels, _RelsOpt> = {
   include?: RelationInclusion<Rels>;
   select?: FieldSelection<Props, Rels>;
 };
@@ -331,6 +327,7 @@ export type ApplySelection<
   O extends { include?: any; select?: any },
 > = Prettify<
   (O extends { select: infer S } ? ApplySelectiveFields<T, S> : T) &
+    // eslint-disable-next-line -- this is merged with the object above, empty object is fine
     (O extends { include: infer I } ? ApplyInclusion<T, I> : {})
 >;
 
@@ -521,8 +518,10 @@ export type ApplyInclusion<T, I> = Prettify<
                   }
                 : never;
           }
-        : {})
-    : {}
+        : // eslint-disable-next-line -- this is being merged, so empty object is fine
+          {})
+    : // eslint-disable-next-line -- this is being merged, so empty object is fine
+      {}
 >;
 
 export type DefaultSelection<Props> = Props;
@@ -776,7 +775,7 @@ export type DeleteReturnSingle<
 /**
  * Options for count
  */
-export type CountOpts<Props, PropsOpt, Rels, RelsOpt> = {
+export type CountOpts<_Props, PropsOpt, Rels, RelsOpt> = {
   where?: WhereInput<PropsOpt & RelsOpt>;
   orderBy?:
     | OrderByInput<PropsOpt & RelsOpt>
@@ -915,7 +914,7 @@ export type AggregateReturn<
 /**
  * Options for groupBy
  */
-export type GroupByOpts<Props, PropsOpt, Rels, RelsOpt> = {
+export type GroupByOpts<Props, PropsOpt, _Rels, RelsOpt> = {
   by: (keyof Props)[];
   where?: WhereInput<PropsOpt & RelsOpt>;
   orderBy?: OrderByInput<PropsOpt & RelsOpt>;

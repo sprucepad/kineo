@@ -5,7 +5,7 @@ describe("ModelBuilder", () => {
   it("creates a model with props", () => {
     const User = model("User", (s) => ({
       id: s.int().id(),
-      name: s.string().required(),
+      name: s.string(),
     }));
 
     expect(User.$name).toBe("User");

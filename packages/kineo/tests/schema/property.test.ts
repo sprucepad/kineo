@@ -3,7 +3,7 @@ import { s, FieldBuilder } from ".";
 
 describe("FieldBuilder", () => {
   it("sets required and optional correctly", () => {
-    const field = s.string().required();
+    const field = s.string();
 
     expect(field.$required).toBe(true);
   });
@@ -28,7 +28,7 @@ describe("FieldBuilder", () => {
   });
 
   it("chains correctly", () => {
-    const field = s.string().required().many().default(["a"]);
+    const field = s.string().many().default(["a"]);
 
     expect(field.$required).toBe(true);
     expect(field.$many).toBe(true);
@@ -47,7 +47,7 @@ describe("RelationBuilder", () => {
   it("supports required + many", () => {
     const User = { $props: {} } as any;
 
-    const rel = s.relation(User).required().many();
+    const rel = s.relation(User).many();
 
     expect(rel.$required).toBe(true);
     expect(rel.$many).toBe(true);

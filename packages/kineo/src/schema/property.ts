@@ -26,7 +26,7 @@ export type Kind =
 export class FieldBuilder<
   T extends Kind,
   TId extends boolean = false,
-  TRequired extends boolean = false,
+  TRequired extends boolean = true,
   TMany extends boolean = false,
   TDefault extends TypeOf<T> | undefined = undefined,
 > {
@@ -35,7 +35,7 @@ export class FieldBuilder<
     public $name?: string,
   ) {}
   public $id: TId = false as any;
-  public $required: TRequired = false as any;
+  public $required: TRequired = true as any;
   public $many: TMany = false as any;
   public $unique = false;
   public $index: InlineIndexProps | boolean = false;
@@ -120,14 +120,14 @@ export class RelationBuilder<
   TP extends ModelProps,
   TR extends ModelRelationsFn<any, any> | undefined,
   TSelf extends ModelProps,
-  TRequired extends boolean = false,
+  TRequired extends boolean = true,
   TMany extends boolean = false,
 > {
   constructor(
     public readonly $to: ModelBuilder<TP, TR>,
     public $name?: string,
   ) {}
-  public $required: TRequired = false as any;
+  public $required: TRequired = true as any;
   public $many: TMany = false as any;
   public $fields?: (keyof TSelf)[];
   public $refs?: (keyof TP)[];

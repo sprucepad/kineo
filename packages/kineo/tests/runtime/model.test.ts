@@ -25,10 +25,10 @@ class MockAdapter implements RuntimeAdapter {
 
 const user = model("User", (s) => ({
   id: s.int().id(),
-  name: s.string().unique().required(),
-  email: s.string().unique().required(),
+  name: s.string().unique(),
+  email: s.string().unique(),
   age: s.int(),
-  createdAt: s.datetime().required(),
+  createdAt: s.datetime(),
 }));
 
 describe("Model", () => {

@@ -5,7 +5,7 @@ import { model, s } from ".";
 
 describe("InferField", () => {
   it("infers required field", () => {
-    const field = s.string().required();
+    const field = s.string();
 
     type T = InferField<typeof field>;
 
@@ -13,7 +13,7 @@ describe("InferField", () => {
   });
 
   it("infers optional field", () => {
-    const field = s.string();
+    const field = s.string().optional();
 
     type T = InferField<typeof field>;
 
@@ -25,7 +25,7 @@ describe("InferField", () => {
 
     type T = InferField<typeof field>;
 
-    expectTypeOf<T>().toEqualTypeOf<number[] | undefined>();
+    expectTypeOf<T>().toEqualTypeOf<number[]>();
   });
 
   it("default makes required", () => {
@@ -49,7 +49,7 @@ describe("InferModel", () => {
   it("infers simple model", () => {
     const User = model((s) => ({
       id: s.int().id(),
-      name: s.string(),
+      name: s.string().optional(),
     }));
 
     type T = InferModel<typeof User>;
@@ -63,7 +63,7 @@ describe("InferModel", () => {
   it("infers with required fields", () => {
     const User = model((s) => ({
       id: s.int().id(),
-      name: s.string().required(),
+      name: s.string(),
     }));
 
     type T = InferModel<typeof User>;
@@ -82,7 +82,7 @@ describe("InferModel", () => {
     const Post = model((s) => ({
       id: s.int().id(),
     })).relate((s) => ({
-      user: s.relation(User).required(),
+      user: s.relation(User),
     }));
 
     type T = InferModel<typeof Post>;
