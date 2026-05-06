@@ -39,8 +39,8 @@ export default function postgres(
       return await sql.end();
     },
 
-    async emit(ir) {
-      return await sqlEmitter(ir, postgresDialect);
+    emit(ir) {
+      return sqlEmitter(ir, postgresDialect);
     },
 
     async exec(opts) {

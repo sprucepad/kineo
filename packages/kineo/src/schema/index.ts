@@ -10,3 +10,4 @@ export * from "./model";
 export * from "./property";
 export * from "./infer";
 export * from "./parser";
+export * from "./diff";

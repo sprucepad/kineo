@@ -5,7 +5,7 @@ describe("parseSchema", () => {
   it("parses models and fields correctly", () => {
     const user = model((s) => ({
       id: s.int().id(),
-      age: s.int(),
+      age: s.int().optional(),
     }));
 
     const schema = { user };

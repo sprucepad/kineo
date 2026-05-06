@@ -25,6 +25,7 @@ export interface ParsedField {
   name: string;
   key: string;
   required: boolean;
+  many: boolean;
   id?: boolean;
   validator?: StandardSchemaV1;
 }
@@ -87,6 +88,7 @@ export function parseSchema(schema: Schema): ParsedSchema {
       fields.set(name, {
         type: prop.$kind,
         required: prop.$required,
+        many: prop.$many,
         id: prop.$id,
         validator: prop.$validator,
         name,
@@ -222,6 +224,7 @@ export function parseSchema(schema: Schema): ParsedSchema {
           name: aFieldName,
           key: aFieldName,
           type: aIdField.type,
+          many: false,
           required: true,
         });
 
@@ -229,6 +232,7 @@ export function parseSchema(schema: Schema): ParsedSchema {
           name: bFieldName,
           key: bFieldName,
           type: bIdField.type,
+          many: false,
           required: true,
         });
 

@@ -569,7 +569,7 @@ const renderStatement = (ctx: RenderContext, statement: Statement): string => {
   }
 };
 
-export default (async (ir, dialect) => {
+export default ((ir, dialect) => {
   const params: any[] = [];
   const ctx: RenderContext = {
     params,
