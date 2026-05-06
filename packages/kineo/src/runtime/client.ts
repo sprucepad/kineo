@@ -30,7 +30,7 @@ export function kineo<T extends Schema>(
 
   const parsedSchema = parseSchema(schema);
 
-  const modelsForSchema: Record<string, Model<any, any, any>> = {};
+  const modelsForSchema: Record<string, Model<any>> = {};
   for (const [modelName, parsedModel] of parsedSchema.models) {
     modelsForSchema[modelName] = new Model(
       parsedSchema,

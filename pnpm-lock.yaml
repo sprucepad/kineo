@@ -36,6 +36,9 @@ importers:
       '@dev/configs':
         specifier: workspace:*
         version: link:../../packages/configs
+      '@types/node':
+        specifier: ^22.19.17
+        version: 22.19.17
       eslint:
         specifier: ^10.2.1
         version: 10.2.1(jiti@2.6.1)
