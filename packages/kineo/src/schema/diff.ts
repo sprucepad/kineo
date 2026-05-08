@@ -120,8 +120,8 @@ function diffFields(a: ParsedModel, b: ParsedModel, ops: MigrationOp[]) {
 
     const changes: FieldChange[] = [];
 
-    if (aField.type !== bField.type) {
-      changes.push({ kind: "type", from: aField.type, to: bField.type });
+    if (aField.kind !== bField.kind) {
+      changes.push({ kind: "type", from: aField.kind, to: bField.kind });
     }
 
     if (aField.required !== bField.required) {

@@ -570,20 +570,23 @@ const renderStatement = (ctx: RenderContext, statement: Statement): string => {
 };
 
 export default ((ir, dialect) => {
-  const params: any[] = [];
-  const ctx: RenderContext = {
-    params,
-    dialect,
-    nextParam(value: unknown) {
-      const index = params.length + 1;
-      params.push(value);
-      return dialect.placeholder(index);
-    },
-  };
-
-  const sql = ir.map((statement) => renderStatement(ctx, statement)).join("; ");
   return {
-    command: sql,
-    params,
+    statements: ir.map((statement) => {
+      const params: any[] = [];
+      const ctx: RenderContext = {
+        params,
+        dialect,
+        nextParam(value: unknown) {
+          const index = params.length + 1;
+          params.push(value);
+          return dialect.placeholder(index);
+        },
+      };
+
+      return {
+        command: renderStatement(ctx, statement),
+        params,
+      };
+    }),
   };
 }) satisfies Emitter<SQLDialect>;

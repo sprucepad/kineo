@@ -81,6 +81,10 @@
     "./emitter/sql": {
       "types": "./dist/emitter/sql/index.d.mts",
       "import": "./dist/emitter/sql/index.mjs"
+    },
+    "./migration/sql": {
+      "types": "./dist/migration/sql/index.d.mts",
+      "import": "./dist/migration/sql/index.mjs"
     }
   },
   "scripts": {

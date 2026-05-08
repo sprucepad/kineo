@@ -1,17 +1,19 @@
 import type { Statement } from "@/ir";
 import type { Model } from "@/runtime";
-import type { ParsedSchema, Schema } from "@/schema";
+import type { ParsedSchema, Schema, SchemaDiff } from "@/schema";
 
 export type Resolvable<T> = T | Promise<T>;
-
-export interface EmitResult {
-  command: string;
-  params: any[];
-}
 
 export type Emitter<T = undefined> = T extends undefined
   ? (ir: Statement[]) => Resolvable<EmitResult>
   : (ir: Statement[], dialect: T) => Resolvable<EmitResult>;
+
+export interface EmitResult {
+  statements: {
+    command: string;
+    params: any[];
+  }[];
+}
 
 export interface ExecResult {
   rows?: Record<string, any>[];
@@ -19,6 +21,10 @@ export interface ExecResult {
   lastInsertId?: any;
   meta?: Record<string, any>;
 }
+
+export type MigrationEmitter<T = undefined> = T extends undefined
+  ? (diff: SchemaDiff) => Resolvable<EmitResult>
+  : (diff: SchemaDiff, dialect: T) => Resolvable<EmitResult>;
 
 export interface RuntimeAdapter {
   /**

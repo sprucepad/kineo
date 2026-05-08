@@ -34,7 +34,7 @@ function field(partial: Partial<ParsedField> & { name: string }): ParsedField {
   return {
     key: partial.key ?? partial.name,
     name: partial.name,
-    type: partial.type ?? "string",
+    kind: partial.kind ?? "string",
     required: partial.required ?? false,
     many: partial.many ?? false,
     id: partial.id,
@@ -153,14 +153,14 @@ describe("schema diff", () => {
     const a = schema([
       model({
         name: "User",
-        fields: new Map([["age", field({ name: "age", type: "int" })]]),
+        fields: new Map([["age", field({ name: "age", kind: "int" })]]),
       }),
     ]);
 
     const b = schema([
       model({
         name: "User",
-        fields: new Map([["age", field({ name: "age", type: "string" })]]),
+        fields: new Map([["age", field({ name: "age", kind: "string" })]]),
       }),
     ]);
 

@@ -21,7 +21,7 @@ export interface ParsedModel {
 }
 
 export interface ParsedField {
-  type: Kind;
+  kind: Kind;
   name: string;
   key: string;
   required: boolean;
@@ -31,6 +31,7 @@ export interface ParsedField {
 }
 
 export interface ParsedRelation {
+  name: string;
   from: string;
   to: string;
   many: boolean;
@@ -86,7 +87,7 @@ export function parseSchema(schema: Schema): ParsedSchema {
 
       const name = prop.$name ?? key;
       fields.set(name, {
-        type: prop.$kind,
+        kind: prop.$kind,
         required: prop.$required,
         many: prop.$many,
         id: prop.$id,
@@ -131,6 +132,7 @@ export function parseSchema(schema: Schema): ParsedSchema {
 
       const name = relation.$name ?? key;
       relations.set(name, {
+        name,
         from: modelName,
         to:
           relation.$to.$name ??
@@ -223,7 +225,7 @@ export function parseSchema(schema: Schema): ParsedSchema {
         fields.set(aFieldName, {
           name: aFieldName,
           key: aFieldName,
-          type: aIdField.type,
+          kind: aIdField.kind,
           many: false,
           required: true,
         });
@@ -231,13 +233,14 @@ export function parseSchema(schema: Schema): ParsedSchema {
         fields.set(bFieldName, {
           name: bFieldName,
           key: bFieldName,
-          type: bIdField.type,
+          kind: bIdField.kind,
           many: false,
           required: true,
         });
 
         // relations
         relations.set(modelAName, {
+          name: `mn_${modelAName}_${modelB.name}`,
           from: joinName,
           to: modelAName,
           virtual: false,
@@ -247,6 +250,7 @@ export function parseSchema(schema: Schema): ParsedSchema {
         });
 
         relations.set(modelB.name, {
+          name: `mn_${modelB.name}_${modelAName}`,
           from: joinName,
           to: modelB.name,
           virtual: false,
