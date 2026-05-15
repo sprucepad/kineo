@@ -45,6 +45,10 @@ export interface Adapter extends RuntimeAdapter {
    * The export path of your runtime adapter. For example, `kineo/adapter/postgres/runtime`.
    */
   runtimePath: string;
+  /**
+   * The export name of your runtime adapter. For example `default`.
+   */
+  runtimeExport?: "default" | (string & {});
 
   push?(schema: ParsedSchema): Resolvable<void>;
   pull?(): Resolvable<ParsedSchema | Schema>;

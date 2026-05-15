@@ -105,14 +105,14 @@
   "dependencies": {
     "convoker": "^0.5.3",
     "decimal.js": "^10.6.0",
-    "jiti": "^2.6.1"
+    "jiti": "^2.7.0"
   },
   "peerDependencies": {
-    "@libsql/client": "^0.17.2",
-    "better-sqlite3": "^12.8.0",
-    "mssql": "^12.2.1",
-    "mysql2": "^3.20.0",
-    "postgres": "^3.4.8"
+    "@libsql/client": "^0.17.3",
+    "better-sqlite3": "^12.10.0",
+    "mssql": "^12.5.3",
+    "mysql2": "^3.22.3",
+    "postgres": "^3.4.9"
   },
   "peerDependenciesMeta": {
     "@libsql/client": {
@@ -135,13 +135,13 @@
     "@dev/configs": "workspace:*",
     "@libsql/client": "^0.17.3",
     "@types/node": "^22.15.22",
-    "better-sqlite3": "^12.9.0",
-    "eslint": "^10.2.1",
-    "mssql": "^12.5.0",
+    "better-sqlite3": "^12.10.0",
+    "eslint": "^10.3.0",
+    "mssql": "^12.5.3",
     "mysql2": "^3.22.3",
     "postgres": "^3.4.9",
     "testcontainers": "^11.14.0",
-    "tsdown": "^0.21.10",
+    "tsdown": "^0.22.0",
     "typescript": "^6.0.3"
   }
 }

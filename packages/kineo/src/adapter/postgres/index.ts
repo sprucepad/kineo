@@ -1,6 +1,6 @@
 import type { Sql } from "postgres";
 import postgresRuntime, { type PostgresOptions } from "./runtime";
-import { postgresDialect } from "@/emitter/sql/postgres";
+import { postgresMigrationDialect } from "@/migrations/sql/postgres";
 import type { Adapter } from "..";
 
 export interface PostgresAdapter extends Adapter {
@@ -18,4 +18,4 @@ export default function postgres(opts: PostgresOptions): PostgresAdapter {
   };
 }
 
-export { postgresDialect, type PostgresOptions };
+export { postgresMigrationDialect, type PostgresOptions };
