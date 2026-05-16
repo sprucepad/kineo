@@ -1,11 +1,11 @@
-import type { Sql } from "postgres";
-import postgresRuntime, { type PostgresOptions } from "./runtime";
+import postgresRuntime, {
+  type PostgresRuntimeAdapter,
+  type PostgresOptions,
+} from "./runtime";
 import { postgresMigrationDialect } from "@/migrations/sql/postgres";
 import type { Adapter } from "..";
 
-export interface PostgresAdapter extends Adapter {
-  sql: Sql<any>;
-}
+export interface PostgresAdapter extends PostgresRuntimeAdapter, Adapter {}
 
 export default function postgres(opts: PostgresOptions): PostgresAdapter {
   const runtimeAdapter = postgresRuntime(opts);

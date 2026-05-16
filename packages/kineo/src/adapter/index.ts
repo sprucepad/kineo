@@ -9,10 +9,12 @@ export type Emitter<T = undefined> = T extends undefined
   : (ir: Statement[], dialect: T) => Resolvable<EmitResult>;
 
 export interface EmitResult {
-  statements: {
-    command: string;
-    params: any[];
-  }[];
+  statements: EmittedStatement[];
+}
+
+export interface EmittedStatement {
+  command: string;
+  params: any[];
 }
 
 export interface ExecResult {
@@ -23,8 +25,17 @@ export interface ExecResult {
 }
 
 export type MigrationEmitter<T = undefined> = T extends undefined
-  ? (diff: SchemaDiff) => Resolvable<EmitResult>
-  : (diff: SchemaDiff, dialect: T) => Resolvable<EmitResult>;
+  ? (diff: SchemaDiff) => Resolvable<MigrationEmitResult>
+  : (diff: SchemaDiff, dialect: T) => Resolvable<MigrationEmitResult>;
+
+export interface MigrationEmitResult {
+  statements: EmittedMigrationStatement[];
+}
+
+export interface EmittedMigrationStatement {
+  entries: MigrationEntry[];
+  params: any[];
+}
 
 export interface RuntimeAdapter {
   /**

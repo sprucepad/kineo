@@ -1,4 +1,8 @@
-import type { MigrationEmitter } from "@/adapter";
+import type {
+  EmittedMigrationStatement,
+  MigrationEmitter,
+  MigrationEntry,
+} from "@/adapter";
 import type {
   FieldChange,
   IndexChange,
@@ -58,14 +62,9 @@ export interface SQLMigrationDialect extends SQLDialect {
   supportsCascade?: boolean;
 }
 
-interface Statement {
-  command: string;
-  params: unknown[];
-}
-
 interface RenderContext {
   dialect: SQLMigrationDialect;
-  push(statement: string, ...params: unknown[]): void;
+  push(commands: MigrationEntry[], ...params: unknown[]): void;
 }
 
 function q(dialect: SQLMigrationDialect, value: string) {
@@ -97,45 +96,67 @@ function columnDefinition(field: ParsedField, dialect: SQLMigrationDialect) {
   return parts.join(" ");
 }
 
-function renderCreateTable(model: ParsedModel, dialect: SQLMigrationDialect) {
+function renderCreateTable(
+  model: ParsedModel,
+  dialect: SQLMigrationDialect,
+): MigrationEntry {
   const columns = valuesOf(model.fields).map((field) =>
     columnDefinition(field, dialect),
   );
 
-  return `CREATE TABLE ${tableName(
-    dialect,
-    model.name,
-  )} (\n  ${columns.join(",\n  ")}\n)`;
+  return {
+    type: "command",
+    command: `CREATE TABLE ${tableName(
+      dialect,
+      model.name,
+    )} (\n  ${columns.join(",\n  ")}\n)`,
+    description: `Create table ${model.name}`,
+  };
 }
 
-function renderDropTable(modelName: string, dialect: SQLMigrationDialect) {
-  return `DROP TABLE ${
-    dialect.supportsIfExists ? "IF EXISTS " : ""
-  }${tableName(dialect, modelName)}${
-    dialect.supportsCascade ? " CASCADE" : ""
-  }`;
+function renderDropTable(
+  modelName: string,
+  dialect: SQLMigrationDialect,
+): MigrationEntry {
+  return {
+    command: `DROP TABLE ${
+      dialect.supportsIfExists ? "IF EXISTS " : ""
+    }${tableName(dialect, modelName)}${
+      dialect.supportsCascade ? " CASCADE" : ""
+    }`,
+    type: "command",
+    description: `Drop table ${modelName}`,
+  };
 }
 
 function renderAddColumn(
   model: string,
   field: ParsedField,
   dialect: SQLMigrationDialect,
-) {
-  return `ALTER TABLE ${tableName(
-    dialect,
-    model,
-  )} ADD COLUMN ${columnDefinition(field, dialect)}`;
+): MigrationEntry {
+  return {
+    type: "command",
+    command: `ALTER TABLE ${tableName(
+      dialect,
+      model,
+    )} ADD COLUMN ${columnDefinition(field, dialect)}`,
+    description: `Add column ${field.name} to ${model}`,
+  };
 }
 
 function renderDropColumn(
   model: string,
   fieldName: string,
   dialect: SQLMigrationDialect,
-) {
-  return `ALTER TABLE ${tableName(
-    dialect,
-    model,
-  )} DROP COLUMN ${q(dialect, fieldName)}`;
+): MigrationEntry {
+  return {
+    type: "command",
+    command: `ALTER TABLE ${tableName(
+      dialect,
+      model,
+    )} DROP COLUMN ${q(dialect, fieldName)}`,
+    description: `Drop column ${fieldName} on ${model}`,
+  };
 }
 
 function renderDefaultFieldChange(
@@ -191,7 +212,7 @@ function renderCreateIndex(
   model: string,
   index: ParsedIndex,
   dialect: SQLMigrationDialect,
-) {
+): MigrationEntry {
   const unique = index.unique ? "UNIQUE " : "";
   const type = dialect.renderIndexType?.(index.type);
 
@@ -199,18 +220,29 @@ function renderCreateIndex(
     .map((field) => renderIndexField(field, dialect))
     .join(", ");
 
-  return `CREATE ${unique}INDEX ${q(
-    dialect,
-    index.name,
-  )} ON ${tableName(dialect, model)}${
-    type ? ` USING ${type}` : ""
-  } (${fields})`;
+  return {
+    type: "command",
+    command: `CREATE ${unique}INDEX ${q(
+      dialect,
+      index.name,
+    )} ON ${tableName(dialect, model)}${
+      type ? ` USING ${type}` : ""
+    } (${fields})`,
+    description: `Create ${unique.toLowerCase()}index ${index.name}`,
+  };
 }
 
-function renderDropIndex(indexName: string, dialect: SQLMigrationDialect) {
-  return `DROP INDEX ${
-    dialect.supportsIfExists ? "IF EXISTS " : ""
-  }${q(dialect, indexName)}`;
+function renderDropIndex(
+  indexName: string,
+  dialect: SQLMigrationDialect,
+): MigrationEntry {
+  return {
+    type: "command",
+    command: `DROP INDEX ${
+      dialect.supportsIfExists ? "IF EXISTS " : ""
+    }${q(dialect, indexName)}`,
+    description: `Drop index ${indexName}`,
+  };
 }
 
 function emitOperation(op: MigrationOp, ctx: RenderContext) {
@@ -218,19 +250,19 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
 
   switch (op.kind) {
     case "create_model":
-      ctx.push(renderCreateTable(op.model, dialect));
+      ctx.push([renderCreateTable(op.model, dialect)]);
       return;
 
     case "drop_model":
-      ctx.push(renderDropTable(op.modelName, dialect));
+      ctx.push([renderDropTable(op.modelName, dialect)]);
       return;
 
     case "add_field":
-      ctx.push(renderAddColumn(op.model, op.field, dialect));
+      ctx.push([renderAddColumn(op.model, op.field, dialect)]);
       return;
 
     case "drop_field":
-      ctx.push(renderDropColumn(op.model, op.fieldName, dialect));
+      ctx.push([renderDropColumn(op.model, op.fieldName, dialect)]);
       return;
 
     case "alter_field":
@@ -240,7 +272,13 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
           renderDefaultFieldChange(op.model, op.fieldName, change, dialect);
 
         if (sql) {
-          ctx.push(sql);
+          ctx.push([
+            {
+              type: "command",
+              command: sql,
+              description: `Alter field ${op.fieldName} (changes: ${change.kind})`,
+            },
+          ]);
         }
       }
 
@@ -250,7 +288,13 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
       const sql = dialect.renderRelation?.(op.model, op.relation, ctx);
 
       if (sql) {
-        ctx.push(sql);
+        ctx.push([
+          {
+            type: "command",
+            command: sql,
+            description: `Add relationship ${op.relation.from} -> ${op.relation.to}`,
+          },
+        ]);
       }
 
       return;
@@ -260,7 +304,13 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
       const sql = dialect.renderDropRelation?.(op.model, op.relationName, ctx);
 
       if (sql) {
-        ctx.push(sql);
+        ctx.push([
+          {
+            type: "command",
+            command: sql,
+            description: `Drop relationship ${op.relationName}`,
+          },
+        ]);
       }
 
       return;
@@ -276,35 +326,48 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
         );
 
         if (sql) {
-          ctx.push(sql);
+          ctx.push([
+            {
+              type: "command",
+              command: sql,
+              description: "Alter relationship",
+            },
+          ]);
         }
       }
 
       return;
 
     case "add_index":
-      ctx.push(renderCreateIndex(op.model, op.index, dialect));
+      ctx.push([renderCreateIndex(op.model, op.index, dialect)]);
 
       return;
 
     case "drop_index":
-      ctx.push(renderDropIndex(op.indexName, dialect));
+      ctx.push([renderDropIndex(op.indexName, dialect)]);
 
       return;
 
     case "alter_index":
-      for (const change of op.changes) {
-        const sql = dialect.renderIndexChange?.(
-          op.model,
-          op.indexName,
-          change,
-          ctx,
-        );
+      ctx.push(
+        op.changes
+          .map((change): MigrationEntry | null => {
+            const sql = dialect.renderIndexChange?.(
+              op.model,
+              op.indexName,
+              change,
+              ctx,
+            );
 
-        if (sql) {
-          ctx.push(sql);
-        }
-      }
+            if (!sql) return null;
+            return {
+              type: "command",
+              command: sql,
+              description: `Alter index ${op.indexName}`,
+            };
+          })
+          .filter(Boolean) as MigrationEntry[],
+      );
 
       return;
 
@@ -319,14 +382,14 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
 }
 
 export default (async (diff: SchemaDiff, dialect: SQLMigrationDialect) => {
-  const statements: Statement[] = [];
+  const statements: EmittedMigrationStatement[] = [];
 
   const ctx: RenderContext = {
     dialect,
 
-    push(command, ...params) {
+    push(entries, ...params) {
       statements.push({
-        command,
+        entries,
         params,
       });
     },
