@@ -1,8 +1,4 @@
-import type {
-  EmittedMigrationStatement,
-  MigrationEmitter,
-  MigrationEntry,
-} from "@/adapter";
+import type { MigrationEmitter, MigrationEntry } from "@/adapter";
 import type {
   FieldChange,
   IndexChange,
@@ -64,7 +60,7 @@ export interface SQLMigrationDialect extends SQLDialect {
 
 interface RenderContext {
   dialect: SQLMigrationDialect;
-  push(commands: MigrationEntry[], ...params: unknown[]): void;
+  push(commands: MigrationEntry[]): void;
 }
 
 function q(dialect: SQLMigrationDialect, value: string) {
@@ -381,17 +377,14 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
   }
 }
 
-export default (async (diff: SchemaDiff, dialect: SQLMigrationDialect) => {
-  const statements: EmittedMigrationStatement[] = [];
+export default ((diff: SchemaDiff, dialect: SQLMigrationDialect) => {
+  const statements: MigrationEntry[] = [];
 
   const ctx: RenderContext = {
     dialect,
 
-    push(entries, ...params) {
-      statements.push({
-        entries,
-        params,
-      });
+    push(entries) {
+      statements.push(...entries);
     },
   };
 
