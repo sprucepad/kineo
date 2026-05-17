@@ -19,7 +19,7 @@ class MockAdapter implements RuntimeAdapter {
   }
 
   async emit() {
-    return { command: "SELECT 1", params: [] };
+    return { statements: [{ command: "SELECT 1", params: [] }] };
   }
 }
 

@@ -23,7 +23,9 @@ describe("Postgres SQL dialect", () => {
       postgresDialect,
     );
 
-    expect(result.command).toBe('SELECT DISTINCT ON ("email") * FROM "users"');
-    expect(result.params).toEqual([]);
+    expect(result.statements[0]?.command).toBe(
+      'SELECT DISTINCT ON ("email") * FROM "users"',
+    );
+    expect(result.statements[0]?.params).toEqual([]);
   });
 });

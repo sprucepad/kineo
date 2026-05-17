@@ -18,7 +18,7 @@ class MockAdapter implements RuntimeAdapter {
   }
 
   async emit() {
-    return { command: "SELECT 1", params: [] };
+    return { statements: [{ command: "SELECT 1", params: [] }] };
   }
 }
 
@@ -111,35 +111,37 @@ describe("templateToParams", () => {
   it("converts template literals to SQL parameters", () => {
     const result = templateToParams`SELECT * FROM users WHERE id = ${1} AND name = ${"John"}`;
 
-    expect(result.command).toBe(
+    expect(result.statements[0]?.command).toBe(
       "SELECT * FROM users WHERE id = $1 AND name = $2",
     );
-    expect(result.params).toEqual({ "0": 1, "1": "John" });
+    expect(result.statements[0]?.params).toEqual({ "0": 1, "1": "John" });
   });
 
   it("handles empty arrays in IN clauses", () => {
     const result = templateToParams`SELECT * FROM users WHERE id IN (${[]})`;
 
-    expect(result.command).toBe("SELECT * FROM users WHERE id IN ((NULL))");
-    expect(result.params).toEqual({});
+    expect(result.statements[0]?.command).toBe(
+      "SELECT * FROM users WHERE id IN ((NULL))",
+    );
+    expect(result.statements[0]?.params).toEqual({});
   });
 
   it("handles arrays in IN clauses", () => {
     const result = templateToParams`SELECT * FROM users WHERE id IN (${[1, 2, 3]})`;
 
-    expect(result.command).toContain(
+    expect(result.statements[0]?.command).toContain(
       "SELECT * FROM users WHERE id IN ($1,$2,$3)",
     );
-    expect(result.params).toEqual({ "0": 1, "1": 2, "2": 3 });
+    expect(result.statements[0]?.params).toEqual({ "0": 1, "1": 2, "2": 3 });
   });
 
   it("handles multiple arrays", () => {
     const result = templateToParams`SELECT * FROM users WHERE id IN (${[1, 2]}) AND status IN (${["active", "pending"]})`;
 
-    expect(result.command).toContain(
+    expect(result.statements[0]?.command).toContain(
       "SELECT * FROM users WHERE id IN ($1,$2) AND status IN ($3,$4)",
     );
-    expect(result.params).toEqual({
+    expect(result.statements[0]?.params).toEqual({
       "0": 1,
       "1": 2,
       "2": "active",
