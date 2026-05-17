@@ -58,17 +58,13 @@ export interface Adapter extends RuntimeAdapter {
 
   /**
    * Pushes a schema to the database.
-   * - If your database doesn't have a schema, you don't need this function.
-   * - If your database does have a schema, even if optional, but you have migrations, you don't need this function.
-   * - Otherwise, it is recommended to implement this function.
-   * @param schema The (parsed) schema to push.
+   * @param prev The current database schema.
+   * @param cur The (parsed) schema to push.
    */
-  push?(schema: ParsedSchema): Resolvable<void>;
+  push?(prev: ParsedSchema, cur: ParsedSchema): Resolvable<void>;
   /**
    * Pulls a schema from the database.
-   * - Kineo doesn't have a `pull` command. This is for detecting breaking changes between your current schema and your database schema.
-   * - If your database doesn't have a schema, you don't need this function.
-   * - Otherwise, it is recommended to implement this function.
+   * @returns Either a schema, or a parsed schema. It's recommended to return a parsed schema directly, so the parsing step can be skipped.
    */
   pull?(): Resolvable<ParsedSchema | Schema>;
   generate?(
