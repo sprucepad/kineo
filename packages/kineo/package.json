@@ -135,13 +135,15 @@
   "devDependencies": {
     "@dev/configs": "workspace:*",
     "@libsql/client": "^0.17.3",
+    "@testcontainers/mssqlserver": "^11.14.0",
+    "@testcontainers/mysql": "^11.14.0",
+    "@testcontainers/postgresql": "^11.14.0",
     "@types/node": "^22.15.22",
     "better-sqlite3": "^12.10.0",
     "eslint": "^10.3.0",
     "mssql": "^12.5.3",
     "mysql2": "^3.22.3",
     "postgres": "^3.4.9",
-    "testcontainers": "^11.14.0",
     "tsdown": "^0.22.0",
     "typescript": "^6.0.3"
   }

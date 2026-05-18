@@ -285,3 +285,11 @@ export function parseSchema(schema: Schema): ParsedSchema {
 
   return { models };
 }
+
+export function isRawSchema(v: Schema | ParsedSchema): v is Schema {
+  return !("models" in v) || v.models instanceof ModelBuilder;
+}
+
+export function isParsedSchema(v: ParsedSchema | Schema): v is ParsedSchema {
+  return "models" in v && !(v.models instanceof ModelBuilder);
+}

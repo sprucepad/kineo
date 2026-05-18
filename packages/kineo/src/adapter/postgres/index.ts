@@ -39,7 +39,7 @@ export default function postgres(opts: PostgresOptions): PostgresAdapter {
             is_nullable
           from information_schema.columns
           where table_schema = ${schema}
-          order by table_name, ordinal_position
+          order by table_name, ordinal_position;
         `,
 
         sql<PkRow[]>`
@@ -51,7 +51,7 @@ export default function postgres(opts: PostgresOptions): PostgresAdapter {
             on tc.constraint_name = kcu.constraint_name
           and tc.table_schema = kcu.table_schema
           where tc.constraint_type = 'PRIMARY KEY'
-            and tc.table_schema = ${schema}
+            and tc.table_schema = ${schema};
         `,
 
         sql<FkRow[]>`
@@ -69,7 +69,7 @@ export default function postgres(opts: PostgresOptions): PostgresAdapter {
             on ccu.constraint_name = tc.constraint_name
           and ccu.table_schema = tc.table_schema
           where tc.constraint_type = 'FOREIGN KEY'
-            and tc.table_schema = ${schema}
+            and tc.table_schema = ${schema};
         `,
 
         sql<IndexRow[]>`
@@ -90,7 +90,7 @@ export default function postgres(opts: PostgresOptions): PostgresAdapter {
           and a.attnum = any(ix.indkey)
           join pg_namespace ns on ns.oid = t.relnamespace
           where ns.nspname = ${schema}
-          order by table_name, index_name, column_order
+          order by table_name, index_name, column_order;
         `,
       ]);
 
@@ -323,7 +323,7 @@ function ensureMigrationsTable(sql: Sql) {
   return sql`
     create table if not exists __kineo_migrations__ (
       m_hash bytea primary key,
-      m_deployed_at datetime
+      m_deployed_at timestamp
     )
   `;
 }
