@@ -49,6 +49,7 @@ function relation(
   return [
     name,
     {
+      name,
       from: rel.from!,
       to: rel.to!,
       many: rel.many ?? false,

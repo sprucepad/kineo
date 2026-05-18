@@ -8,7 +8,7 @@ describe("SQL emitter", () => {
   };
 
   it("renders a basic SELECT query with parameters", async () => {
-    const result = await sqlEmitter(
+    const result = sqlEmitter(
       [
         {
           type: "query",
@@ -51,7 +51,7 @@ describe("SQL emitter", () => {
   });
 
   it("renders INSERT with RETURNING and ON CONFLICT", async () => {
-    const result = await sqlEmitter(
+    const result = sqlEmitter(
       [
         {
           type: "insert",
@@ -89,7 +89,7 @@ describe("SQL emitter", () => {
   });
 
   it("renders UPDATE with FROM and RETURNING", async () => {
-    const result = await sqlEmitter(
+    const result = sqlEmitter(
       [
         {
           type: "update",
@@ -123,7 +123,7 @@ describe("SQL emitter", () => {
   });
 
   it("renders DELETE with WHERE and RETURNING", async () => {
-    const result = await sqlEmitter(
+    const result = sqlEmitter(
       [
         {
           type: "delete",
