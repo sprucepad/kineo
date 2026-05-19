@@ -279,12 +279,16 @@ export type ArrayFilterCondition<T extends any[]> = T[number] extends object
   : ScalarListFilter<T[number]>;
 
 type OrderByValue<V> = V extends readonly (infer U)[]
-  ? U extends object
-    ? OrderByRelation<U> | { _count?: "asc" | "desc" }
-    : "asc" | "desc"
-  : NonNullable<V> extends object
-    ? OrderByRelation<NonNullable<V>>
-    : "asc" | "desc";
+  ? U extends Date
+    ? "asc" | "desc"
+    : U extends object
+      ? OrderByRelation<U> | { _count?: "asc" | "desc" }
+      : "asc" | "desc"
+  : NonNullable<V> extends Date
+    ? "asc" | "desc"
+    : NonNullable<V> extends object
+      ? OrderByRelation<NonNullable<V>>
+      : "asc" | "desc";
 
 /**
  * Order by input - can order by fields or nested relations

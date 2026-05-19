@@ -24,7 +24,7 @@ const program = new Command("kineo")
     loadEnv(
       ".env",
       ".env.local",
-      `.env.${process.env.NODE_ENV}`,
+      `.env.${process.env.NODE_ENV ?? "development"}`,
       ...(envs ?? []),
     );
     config = await resolveConfig([

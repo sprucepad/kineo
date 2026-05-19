@@ -44,35 +44,37 @@ export default function postgres(
     },
 
     async exec(opts) {
-      const strings: string[] = [];
-      const values: any[] = [];
+      const rows: any[] = [];
+      for (const statement of opts.statements) {
+        const strings: string[] = [];
+        const values: any[] = [];
 
-      let lastIndex = 0;
-      let match: RegExpExecArray | null;
+        let lastIndex = 0;
+        let match: RegExpExecArray | null;
 
-      // Match $1, $2, ... in order
-      const regex = /\$(\d+)/g;
+        // Match $1, $2, ... in order
+        const regex = /\$(\d+)/g;
 
-      while ((match = regex.exec(opts.command)) !== null) {
-        const index = match.index;
-        const paramPosition = Number(match[1]) - 1;
+        while ((match = regex.exec(statement.command)) !== null) {
+          const index = match.index;
+          const paramPosition = Number(match[1]) - 1;
 
-        // Push the string before this match
-        strings.push(opts.command.slice(lastIndex, index));
+          // Push the string before this match
+          strings.push(statement.command.slice(lastIndex, index));
 
-        // Push the corresponding param
-        values.push(opts.params[paramPosition]);
+          // Push the corresponding param
+          values.push(statement.params[paramPosition]);
 
-        lastIndex = index + match[0].length;
+          lastIndex = index + match[0].length;
+        }
+
+        // Push the remaining string after the last match
+        strings.push(statement.command.slice(lastIndex));
+
+        rows.push(
+          ...(await sql(Object.assign(strings, { raw: strings }), ...values)),
+        );
       }
-
-      // Push the remaining string after the last match
-      strings.push(opts.command.slice(lastIndex));
-
-      const rows = await sql(
-        Object.assign(strings, { raw: strings }),
-        ...values,
-      );
       return {
         rows,
         rowCount:

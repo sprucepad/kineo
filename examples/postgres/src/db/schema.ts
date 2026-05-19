@@ -1,4 +1,4 @@
-import { model, type InferModel } from "kineo";
+import { model } from "kineo";
 
 export const user = model((s) => ({
   id: s.int().id(),
@@ -24,8 +24,6 @@ export const post = model((s) => ({
     categories: s.relation(category).many(),
   }))
   .index("authorId", "title");
-
-export type Post = InferModel<typeof post>;
 
 export const category = model((s) => ({
   id: s.string().id(),

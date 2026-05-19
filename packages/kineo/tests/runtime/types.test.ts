@@ -17,15 +17,16 @@ import type {
   FieldUpdate,
 } from "./types";
 import type { BuilderProps, BuilderRelations } from ".";
+import type { RuntimeAdapter } from "@/adapter";
 
 // Mock adapter for type testing
-const mockAdapter = {
+const mockAdapter: RuntimeAdapter = {
   async exec() {
     return { rows: [], rowCount: 0 };
   },
   async close() {},
   async emit() {
-    return { command: "", params: [] };
+    return { statements: [{ command: "", params: [] }] };
   },
 };
 

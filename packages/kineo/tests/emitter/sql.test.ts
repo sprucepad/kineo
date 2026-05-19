@@ -8,7 +8,7 @@ describe("SQL emitter", () => {
   };
 
   it("renders a basic SELECT query with parameters", async () => {
-    const result = await sqlEmitter(
+    const result = sqlEmitter(
       [
         {
           type: "query",
@@ -44,14 +44,14 @@ describe("SQL emitter", () => {
       dialect,
     );
 
-    expect(result.command).toBe(
+    expect(result.statements[0]?.command).toBe(
       'SELECT "u"."id" AS "id", "u"."name" AS "name" FROM "users" AS "u" WHERE "u"."active" = $1 ORDER BY "u"."createdAt" DESC LIMIT 10 OFFSET 5',
     );
-    expect(result.params).toEqual([true]);
+    expect(result.statements[0]?.params).toEqual([true]);
   });
 
   it("renders INSERT with RETURNING and ON CONFLICT", async () => {
-    const result = await sqlEmitter(
+    const result = sqlEmitter(
       [
         {
           type: "insert",
@@ -79,14 +79,17 @@ describe("SQL emitter", () => {
       dialect,
     );
 
-    expect(result.command).toBe(
+    expect(result.statements[0]?.command).toBe(
       'INSERT INTO "users" ("name", "email") VALUES ($1, $2) ON CONFLICT ("email") DO NOTHING RETURNING "id" AS "id"',
     );
-    expect(result.params).toEqual(["Alice", "alice@example.com"]);
+    expect(result.statements[0]?.params).toEqual([
+      "Alice",
+      "alice@example.com",
+    ]);
   });
 
   it("renders UPDATE with FROM and RETURNING", async () => {
-    const result = await sqlEmitter(
+    const result = sqlEmitter(
       [
         {
           type: "update",
@@ -113,14 +116,14 @@ describe("SQL emitter", () => {
       dialect,
     );
 
-    expect(result.command).toBe(
+    expect(result.statements[0]?.command).toBe(
       'UPDATE "users" SET "name" = $1 FROM "accounts" AS "a" WHERE "id" = $2 RETURNING "id" AS "id"',
     );
-    expect(result.params).toEqual(["Bob", 42]);
+    expect(result.statements[0]?.params).toEqual(["Bob", 42]);
   });
 
   it("renders DELETE with WHERE and RETURNING", async () => {
-    const result = await sqlEmitter(
+    const result = sqlEmitter(
       [
         {
           type: "delete",
@@ -143,9 +146,9 @@ describe("SQL emitter", () => {
       dialect,
     );
 
-    expect(result.command).toBe(
+    expect(result.statements[0]?.command).toBe(
       'DELETE FROM "users" WHERE "id" = $1 RETURNING "id" AS "id"',
     );
-    expect(result.params).toEqual([3]);
+    expect(result.statements[0]?.params).toEqual([3]);
   });
 });

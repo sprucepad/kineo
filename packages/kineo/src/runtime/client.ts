@@ -92,5 +92,5 @@ export function templateToParams(
     }
   }
 
-  return { command, params: { ...params } };
+  return { statements: [{ command, params: { ...params } }] };
 }
