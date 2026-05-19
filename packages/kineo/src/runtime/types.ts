@@ -473,7 +473,7 @@ export type FindReturn<
   Many extends boolean = false,
 > = Many extends true
   ? FindReturnSingle<Props, PropsOpt, Rels, RelsOpt, O>[]
-  : FindReturnSingle<Props, PropsOpt, Rels, RelsOpt, O>;
+  : FindReturnSingle<Props, PropsOpt, Rels, RelsOpt, O> | null;
 
 export type FindReturnSingle<
   Props,
