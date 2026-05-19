@@ -228,7 +228,7 @@ export class Model<
   public async aggregate<O extends AggregateOpts<I, IO, R, RO>>(
     opts?: O,
   ): Promise<AggregateReturn<I, IO, R, RO, O>> {
-    const ir = this.parse("delete", opts);
+    const ir = this.parse("aggregate", opts);
     const result = await this.exec(ir);
     return (result.rows?.[0] as any) ?? null;
   }
@@ -236,8 +236,8 @@ export class Model<
   public async groupBy<O extends GroupByOpts<I, IO, R, RO>>(
     opts?: O,
   ): Promise<GroupByReturn<I, IO, R, RO, O>> {
-    const ir = this.parse("delete", opts);
+    const ir = this.parse("groupBy", opts);
     const result = await this.exec(ir);
-    return (result.rows?.[0] as any) ?? null;
+    return (result.rows as any) ?? [];
   }
 }

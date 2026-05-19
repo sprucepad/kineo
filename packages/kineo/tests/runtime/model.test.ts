@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import type { RuntimeAdapter } from "@/adapter";
+import type { Statement } from "@/ir";
 import {
   type ParsedSchema,
   type ParsedModel,
@@ -10,7 +11,59 @@ import { Model } from "@/runtime/model";
 
 // Mock adapter for testing
 class MockAdapter implements RuntimeAdapter {
+  private lastStatements: Statement[] = [];
+
   async exec() {
+    // Return appropriate mock data based on the last statement
+    const statement = this.lastStatements[0];
+
+    if (!statement || statement.type !== "query") {
+      return { rows: [], rowCount: 0 };
+    }
+
+    const queryStmt = statement;
+
+    // Check if this is an aggregate query (has aggregate functions in select)
+    const hasAggregates = queryStmt.select.some(
+      (item) =>
+        item.type === "expression" &&
+        item.expression?.type === "function" &&
+        ["count", "sum", "avg", "min", "max"].includes(
+          (item.expression as any).name?.toLowerCase(),
+        ),
+    );
+
+    // Check if this is a groupBy query (has groupBy clause)
+    const isGroupBy = queryStmt.groupBy && queryStmt.groupBy.length > 0;
+
+    if (hasAggregates && !isGroupBy) {
+      // Return a single aggregate result
+      return {
+        rows: [
+          {
+            _count: 10,
+            _sum: { age: 250 },
+            _avg: { age: 25 },
+            _min: { age: 18, createdAt: new Date("2024-01-01") },
+            _max: { age: 65, createdAt: new Date("2024-12-31") },
+          },
+        ],
+        rowCount: 1,
+      };
+    }
+
+    if (isGroupBy) {
+      // Return multiple grouped results
+      return {
+        rows: [
+          { name: "John", _count: 3, age: 25 },
+          { name: "Jane", _count: 2, age: 30 },
+        ],
+        rowCount: 2,
+      };
+    }
+
+    // Default for other queries
     return { rows: [], rowCount: 0 };
   }
 
@@ -18,7 +71,8 @@ class MockAdapter implements RuntimeAdapter {
     // noop
   }
 
-  async emit() {
+  async emit(statements: Statement[]) {
+    this.lastStatements = statements;
     return { statements: [{ command: "SELECT 1", params: [] }] };
   }
 }
