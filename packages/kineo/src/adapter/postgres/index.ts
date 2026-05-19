@@ -27,6 +27,11 @@ export default function postgres(opts: PostgresOptions): PostgresAdapter {
       return emit(diff(prev, cur), postgresMigrationDialect);
     },
 
+    async afterGenerate(hash) {
+      await ensureMigrationsTable(this.sql);
+      await this.sql`insert into __kineo_migrations__ values (${hash}, NULL);`;
+    },
+
     async pull(schema = "public") {
       const { sql } = runtimeAdapter;
       const [columns, primaryKeys, foreignKeys, indexes] = await Promise.all([
@@ -126,46 +131,8 @@ export default function postgres(opts: PostgresOptions): PostgresAdapter {
         });
       }
 
-      // detect implicit join tables
-      const implicitJoinTables = new Set<string>();
-
-      {
-        const fkMap = new Map<string, FkRow[]>();
-
-        for (const fk of foreignKeys) {
-          const arr = fkMap.get(fk.table_name) ?? [];
-          arr.push(fk);
-          fkMap.set(fk.table_name, arr);
-        }
-
-        for (const [table, fks] of fkMap) {
-          if (fks.length !== 2) continue;
-
-          const model = models.get(table);
-          if (!model) continue;
-
-          const fieldCount = model.fields.size;
-
-          // typical implicit m2m table:
-          // - exactly 2 fks
-          // - no extra columns
-          if (fieldCount !== 2) continue;
-
-          const [a, b] = fks;
-
-          const expected1 = `${a!.foreign_table_name}_${b!.foreign_table_name}`;
-          const expected2 = `${b!.foreign_table_name}_${a!.foreign_table_name}`;
-
-          if (table === expected1 || table === expected2) {
-            implicitJoinTables.add(table);
-          }
-        }
-      }
-
       // regular fk relations
       for (const fk of foreignKeys) {
-        if (implicitJoinTables.has(fk.table_name)) continue;
-
         const from = models.get(fk.table_name);
         const to = models.get(fk.foreign_table_name);
 
@@ -195,34 +162,6 @@ export default function postgres(opts: PostgresOptions): PostgresAdapter {
             virtual: true,
           });
         }
-      }
-
-      // implicit many-to-many relations
-      for (const table of implicitJoinTables) {
-        const fks = foreignKeys.filter((fk) => fk.table_name === table);
-
-        const [a, b] = fks;
-
-        const modelA = models.get(a!.foreign_table_name);
-        const modelB = models.get(b!.foreign_table_name);
-
-        if (!modelA || !modelB) continue;
-
-        modelA.relations.set(pluralize(modelB.name), {
-          name: pluralize(modelB.name),
-          from: modelA.name,
-          to: modelB.name,
-          many: true,
-          virtual: true,
-        });
-
-        modelB.relations.set(pluralize(modelA.name), {
-          name: pluralize(modelA.name),
-          from: modelB.name,
-          to: modelA.name,
-          many: true,
-          virtual: true,
-        });
       }
 
       // indexes
@@ -255,15 +194,10 @@ export default function postgres(opts: PostgresOptions): PostgresAdapter {
         model.indexes.set(first.index_name, {
           name: first.index_name,
           unique: first.unique,
-          fulltext: first.method === "GIN",
+          fulltext: first.method.toLowerCase() === "gin",
           type: first.method,
           fields,
         });
-      }
-
-      // remove implicit join models entirely
-      for (const table of implicitJoinTables) {
-        models.delete(table);
       }
 
       return { models };
@@ -278,31 +212,28 @@ export default function postgres(opts: PostgresOptions): PostgresAdapter {
         commands.push(statement.command);
       }
 
-      const wrappedCommand = [`BEGIN;${commands.join(";")};COMMIT;`];
-      await this.sql(Object.assign(wrappedCommand, { raw: wrappedCommand }));
+      await this.sql.unsafe(commands.join(";"));
     },
 
     async deploy(hash, migration) {
-      await ensureMigrationsTable(runtimeAdapter.sql);
-      const [row] =
-        await runtimeAdapter.sql`select m_deployed_at from __kineo_migrations__ where m_hash = ${hash}`;
+      await ensureMigrationsTable(this.sql);
+      const [row] = await this
+        .sql`select m_deployed_at from __kineo_migrations__ where m_hash = ${hash};`;
 
-      if (row?.m_deployed_at != null) {
-        throw new Error("Migration already exists"); // TODO better errors
+      if (row && row.m_deployed_at != null) {
+        throw new Error("Migration already deployed"); // TODO better errors
       }
 
-      const wrappedMigration = [migration];
-      await runtimeAdapter.sql(
-        Object.assign(wrappedMigration, { raw: wrappedMigration }),
-      );
+      await this.sql.unsafe(migration);
 
-      await runtimeAdapter.sql`insert into __kineo_migrations__ values (${hash}, NULL)`;
+      await this
+        .sql`update __kineo_migrations__ set m_deployed_at = ${new Date()} where m_hash = ${hash};`;
     },
 
     async status(hash) {
-      await ensureMigrationsTable(runtimeAdapter.sql);
-      const [row] =
-        await runtimeAdapter.sql`select m_hash, m_deployed_at from __kineo_migrations__ where m_hash = ${hash}`;
+      await ensureMigrationsTable(this.sql);
+      const [row] = await this
+        .sql`select m_hash, m_deployed_at from __kineo_migrations__ where m_hash = ${hash};`;
       if (!row) {
         throw new Error("Migration not found"); // TODO better errors
       }
@@ -319,12 +250,12 @@ export default function postgres(opts: PostgresOptions): PostgresAdapter {
 
 export { postgresMigrationDialect, type PostgresOptions };
 
-function ensureMigrationsTable(sql: Sql) {
-  return sql`
+async function ensureMigrationsTable(sql: Sql) {
+  await sql`
     create table if not exists __kineo_migrations__ (
       m_hash bytea primary key,
       m_deployed_at timestamp
-    )
+    );
   `;
 }
 

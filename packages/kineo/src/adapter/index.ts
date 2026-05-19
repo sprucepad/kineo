@@ -71,6 +71,12 @@ export interface Adapter extends RuntimeAdapter {
     prev: ParsedSchema,
     cur: ParsedSchema,
   ): Resolvable<MigrationEmitResult>;
+  /**
+   * Runs after a migration is generated. Useful for inserting the migration in a table, to track its status.
+   * @param hash A SHA-256 hash of the migration.
+   * @param migration The actual migration text.
+   */
+  afterGenerate?(hash: Buffer, migration: string): Resolvable<void>;
   status?(hash: Buffer, migration: string): Resolvable<MigrationStatus>;
   deploy?(hash: Buffer, migration: string): Resolvable<void>;
 }

@@ -125,51 +125,6 @@ describe("PostgreSQL adapter", () => {
       });
     });
 
-    it("detects implicit many-to-many join tables", async () => {
-      await adapter.sql`
-        create table users (
-          id serial primary key
-        );
-      `;
-
-      await adapter.sql`
-        create table roles (
-          id serial primary key
-        );
-      `;
-
-      await adapter.sql`
-        create table users_roles (
-          users_id integer not null references users(id),
-          roles_id integer not null references roles(id)
-        );
-      `;
-
-      const schema = await adapter.pull!();
-      if (isRawSchema(schema)) throw schema;
-
-      expect(schema.models.has("users_roles")).toBe(false);
-
-      const users = schema.models.get("users");
-      const roles = schema.models.get("roles");
-
-      expect(users?.relations.get("roles")).toEqual({
-        name: "roles",
-        from: "users",
-        to: "roles",
-        many: true,
-        virtual: true,
-      });
-
-      expect(roles?.relations.get("users")).toEqual({
-        name: "users",
-        from: "roles",
-        to: "users",
-        many: true,
-        virtual: true,
-      });
-    });
-
     it("pulls indexes", async () => {
       await adapter.sql`
         create table users (
@@ -294,17 +249,16 @@ describe("PostgreSQL adapter", () => {
   });
 
   describe("deploy()", () => {
-    it("deploys a migration and creates a pending status entry", async () => {
+    it("deploys a migration and updates entry", async () => {
       const hash = Buffer.from("abc123");
+      const migration = `
+        create table users (
+          id serial primary key
+        );
+      `;
+      await adapter.afterGenerate!(hash, migration);
 
-      await adapter.deploy!(
-        hash,
-        `
-          create table users (
-            id serial primary key
-          );
-        `,
-      );
+      await adapter.deploy!(hash, migration);
 
       const result = await adapter.sql`
         select m_hash, m_deployed_at
@@ -313,48 +267,37 @@ describe("PostgreSQL adapter", () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]?.m_hash).toEqual(hash);
-      expect(result[0]?.m_deployed_at).toBeNull();
+      expect(result[0]?.m_deployed_at).not.toBeNull();
     });
 
     it("throws if migration already exists", async () => {
       const hash = Buffer.from("duplicate");
+      const migration = `
+        create table posts (
+          id serial primary key
+        );
+      `;
+      await adapter.afterGenerate!(hash, migration);
 
-      await adapter.deploy!(
-        hash,
-        `
-          create table users (
-            id serial primary key
-          );
-        `,
+      await adapter.deploy!(hash, migration);
+
+      await expect(adapter.deploy!(hash, migration)).rejects.toThrow(
+        "Migration already deployed",
       );
-
-      await expect(
-        adapter.deploy!(
-          hash,
-          `
-            create table posts (
-              id serial primary key
-            );
-          `,
-        ),
-      ).rejects.toThrow("Migration already exists");
     });
   });
 
   describe("status()", () => {
     it("returns pending status", async () => {
       const hash = Buffer.from("pending");
+      const migration = `
+        create table users (
+          id serial primary key
+        );
+      `;
+      await adapter.afterGenerate!(hash, migration);
 
-      await adapter.deploy!(
-        hash,
-        `
-          create table users (
-            id serial primary key
-          );
-        `,
-      );
-
-      const result = await adapter.status!(hash, "...");
+      const result = await adapter.status!(hash, migration);
 
       expect(result.status).toBe("pending");
       expect(result.meta.hash).toEqual(hash);
@@ -369,7 +312,7 @@ describe("PostgreSQL adapter", () => {
 
   describe("push()", () => {
     it("executes generated migration SQL", async () => {
-      const spy = vi.spyOn(adapter, "sql");
+      const spy = vi.spyOn(adapter.sql, "unsafe");
 
       await adapter.push!(
         {
