@@ -52,9 +52,13 @@ export interface Adapter extends RuntimeAdapter {
    */
   runtimePath: string;
   /**
-   * The export name of your runtime adapter. For example `default`.
+   * The export name of your runtime adapter. For example, `default`.
    */
   runtimeExport?: "default" | (string & {});
+  /**
+   * The file extension of migrations. For example, `.sql`.
+   */
+  migrationExtension?: string;
 
   /**
    * Pushes a schema to the database.

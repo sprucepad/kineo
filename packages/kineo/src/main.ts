@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 import process from "node:process";
 import { Command, i } from "convoker";
-import { loadEnv, resolveConfig, type ResolvedConfig } from "@/config";
-
-let config: ResolvedConfig;
+import { loadEnv, resolveConfig } from "@/config";
+import { setConfig } from "./cli/_config";
 
 const program = new Command("kineo")
   .description("Declarative, TypeScript-first ORM.")
@@ -20,45 +19,38 @@ const program = new Command("kineo")
       .list()
       .optional(),
   })
-  .use(async ({ configs, envs }) => {
-    loadEnv(
-      ".env",
-      ".env.local",
-      `.env.${process.env.NODE_ENV ?? "development"}`,
-      ...(envs ?? []),
-    );
-    config = await resolveConfig([
-      "kineo.config.ts",
-      "kineo.config.js",
-      ".config/kineo.ts",
-      ".config/kineo.js",
-      "kineo.config.mts",
-      "kineo.config.mjs",
-      ".config/kineo.mts",
-      ".config/kineo.mjs",
-      "kineo.config.cts",
-      "kineo.config.cjs",
-      ".config/kineo.cts",
-      ".config/kineo.cjs",
-      ...(configs ?? []),
-    ]);
+  .use(
+    async (
+      {
+        configs = [
+          "kineo.config.ts",
+          "kineo.config.js",
+          ".config/kineo.ts",
+          ".config/kineo.js",
+          "kineo.config.mts",
+          "kineo.config.mjs",
+          ".config/kineo.mts",
+          ".config/kineo.mjs",
+          "kineo.config.cts",
+          "kineo.config.cjs",
+          ".config/kineo.cts",
+          ".config/kineo.cjs",
+        ],
+        envs = [
+          ".env",
+          ".env.local",
+          `.env.${process.env.NODE_ENV ?? "development"}`,
+        ],
+      },
+      next,
+    ) => {
+      loadEnv(...envs);
+      setConfig(await resolveConfig(configs));
+      return next();
+    },
+  );
 
-    console.log(config); // TODO
-  });
-
-program.subCommand("greet", (c) =>
-  c
-    .input({
-      names: i
-        .positional("string")
-        .description("List of names to greet")
-        .list(),
-    })
-    .action(({ names }) => {
-      for (const name of names) {
-        console.log(`Hello, ${name}!`);
-      }
-    }),
-);
+import migrate from "./cli/migrate";
+program.add(migrate);
 
 program.run();

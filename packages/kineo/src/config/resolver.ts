@@ -1,4 +1,6 @@
 import process from "node:process";
+import path from "node:path";
+
 import type { Adapter } from "@/adapter";
 import type {
   KineoConfig,
@@ -23,26 +25,38 @@ export const jiti = createJiti(process.cwd());
 export async function resolveConfig(files: string[]): Promise<ResolvedConfig> {
   let cfg: KineoConfig | undefined;
   for (const file of files) {
-    cfg = await jiti.import(file, { default: true, try: true });
+    cfg = await jiti.import(path.join(process.cwd(), file), {
+      default: true,
+      try: true,
+    });
     if (cfg) break;
   }
   if (!cfg) throw new UnresolvedConfigError(files);
 
   const resolvedMigrations: ResolvedConfig["migrations"] = {} as any;
   if (typeof cfg.migrations === "string") {
-    resolvedMigrations.path = cfg.migrations;
-    resolvedMigrations.seed = "./db/seed.ts";
+    resolvedMigrations.path = path.resolve(process.cwd(), cfg.migrations);
+    resolvedMigrations.seed = path.resolve(process.cwd(), "./db/seed.ts");
   } else {
-    resolvedMigrations.path = cfg.migrations?.path ?? "./db/migrations";
-    resolvedMigrations.seed = cfg.migrations?.seed ?? "./db/seed.ts";
+    resolvedMigrations.path = path.resolve(
+      process.cwd(),
+      cfg.migrations?.path ?? "./db/migrations",
+    );
+    resolvedMigrations.seed = path.resolve(
+      process.cwd(),
+      cfg.migrations?.seed ?? "./db/seed.ts",
+    );
   }
 
   const resolvedOutput: ResolvedConfig["output"] = {} as any;
   if (typeof cfg.output === "string") {
-    resolvedOutput.path = cfg.output;
+    resolvedOutput.path = path.resolve(process.cwd(), cfg.output);
     resolvedOutput.mode = "dts";
   } else {
-    resolvedOutput.path = cfg.output?.path ?? "./generated/kineo";
+    resolvedOutput.path = path.resolve(
+      process.cwd(),
+      cfg.output?.path ?? "./generated/kineo",
+    );
     resolvedOutput.mode = cfg.output?.mode ?? "dts";
   }
 

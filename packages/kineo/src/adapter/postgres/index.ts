@@ -22,6 +22,7 @@ export default function postgres(opts: PostgresOptions): PostgresAdapter {
   return {
     ...runtimeAdapter,
     runtimePath: "kineo/adapter/postgres/runtime",
+    migrationExtension: ".sql",
 
     generate(prev, cur) {
       return emit(diff(prev, cur), postgresMigrationDialect);

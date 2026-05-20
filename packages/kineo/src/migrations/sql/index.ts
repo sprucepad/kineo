@@ -106,7 +106,7 @@ function renderCreateTable(
       dialect,
       model.name,
     )} (\n  ${columns.join(",\n  ")}\n)`,
-    description: `Create table ${model.name}`,
+    description: `-- Create table ${model.name}`,
   };
 }
 
@@ -121,7 +121,7 @@ function renderDropTable(
       dialect.supportsCascade ? " CASCADE" : ""
     }`,
     type: "command",
-    description: `Drop table ${modelName}`,
+    description: `-- Drop table ${modelName}`,
   };
 }
 
@@ -136,7 +136,7 @@ function renderAddColumn(
       dialect,
       model,
     )} ADD COLUMN ${columnDefinition(field, dialect)}`,
-    description: `Add column ${field.name} to ${model}`,
+    description: `-- Add column ${field.name} to ${model}`,
   };
 }
 
@@ -151,7 +151,7 @@ function renderDropColumn(
       dialect,
       model,
     )} DROP COLUMN ${q(dialect, fieldName)}`,
-    description: `Drop column ${fieldName} on ${model}`,
+    description: `-- Drop column ${fieldName} on ${model}`,
   };
 }
 
@@ -224,7 +224,7 @@ function renderCreateIndex(
     )} ON ${tableName(dialect, model)}${
       type ? ` USING ${type}` : ""
     } (${fields})`,
-    description: `Create ${unique.toLowerCase()}index ${index.name}`,
+    description: `-- Create ${unique.toLowerCase()}index ${index.name}`,
   };
 }
 
@@ -237,7 +237,7 @@ function renderDropIndex(
     command: `DROP INDEX ${
       dialect.supportsIfExists ? "IF EXISTS " : ""
     }${q(dialect, indexName)}`,
-    description: `Drop index ${indexName}`,
+    description: `-- Drop index ${indexName}`,
   };
 }
 
@@ -272,7 +272,7 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
             {
               type: "command",
               command: sql,
-              description: `Alter field ${op.fieldName} (changes: ${change.kind})`,
+              description: `-- Alter field ${op.fieldName} (changes: ${change.kind})`,
             },
           ]);
         }
@@ -288,7 +288,7 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
           {
             type: "command",
             command: sql,
-            description: `Add relationship ${op.relation.from} -> ${op.relation.to}`,
+            description: `-- Add relationship ${op.relation.from} -> ${op.relation.to}`,
           },
         ]);
       }
@@ -304,7 +304,7 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
           {
             type: "command",
             command: sql,
-            description: `Drop relationship ${op.relationName}`,
+            description: `-- Drop relationship ${op.relationName}`,
           },
         ]);
       }
@@ -326,7 +326,7 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
             {
               type: "command",
               command: sql,
-              description: "Alter relationship",
+              description: "-- Alter relationship",
             },
           ]);
         }
@@ -359,7 +359,7 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
             return {
               type: "command",
               command: sql,
-              description: `Alter index ${op.indexName}`,
+              description: `-- Alter index ${op.indexName}`,
             };
           })
           .filter(Boolean) as MigrationEntry[],

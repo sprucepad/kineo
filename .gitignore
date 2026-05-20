@@ -7,3 +7,7 @@ node_modules/
 # build outout
 dist/
 *.tsbuildinfo
+
+# environment files (just to be safe)
+.env*
+!.env.example
