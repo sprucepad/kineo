@@ -15,7 +15,10 @@ export default new Command("migrate")
     "Generates and manages migrations. By default, this generates and deploys migrations.",
   )
   .input({
-    noDeploy: i.option("boolean", "--no-deploy", "-n").optional(),
+    noDeploy: i
+      .option("boolean", "--no-deploy", "-n")
+      .description("Disables deploying the migration after generation.")
+      .optional(),
   })
   .action(async ({ noDeploy = false }) => {
     const cfg = config();
@@ -32,24 +35,30 @@ export default new Command("migrate")
         : isRawSchema(pulled)
           ? parseSchema(pulled)
           : pulled;
+    prev.models.delete("__kineo_migrations__");
 
     const cur = parseSchema(cfg.schema);
 
     console.log(theme.bold("Generating migration..."));
     const entries = await cfg.adapter.generate(prev, cur);
 
+    if (entries.statements.length === 0) {
+      console.log(theme.green("Nothing changed!"));
+      return;
+    }
+
     let code = "";
     for (const statement of entries.statements) {
       code +=
-        "\n" +
         (statement.type === "note"
           ? statement.note
-          : `${statement.command} ${statement.description}`);
+          : `${statement.command} ${statement.description}`) + "\n";
     }
 
     await fs.promises.writeFile(
       path.resolve(
         process.cwd(),
+        cfg.migrations.path,
         Date.now() + (cfg.adapter.migrationExtension ?? ".txt"),
       ),
       code,
@@ -71,9 +80,14 @@ export default new Command("migrate")
     c
       .description("Runs the seed script defined in your configuration.")
       .input({
-        runner: i.option("string", "--runner", "-r").optional(),
+        runner: i
+          .option("string", "--runner", "-r")
+          .description(
+            "The command or package CLI to run to execute the seed. Defaults to `node`.",
+          )
+          .optional(),
       })
-      .action(async ({ runner = "tsx" }) => {
+      .action(async ({ runner = "node" }) => {
         const cfg = config();
 
         function getPackageManagerExecuteCommand(
@@ -121,7 +135,11 @@ export default new Command("migrate")
         "Deploys one or more migrations. By default, this deploys all pending migrations.",
       )
       .input({
-        migrations: i.argument("string").list().optional(),
+        migrations: i
+          .argument("string")
+          .description("The migration file names to deploy.")
+          .list()
+          .optional(),
       })
       .action(async ({ migrations }) => {
         const cfg = config();
@@ -152,7 +170,11 @@ export default new Command("migrate")
         "Checks the status of one or more migrations. By default, this shows the status of all migrations.",
       )
       .input({
-        migrations: i.argument("string").list().optional(),
+        migrations: i
+          .argument("string")
+          .description("The migration file names to check the status of.")
+          .list()
+          .optional(),
       })
       .action(async ({ migrations }) => {
         const cfg = config();

@@ -3,6 +3,7 @@ import { defineConfig } from "tsdown";
 export default defineConfig([
   {
     entry: [
+      "./src/main.ts", // unfortunately can't be bundled separately
       "./src/index.ts",
       "./src/config/index.ts",
       "./src/schema/index.ts",
@@ -32,17 +33,11 @@ export default defineConfig([
     ],
     minify: true,
     sourcemap: true,
-    dts: {
-      sourcemap: true,
-    },
     outputOptions: {
       sourcemapExcludeSources: true,
     },
-  },
-  {
-    entry: ["./src/main.ts"],
-    minify: true,
-    sourcemap: false,
-    dts: false,
+    dts: {
+      sourcemap: true,
+    },
   },
 ]);

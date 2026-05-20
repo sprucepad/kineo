@@ -75,6 +75,14 @@ function valuesOf<T>(map: Map<string, T>): T[] {
   return [...map.values()];
 }
 
+/**
+ * Ensures every SQL statement ends with exactly one semicolon.
+ */
+function toSqlCommand(sql: string) {
+  const trimmed = sql.trim();
+  return trimmed.endsWith(";") ? trimmed : `${trimmed};`;
+}
+
 function columnDefinition(field: ParsedField, dialect: SQLMigrationDialect) {
   const parts: string[] = [
     q(dialect, field.name),
@@ -102,10 +110,11 @@ function renderCreateTable(
 
   return {
     type: "command",
-    command: `CREATE TABLE ${tableName(
-      dialect,
-      model.name,
-    )} (\n  ${columns.join(",\n  ")}\n)`,
+    command: toSqlCommand(
+      `CREATE TABLE ${tableName(dialect, model.name)} (
+  ${columns.join(",\n  ")}
+)`,
+    ),
     description: `-- Create table ${model.name}`,
   };
 }
@@ -115,11 +124,13 @@ function renderDropTable(
   dialect: SQLMigrationDialect,
 ): MigrationEntry {
   return {
-    command: `DROP TABLE ${
-      dialect.supportsIfExists ? "IF EXISTS " : ""
-    }${tableName(dialect, modelName)}${
-      dialect.supportsCascade ? " CASCADE" : ""
-    }`,
+    command: toSqlCommand(
+      `DROP TABLE ${
+        dialect.supportsIfExists ? "IF EXISTS " : ""
+      }${tableName(dialect, modelName)}${
+        dialect.supportsCascade ? " CASCADE" : ""
+      }`,
+    ),
     type: "command",
     description: `-- Drop table ${modelName}`,
   };
@@ -132,10 +143,12 @@ function renderAddColumn(
 ): MigrationEntry {
   return {
     type: "command",
-    command: `ALTER TABLE ${tableName(
-      dialect,
-      model,
-    )} ADD COLUMN ${columnDefinition(field, dialect)}`,
+    command: toSqlCommand(
+      `ALTER TABLE ${tableName(
+        dialect,
+        model,
+      )} ADD COLUMN ${columnDefinition(field, dialect)}`,
+    ),
     description: `-- Add column ${field.name} to ${model}`,
   };
 }
@@ -147,10 +160,12 @@ function renderDropColumn(
 ): MigrationEntry {
   return {
     type: "command",
-    command: `ALTER TABLE ${tableName(
-      dialect,
-      model,
-    )} DROP COLUMN ${q(dialect, fieldName)}`,
+    command: toSqlCommand(
+      `ALTER TABLE ${tableName(
+        dialect,
+        model,
+      )} DROP COLUMN ${q(dialect, fieldName)}`,
+    ),
     description: `-- Drop column ${fieldName} on ${model}`,
   };
 }
@@ -218,12 +233,12 @@ function renderCreateIndex(
 
   return {
     type: "command",
-    command: `CREATE ${unique}INDEX ${q(
-      dialect,
-      index.name,
-    )} ON ${tableName(dialect, model)}${
-      type ? ` USING ${type}` : ""
-    } (${fields})`,
+    command: toSqlCommand(
+      `CREATE ${unique}INDEX ${q(dialect, index.name)} ON ${tableName(
+        dialect,
+        model,
+      )}${type ? ` USING ${type}` : ""} (${fields})`,
+    ),
     description: `-- Create ${unique.toLowerCase()}index ${index.name}`,
   };
 }
@@ -233,10 +248,12 @@ function renderDropIndex(
   dialect: SQLMigrationDialect,
 ): MigrationEntry {
   return {
+    command: toSqlCommand(
+      `DROP INDEX ${
+        dialect.supportsIfExists ? "IF EXISTS " : ""
+      }${q(dialect, indexName)}`,
+    ),
     type: "command",
-    command: `DROP INDEX ${
-      dialect.supportsIfExists ? "IF EXISTS " : ""
-    }${q(dialect, indexName)}`,
     description: `-- Drop index ${indexName}`,
   };
 }
@@ -271,13 +288,12 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
           ctx.push([
             {
               type: "command",
-              command: sql,
+              command: toSqlCommand(sql),
               description: `-- Alter field ${op.fieldName} (changes: ${change.kind})`,
             },
           ]);
         }
       }
-
       return;
 
     case "add_relation": {
@@ -287,12 +303,11 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
         ctx.push([
           {
             type: "command",
-            command: sql,
+            command: toSqlCommand(sql),
             description: `-- Add relationship ${op.relation.from} -> ${op.relation.to}`,
           },
         ]);
       }
-
       return;
     }
 
@@ -303,12 +318,11 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
         ctx.push([
           {
             type: "command",
-            command: sql,
+            command: toSqlCommand(sql),
             description: `-- Drop relationship ${op.relationName}`,
           },
         ]);
       }
-
       return;
     }
 
@@ -325,23 +339,20 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
           ctx.push([
             {
               type: "command",
-              command: sql,
+              command: toSqlCommand(sql),
               description: "-- Alter relationship",
             },
           ]);
         }
       }
-
       return;
 
     case "add_index":
       ctx.push([renderCreateIndex(op.model, op.index, dialect)]);
-
       return;
 
     case "drop_index":
       ctx.push([renderDropIndex(op.indexName, dialect)]);
-
       return;
 
     case "alter_index":
@@ -356,20 +367,19 @@ function emitOperation(op: MigrationOp, ctx: RenderContext) {
             );
 
             if (!sql) return null;
+
             return {
               type: "command",
-              command: sql,
+              command: toSqlCommand(sql),
               description: `-- Alter index ${op.indexName}`,
             };
           })
           .filter(Boolean) as MigrationEntry[],
       );
-
       return;
 
     default: {
       const exhaustive: never = op;
-
       throw new Error(
         `Unhandled migration operation: ${JSON.stringify(exhaustive)}`,
       );
@@ -382,7 +392,6 @@ export default ((diff: SchemaDiff, dialect: SQLMigrationDialect) => {
 
   const ctx: RenderContext = {
     dialect,
-
     push(entries) {
       statements.push(...entries);
     },

@@ -25,7 +25,7 @@ describe("PostgreSQL runtime adapter", () => {
 
   // connect to database
   beforeAll(async () => {
-    container = await new PostgreSqlContainer("postgres:latest").start();
+    container = await new PostgreSqlContainer("postgres:18").start();
     adapter = postgresRuntime({ url: container.getConnectionUri(), max: 1 });
   }, 300_000); // 5 minutes
 
