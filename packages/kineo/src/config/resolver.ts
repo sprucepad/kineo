@@ -25,7 +25,7 @@ export const jiti = createJiti(process.cwd());
 export async function resolveConfig(files: string[]): Promise<ResolvedConfig> {
   let cfg: KineoConfig | undefined;
   for (const file of files) {
-    cfg = await jiti.import(path.join(process.cwd(), file), {
+    cfg = await jiti.import(path.resolve(process.cwd(), file), {
       default: true,
       try: true,
     });

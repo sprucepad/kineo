@@ -20,3 +20,6 @@ CREATE TABLE "category_post" (
   "categoryId" TEXT NOT NULL,
   "postId" TEXT NOT NULL
 ); -- Create table category_post
+ALTER TABLE "post" ADD CONSTRAINT "post_author_fkey" FOREIGN KEY ("authorId") REFERENCES "user" ("id"); -- Add relationship post -> user
+ALTER TABLE "category_post" ADD CONSTRAINT "category_post_mn_category_post_fkey" FOREIGN KEY ("categoryId") REFERENCES "category" ("id"); -- Add relationship category_post -> category
+ALTER TABLE "category_post" ADD CONSTRAINT "category_post_mn_post_category_fkey" FOREIGN KEY ("postId") REFERENCES "post" ("id"); -- Add relationship category_post -> post

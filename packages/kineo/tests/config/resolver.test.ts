@@ -1,9 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  resolveConfig,
-  resolveSchema,
-  UnresolvedConfigError,
-} from "./resolver";
 
 vi.mock("jiti", () => {
   return {
@@ -13,8 +8,14 @@ vi.mock("jiti", () => {
   };
 });
 
-import { jiti } from "./resolver";
+import {
+  jiti,
+  resolveConfig,
+  resolveSchema,
+  UnresolvedConfigError,
+} from "./resolver";
 import { model } from "@/schema";
+import path from "node:path";
 
 describe("resolveConfig", () => {
   beforeEach(() => {
@@ -40,12 +41,12 @@ describe("resolveConfig", () => {
 
     expect(result.adapter).toBe("adapter");
     expect(result.output).toEqual({
-      path: "./generated/kineo",
+      path: path.resolve(process.cwd(), "./generated/kineo"),
       mode: "dts",
     });
     expect(result.migrations).toEqual({
-      path: "./db/migrations",
-      seed: "./db/seed.ts",
+      path: path.resolve(process.cwd(), "./db/migrations"),
+      seed: path.resolve(process.cwd(), "./db/seed.ts"),
     });
   });
 
@@ -61,13 +62,13 @@ describe("resolveConfig", () => {
     const result = await resolveConfig(["config.ts"]);
 
     expect(result.output).toEqual({
-      path: "./out",
+      path: path.resolve(process.cwd(), "./out"),
       mode: "dts",
     });
 
     expect(result.migrations).toEqual({
-      path: "./migrations",
-      seed: "./db/seed.ts",
+      path: path.resolve(process.cwd(), "./migrations"),
+      seed: path.resolve(process.cwd(), "./db/seed.ts"),
     });
   });
 });

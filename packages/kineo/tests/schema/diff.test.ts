@@ -94,6 +94,45 @@ describe("schema diff", () => {
     ]);
   });
 
+  it("emits add_relation for non-virtual relations when a model is created", () => {
+    const a = schema([]);
+    const b = schema([
+      model({
+        name: "Post",
+        relations: new Map([
+          relation("author", {
+            from: "Post",
+            to: "User",
+            virtual: false,
+            many: false,
+            fields: ["authorId"],
+            refs: ["id"],
+          }),
+        ]),
+      }),
+    ]);
+
+    const result = diff(a, b);
+
+    expect(result.operations).toEqual([
+      expect.objectContaining({
+        kind: "create_model",
+        model: expect.objectContaining({ name: "Post" }),
+      }),
+      expect.objectContaining({
+        kind: "add_relation",
+        model: "Post",
+        relation: expect.objectContaining({
+          name: "author",
+          from: "Post",
+          to: "User",
+          fields: ["authorId"],
+          refs: ["id"],
+        }),
+      }),
+    ]);
+  });
+
   it("detects removed model", () => {
     const a = schema([model({ name: "User" })]);
     const b = schema([]);
