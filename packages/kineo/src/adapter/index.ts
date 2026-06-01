@@ -85,6 +85,13 @@ export interface Adapter extends RuntimeAdapter {
   deploy?(hash: Buffer, migration: string): Resolvable<void>;
 }
 
+export interface AdapterMeta {
+  packages: string[];
+  adapterPath: string;
+  adapterExport: string;
+  adapterOptions: string | Record<string, any>;
+}
+
 export type AsyncAdapter = Promise<Adapter>;
 
 export type MigrationEntry = MigrationCommand | MigrationNote;

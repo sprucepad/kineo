@@ -50,7 +50,10 @@ const program = new Command("kineo")
     },
   );
 
+import init from "./cli/init";
+import generate from "./cli/generate";
 import migrate from "./cli/migrate";
-program.add(migrate);
+import push from "./cli/push";
+program.add(init, generate, migrate, push);
 
 program.run();

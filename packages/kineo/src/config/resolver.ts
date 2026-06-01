@@ -20,7 +20,7 @@ export interface ResolvedConfig {
   schemaConfig: Partial<SchemaConfig>;
 }
 
-export const jiti = createJiti(process.cwd());
+export const jiti = createJiti(path.resolve(process.cwd(), "package.json"));
 
 export async function resolveConfig(files: string[]): Promise<ResolvedConfig> {
   let cfg: KineoConfig | undefined;
