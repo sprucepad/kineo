@@ -22,7 +22,9 @@ export interface ResolvedConfig {
 
 export const jiti = createJiti(path.resolve(process.cwd(), "package.json"));
 
-export async function resolveConfig(files: string[]): Promise<ResolvedConfig> {
+export async function resolveConfig(
+  files: string[],
+): Promise<ResolvedConfig | null> {
   let cfg: KineoConfig | undefined;
   for (const file of files) {
     cfg = await jiti.import(path.resolve(process.cwd(), file), {
@@ -31,7 +33,11 @@ export async function resolveConfig(files: string[]): Promise<ResolvedConfig> {
     });
     if (cfg) break;
   }
-  if (!cfg) throw new UnresolvedConfigError(files);
+
+  if (!cfg) return null;
+
+  const resolvedSchema = await resolveSchema(cfg.schema);
+  if (!resolvedSchema) return null;
 
   const resolvedMigrations: ResolvedConfig["migrations"] = {} as any;
   if (typeof cfg.migrations === "string") {
@@ -60,8 +66,6 @@ export async function resolveConfig(files: string[]): Promise<ResolvedConfig> {
     resolvedOutput.mode = cfg.output?.mode ?? "dts";
   }
 
-  const resolvedSchema = await resolveSchema(cfg.schema);
-
   return {
     adapter: await cfg.adapter,
 
@@ -75,11 +79,11 @@ export async function resolveConfig(files: string[]): Promise<ResolvedConfig> {
 
 export async function resolveSchema(
   cfg: KineoConfig["schema"],
-): Promise<Pick<ResolvedConfig, "schema" | "schemaConfig">> {
+): Promise<Pick<ResolvedConfig, "schema" | "schemaConfig"> | null> {
   if (!cfg) {
     const path = "./db/schema.ts";
     const schema = await jiti.import(path, { try: true });
-    if (!schema) throw new UnresolvedConfigError([path]);
+    if (!schema) return null;
 
     return {
       schema: schema as Schema,
@@ -107,7 +111,7 @@ export async function resolveSchema(
           : (awaited.export ?? "all");
 
       const mod = (await jiti.import(path, { try: true })) as any;
-      if (!mod) throw new UnresolvedConfigError([path]);
+      if (!mod) return null;
 
       let schema: Schema;
       if (exportName === "all") schema = mod as Schema;
@@ -128,7 +132,7 @@ export async function resolveSchema(
     }
   } else {
     const schema = await jiti.import(awaited, { try: true });
-    if (!schema) throw new UnresolvedConfigError([awaited]);
+    if (!schema) return null;
 
     return {
       schema: schema as Schema,
@@ -140,10 +144,10 @@ export async function resolveSchema(
   }
 }
 
-export class UnresolvedConfigError extends Error {
-  constructor(files: string[]) {
-    super(
-      `Could not resolve Kineo configuration. Files attempted: ${files.join(", ")}`,
-    );
-  }
-}
+// export class UnresolvedConfigError extends Error {
+//   constructor(files: string[]) {
+//     super(
+//       `Could not resolve Kineo configuration. Files attempted: ${files.join(", ")}`,
+//     );
+//   }
+// }

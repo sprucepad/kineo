@@ -6,6 +6,16 @@ export function env(key: string): string {
   return val;
 }
 
+export function optEnv(key: string): string | undefined {
+  const val = process.env[key];
+  return val;
+}
+
+export function nullEnv(key: string): string | null {
+  const val = process.env[key];
+  return val ?? null;
+}
+
 export class UndefinedEnvError extends Error {
   constructor(key: string) {
     super(`Undefined environment variable: ${key}.`);

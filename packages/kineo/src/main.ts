@@ -45,6 +45,7 @@ const program = new Command("kineo")
       next,
     ) => {
       loadEnv(...envs);
+
       setConfig(await resolveConfig(configs));
       return next();
     },

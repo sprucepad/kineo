@@ -4,7 +4,9 @@ import process from "node:process";
 import childProcess from "node:child_process";
 import { Command, i, theme } from "convoker";
 import type { AdapterMeta } from "@/adapter";
-import { jiti } from "@/config";
+import { jiti, resolveConfig } from "@/config";
+import { generateClient } from "./generate";
+import { setConfig } from "./_config";
 
 export default new Command("init")
   .description("Initializes a new project.")
@@ -109,6 +111,7 @@ export default new Command("init")
       ];
 
       let pkg: any | undefined;
+      let installed = false;
       if (!noInstall) {
         const contents = await fs.promises.readFile(
           path.resolve(process.cwd(), packageJson),
@@ -116,11 +119,12 @@ export default new Command("init")
         );
         pkg = JSON.parse(contents);
 
-        if (containsPackages(pkg, ["kineo"])) {
-          console.log(theme.gray(`$ ${command.join(" ")}\n`));
+        if (!containsPackages(pkg, ["kineo"])) {
+          console.log(theme.gray(`$ ${command.join(" ")}`));
 
           const exitCode = await installDeps(command);
-          if (exitCode !== 0)
+          if (exitCode !== 0) {
+            installed = false;
             console.log(
               theme.bold(
                 theme.red(
@@ -128,8 +132,12 @@ export default new Command("init")
                 ),
               ),
             );
-          else console.log(theme.bold(theme.green("Installed dependencies!")));
+          } else {
+            installed = true;
+            console.log(theme.bold(theme.green("Installed dependencies!")));
+          }
         } else {
+          installed = true;
           console.log(theme.bold(theme.green("Kineo is already installed!")));
         }
       }
@@ -145,17 +153,20 @@ export default new Command("init")
           });
         });
 
-      if (pkg) {
+      if (pkg && !noInstall) {
         if (!containsPackages(pkg, adapterMeta.packages)) {
           const command = [
             packageManager,
             installCommand,
             ...adapterMeta.packages,
           ] as [string, ...string[]];
-          console.log(theme.gray(`$ ${command.join(" ")}\n`));
+          packages.push(...adapterMeta.packages);
+
+          console.log(theme.gray(`$ ${command.join(" ")}`));
 
           const code = await installDeps(command);
-          if (code !== 0)
+          if (code !== 0) {
+            installed = false;
             console.log(
               theme.bold(
                 theme.red(
@@ -163,10 +174,12 @@ export default new Command("init")
                 ),
               ),
             );
-          else
+          } else {
+            installed = true;
             console.log(
               theme.bold(theme.green("Installed secondary dependencies!")),
             );
+          }
         }
       }
 
@@ -176,6 +189,53 @@ export default new Command("init")
         generatedConfig,
         "utf-8",
       );
+      console.log(theme.bold(theme.green("Configuration generated!")));
+
+      function getPackageManagerExecuteCommand(
+        pkg: string,
+      ): [string, ...string[]] {
+        if (packageManager === "pnpm") {
+          return ["pnpm", "exec", pkg];
+        } else if (packageManager === "yarn") {
+          return ["yarn", "run", pkg];
+        } else if (packageManager === "bun") {
+          return ["bunx", pkg];
+        } else {
+          return ["npx", pkg];
+        }
+      }
+
+      if (!installed) {
+        console.log(
+          theme.yellow(
+            "Dependencies were not installed. Make sure to run these commands to get started, after fixing any conflicts:",
+          ),
+        );
+        console.log(
+          theme.gray(
+            `$ ${packageManager} ${installCommand} ${packages.join(" ")}`,
+          ),
+        );
+        console.log(
+          theme.gray(`$ ${getPackageManagerExecuteCommand("kineo")} generate`),
+        );
+      } else {
+        console.log(theme.bold("Generating client..."));
+        try {
+          const config = await resolveConfig(["kineo.config.mjs"]);
+          setConfig(config);
+
+          await generateClient();
+          console.log(theme.bold(theme.green("Kineo is ready for use!")));
+        } catch {
+          console.log(
+            theme.red(
+              "Failed to generate client. After fixing any issues, run this command manually:",
+            ),
+          );
+          console.log(`$ ${getPackageManagerExecuteCommand("kineo")} generate`);
+        }
+      }
     },
   );
 
@@ -218,11 +278,11 @@ function getInstallCommand(packageManager: string) {
 function containsPackages(pkg: any, packages: string[]) {
   return packages.some(
     (pkgName) =>
-      pkg.dependencies[pkgName] ||
-      pkg.devDependencies[pkgName] ||
-      pkg.peerDependencies[pkgName] ||
-      pkg.optionalDependencies[pkgName] ||
-      pkg.bundleDependencies.some((a: string) => a === pkgName) ||
-      pkg.bundledDependencies.some((a: string) => a === pkgName),
+      pkg.dependencies?.[pkgName] ||
+      pkg.devDependencies?.[pkgName] ||
+      pkg.peerDependencies?.[pkgName] ||
+      pkg.optionalDependencies?.[pkgName] ||
+      pkg.bundleDependencies?.some((a: string) => a === pkgName) ||
+      pkg.bundledDependencies?.some((a: string) => a === pkgName),
   );
 }

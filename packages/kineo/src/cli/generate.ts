@@ -6,3 +6,7 @@ export default new Command("generate")
   .action(async () => {
     // TODO
   });
+
+export async function generateClient() {
+  // TODO
+}
