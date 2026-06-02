@@ -349,9 +349,13 @@ export default defineConfig({
     imports = new Set(["defineConfig"]),
   ) {
     if (typeof opts === "string") {
-      if (opts.includes("env(")) imports.add("env");
-      else if (opts.includes("optEnv(")) imports.add("optEnv");
-      else if (opts.includes("nullEnv(")) imports.add("nullEnv");
+      if (
+        opts.includes("env(") ||
+        opts.includes("env.nullable(") ||
+        opts.includes("env.optional(") ||
+        opts.includes("env.load(")
+      )
+        imports.add("env");
     } else {
       for (const key in opts) {
         getKineoImports(opts[key], imports);

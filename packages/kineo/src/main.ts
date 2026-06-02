@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import process from "node:process";
 import { Command, i } from "convoker";
-import { loadEnv, resolveConfig } from "@/config";
+import { env, resolveConfig } from "@/config";
 import { setConfig } from "./cli/_config";
 
 const program = new Command("kineo")
@@ -44,7 +44,7 @@ const program = new Command("kineo")
       },
       next,
     ) => {
-      loadEnv(...envs);
+      env.load(...envs);
 
       setConfig(await resolveConfig(configs));
       return next();

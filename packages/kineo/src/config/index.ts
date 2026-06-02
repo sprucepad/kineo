@@ -15,17 +15,23 @@ export interface KineoConfig {
 }
 
 export interface SchemaConfig {
-  path: string;
+  path?: string;
   export?: "all" | "default" | (string & {});
 }
 
 export interface OutputConfig {
-  path: string;
+  path?: string;
   mode?: "dts" | "ts";
+  envMode?:
+    | "import.meta"
+    | "deno.env"
+    | "global_process"
+    | "node:process"
+    | "cloudflare:workers";
 }
 
 export interface MigrationConfig {
-  path: string;
+  path?: string;
   seed?: string;
 }
 

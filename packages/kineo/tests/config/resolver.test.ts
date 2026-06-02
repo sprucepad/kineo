@@ -8,12 +8,7 @@ vi.mock("jiti", () => {
   };
 });
 
-import {
-  jiti,
-  resolveConfig,
-  resolveSchema,
-  UnresolvedConfigError,
-} from "./resolver";
+import { jiti, resolveConfig, resolveSchema } from "./resolver";
 import { model } from "@/schema";
 import path from "node:path";
 
@@ -25,9 +20,7 @@ describe("resolveConfig", () => {
   it("should throw if no config found", async () => {
     (jiti.import as any).mockResolvedValue(undefined);
 
-    await expect(resolveConfig(["a.ts", "b.ts"])).rejects.toThrow(
-      UnresolvedConfigError,
-    );
+    expect(await resolveConfig(["a.ts", "b.ts"])).toBeNull();
   });
 
   it("should resolve basic config with defaults", async () => {
@@ -39,12 +32,14 @@ describe("resolveConfig", () => {
 
     const result = await resolveConfig(["config.ts"]);
 
-    expect(result.adapter).toBe("adapter");
-    expect(result.output).toEqual({
+    expect(result).not.toBeNull();
+    expect(result?.adapter).toBe("adapter");
+    expect(result?.output).toEqual({
       path: path.resolve(process.cwd(), "./generated/kineo"),
       mode: "dts",
+      envMode: "global_process",
     });
-    expect(result.migrations).toEqual({
+    expect(result?.migrations).toEqual({
       path: path.resolve(process.cwd(), "./db/migrations"),
       seed: path.resolve(process.cwd(), "./db/seed.ts"),
     });
@@ -61,12 +56,14 @@ describe("resolveConfig", () => {
 
     const result = await resolveConfig(["config.ts"]);
 
-    expect(result.output).toEqual({
+    expect(result).not.toBeNull();
+    expect(result?.output).toEqual({
       path: path.resolve(process.cwd(), "./out"),
       mode: "dts",
+      envMode: "global_process",
     });
 
-    expect(result.migrations).toEqual({
+    expect(result?.migrations).toEqual({
       path: path.resolve(process.cwd(), "./migrations"),
       seed: path.resolve(process.cwd(), "./db/seed.ts"),
     });
@@ -83,8 +80,9 @@ describe("resolveSchema", () => {
 
     const result = await resolveSchema(undefined);
 
-    expect(result.schema).toEqual({ foo: "bar" });
-    expect(result.schemaConfig).toEqual({
+    expect(result).not.toBeNull();
+    expect(result?.schema).toEqual({ foo: "bar" });
+    expect(result?.schemaConfig).toEqual({
       path: "./db/schema.ts",
       export: "all",
     });
@@ -93,9 +91,7 @@ describe("resolveSchema", () => {
   it("should throw if default schema missing", async () => {
     (jiti.import as any).mockResolvedValue(undefined);
 
-    await expect(resolveSchema(undefined)).rejects.toThrow(
-      UnresolvedConfigError,
-    );
+    expect(await resolveSchema(undefined)).toBeNull();
   });
 
   it("should resolve schema from string path", async () => {
@@ -103,8 +99,9 @@ describe("resolveSchema", () => {
 
     const result = await resolveSchema("./schema.ts");
 
-    expect(result.schema).toEqual({ foo: "bar" });
-    expect(result.schemaConfig).toEqual({
+    expect(result).not.toBeNull();
+    expect(result?.schema).toEqual({ foo: "bar" });
+    expect(result?.schemaConfig).toEqual({
       path: "./schema.ts",
       export: "all",
     });
@@ -115,8 +112,9 @@ describe("resolveSchema", () => {
 
     const result = await resolveSchema(Promise.resolve({ default: schema }));
 
-    expect(result.schema).toBe(schema);
-    expect(result.schemaConfig).toEqual({
+    expect(result).not.toBeNull();
+    expect(result?.schema).toBe(schema);
+    expect(result?.schemaConfig).toEqual({
       export: "default",
     });
   });
@@ -131,8 +129,9 @@ describe("resolveSchema", () => {
       export: "mySchema",
     });
 
-    expect(result.schema).toEqual({ foo: "bar" });
-    expect(result.schemaConfig).toEqual({
+    expect(result).not.toBeNull();
+    expect(result?.schema).toEqual({ foo: "bar" });
+    expect(result?.schemaConfig).toEqual({
       path: "./schema.ts",
       export: "mySchema",
     });
@@ -143,7 +142,8 @@ describe("resolveSchema", () => {
 
     const result = await resolveSchema(schema as any);
 
-    expect(result.schema).toBe(schema);
-    expect(result.schemaConfig).toEqual({});
+    expect(result).not.toBeNull();
+    expect(result?.schema).toBe(schema);
+    expect(result?.schemaConfig).toEqual({});
   });
 });

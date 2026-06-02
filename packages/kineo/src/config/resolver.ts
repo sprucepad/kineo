@@ -58,12 +58,14 @@ export async function resolveConfig(
   if (typeof cfg.output === "string") {
     resolvedOutput.path = path.resolve(process.cwd(), cfg.output);
     resolvedOutput.mode = "dts";
+    resolvedOutput.envMode = "global_process";
   } else {
     resolvedOutput.path = path.resolve(
       process.cwd(),
       cfg.output?.path ?? "./generated/kineo",
     );
     resolvedOutput.mode = cfg.output?.mode ?? "dts";
+    resolvedOutput.envMode = cfg.output?.envMode ?? "global_process";
   }
 
   return {
@@ -104,7 +106,7 @@ export async function resolveSchema(
         },
       };
     } else if ("path" in awaited && !(awaited.path instanceof ModelBuilder)) {
-      const path = awaited.path;
+      const path = awaited.path ?? "./db/schema.ts";
       const exportName =
         awaited.export instanceof ModelBuilder
           ? "all"
