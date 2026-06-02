@@ -54,14 +54,6 @@
       "types": "./dist/adapter/sqlite3/runtime.d.mts",
       "import": "./dist/adapter/sqlite3/runtime.mjs"
     },
-    "./adapter/libsql": {
-      "types": "./dist/adapter/libsql/index.d.mts",
-      "import": "./dist/adapter/libsql/index.mjs"
-    },
-    "./adapter/libsql/runtime": {
-      "types": "./dist/adapter/libsql/runtime.d.mts",
-      "import": "./dist/adapter/libsql/runtime.mjs"
-    },
     "./adapter/mysql2": {
       "types": "./dist/adapter/mysql2/index.d.mts",
       "import": "./dist/adapter/mysql2/index.mjs"
@@ -69,14 +61,6 @@
     "./adapter/mysql2/runtime": {
       "types": "./dist/adapter/mysql2/runtime.d.mts",
       "import": "./dist/adapter/mysql2/runtime.mjs"
-    },
-    "./adapter/mssql": {
-      "types": "./dist/adapter/mssql/index.d.mts",
-      "import": "./dist/adapter/mssql/index.mjs"
-    },
-    "./adapter/mssql/runtime": {
-      "types": "./dist/adapter/mssql/runtime.d.mts",
-      "import": "./dist/adapter/mssql/runtime.mjs"
     },
     "./emitter/sql": {
       "types": "./dist/emitter/sql/index.d.mts",

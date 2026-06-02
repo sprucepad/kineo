@@ -88,7 +88,11 @@ export interface Adapter extends RuntimeAdapter {
 export interface AdapterMeta {
   packages: string[];
   adapterPath: string;
-  adapterExport: string;
+  adapterExport?: string;
+  /**
+   * The name of the adapter, if the default export is set.
+   */
+  adapterName?: string;
   adapterOptions: string | Record<string, any>;
 }
 

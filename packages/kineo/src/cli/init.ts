@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import childProcess from "node:child_process";
-import { Command, i, theme } from "convoker";
+import { Command, i, prompt, theme } from "convoker";
 import type { AdapterMeta } from "@/adapter";
 import { jiti, resolveConfig } from "@/config";
 import { generateClient } from "./generate";
@@ -32,14 +32,73 @@ export default new Command("init")
         "The adapter to use. Can be a package name, or a built-in Kineo adapter.",
       )
       .optional(),
+    schema: i
+      .option("string", "-s", "--schema")
+      .description("Where your schema is located.")
+      .optional(),
+    migrations: i
+      .option("string", "-m", "--migrations")
+      .description("Where to generate your migrations.")
+      .optional(),
+    output: i
+      .option("string", "-o", "--output")
+      .description("Where to generate your client.")
+      .optional(),
   })
   .action(
     async ({
       packageJson = "./package.json",
       packageManager = getPackageManager(),
-      adapter = "sqlite3",
-      noInstall = false,
+      noInstall,
+
+      adapter,
+      schema,
+      migrations,
+      output,
     }) => {
+      if (!adapter) {
+        adapter = await prompt.search({
+          message: "Which adapter would you like to use?",
+          options: [
+            { label: "SQLite (better-sqlite3)", value: "sqlite3" },
+            { label: "Postgres (postgres)", value: "postgres" },
+            { label: "MySQL (mysql2)", value: "mysql2" },
+            // TODO
+            // { label: "libSQL (@libsql/client)", value: "libsql" },
+            // { label: "Microsoft SQL Server (mssql)", value: "mssql" },
+            // { label: "Dexie.js (IndexedDB, dexie)", value: "dexie" },
+          ],
+          default: "sqlite3",
+        });
+      }
+
+      if (!schema) {
+        schema = await prompt.text({
+          message: "Where is your schema located?",
+          default: "./db/schema.ts",
+        });
+      }
+
+      if (!output) {
+        output = await prompt.text({
+          message: "Where should your client be generated?",
+          default: "./generated/kineo",
+        });
+      }
+
+      if (!migrations) {
+        migrations = await prompt.text({
+          message: "Where should your migrations be stored?",
+          default: "./db/migrations",
+        });
+      }
+
+      if (!noInstall) {
+        noInstall = await prompt.confirm({
+          message: "Install dependencies?",
+        });
+      }
+
       const packages = ["kineo"];
 
       const builtInAdapters = {
@@ -47,12 +106,14 @@ export default new Command("init")
           packages: ["better-sqlite3"],
           adapterPath: "kineo/adapter/sqlite3",
           adapterExport: "default",
+          adapterName: "sqlite",
           adapterOptions: 'env("DB_URL")',
         },
         mysql2: {
           packages: ["mysql2"],
           adapterPath: "kineo/adapter/mysql2",
           adapterExport: "default",
+          adapterName: "mysql",
           adapterOptions: {
             url: 'env("DB_URL")',
             database: 'env("DB_NAME")',
@@ -62,6 +123,7 @@ export default new Command("init")
           packages: ["postgres"],
           adapterPath: "kineo/adapter/postgres",
           adapterExport: "default",
+          adapterName: "postgres",
           adapterOptions: {
             url: 'env("DB_URL")',
             database: 'env("DB_NAME")',
@@ -71,6 +133,7 @@ export default new Command("init")
           packages: ["@kineojs/adapter-libsql", "@libsql/client"],
           adapterPath: "@kineojs/adapter-libsql",
           adapterExport: "default",
+          adapterName: "libsql",
           adapterOptions: {
             url: 'env("DB_URL")',
             authToken: 'env("DB_TOKEN")',
@@ -80,6 +143,7 @@ export default new Command("init")
           packages: ["@kineojs/adapter-mssql", "mssql"],
           adapterPath: "@kineojs/adapter-mssql",
           adapterExport: "default",
+          adapterName: "mssql",
           adapterOptions: {
             url: 'env("DB_URL")',
             database: 'env("DB_NAME")',
@@ -91,6 +155,7 @@ export default new Command("init")
           packages: ["@kineojs/adapter-dexie", "dexie"],
           adapterPath: "@kineojs/adapter-dexie",
           adapterExport: "default",
+          adapterName: "dexie",
           adapterOptions: '"kineo"',
         },
       } satisfies Record<string, AdapterMeta>;
@@ -183,7 +248,12 @@ export default new Command("init")
         }
       }
 
-      const generatedConfig = await generateConfig(adapterMeta);
+      const generatedConfig = await generateConfig(
+        adapterMeta,
+        output,
+        migrations,
+        schema,
+      );
       await fs.promises.writeFile(
         path.resolve(process.cwd(), "kineo.config.mjs"),
         generatedConfig,
@@ -227,13 +297,18 @@ export default new Command("init")
 
           await generateClient();
           console.log(theme.bold(theme.green("Kineo is ready for use!")));
-        } catch {
+        } catch (e) {
+          console.error(e);
           console.log(
             theme.red(
               "Failed to generate client. After fixing any issues, run this command manually:",
             ),
           );
-          console.log(`$ ${getPackageManagerExecuteCommand("kineo")} generate`);
+          console.log(
+            theme.gray(
+              `$ ${getPackageManagerExecuteCommand("kineo").join(" ")} generate`,
+            ),
+          );
         }
       }
     },
@@ -249,9 +324,67 @@ async function installDeps([command, ...args]: [string, ...string[]]) {
   );
 }
 
-async function generateConfig(adapter: AdapterMeta) {
-  void adapter;
-  return "TODO";
+async function generateConfig(
+  meta: AdapterMeta,
+  output: string,
+  migrations: string,
+  schema: string,
+) {
+  const adapterName = meta.adapterName ?? meta.adapterExport!;
+  return `// @ts-check
+import { ${[...getKineoImports()].join(", ")} } from "kineo";
+import ${meta.adapterExport === "default" ? adapterName : `{ ${adapterName} }`} from ${JSON.stringify(meta.adapterPath)};
+
+export default defineConfig({
+  adapter: ${adapterName}(${getAdapterOptions()}),
+  output: ${JSON.stringify(output)},
+
+  migrations: ${JSON.stringify(migrations)},
+  schema: ${JSON.stringify(schema)},
+});
+`;
+
+  function getKineoImports(
+    opts = meta.adapterOptions,
+    imports = new Set(["defineConfig"]),
+  ) {
+    if (typeof opts === "string") {
+      if (opts.includes("env(")) imports.add("env");
+      else if (opts.includes("optEnv(")) imports.add("optEnv");
+      else if (opts.includes("nullEnv(")) imports.add("nullEnv");
+    } else {
+      for (const key in opts) {
+        getKineoImports(opts[key], imports);
+      }
+    }
+
+    return imports;
+  }
+
+  function getAdapterOptions(
+    opts = meta.adapterOptions,
+    indentLevel = 1,
+  ): string {
+    if (typeof opts === "string") {
+      return opts;
+    }
+
+    if (opts && typeof opts === "object") {
+      const indent = "  ".repeat(indentLevel);
+      const childIndent = "  ".repeat(indentLevel + 1);
+
+      const entries = Object.entries(opts)
+        .map(
+          ([key, value]) =>
+            `${childIndent}${key}: ${getAdapterOptions(value, indentLevel + 1)}`,
+        )
+        .join(",\n");
+
+      return `{\n${entries},\n${indent}}`;
+    }
+
+    return String(opts);
+  }
 }
 
 function getPackageManager() {

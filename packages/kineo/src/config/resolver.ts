@@ -143,11 +143,3 @@ export async function resolveSchema(
     };
   }
 }
-
-// export class UnresolvedConfigError extends Error {
-//   constructor(files: string[]) {
-//     super(
-//       `Could not resolve Kineo configuration. Files attempted: ${files.join(", ")}`,
-//     );
-//   }
-// }
