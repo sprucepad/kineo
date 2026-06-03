@@ -19,15 +19,17 @@ export interface SchemaConfig {
   export?: "all" | "default" | (string & {});
 }
 
+export type EnvMode =
+  | "import.meta"
+  | "deno.env"
+  | "global_process"
+  | "node:process"
+  | "cloudflare:workers";
+
 export interface OutputConfig {
   path?: string;
   mode?: "dts" | "ts";
-  envMode?:
-    | "import.meta"
-    | "deno.env"
-    | "global_process"
-    | "node:process"
-    | "cloudflare:workers";
+  envMode?: EnvMode;
 }
 
 export interface MigrationConfig {

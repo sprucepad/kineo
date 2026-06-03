@@ -2,6 +2,9 @@ import type { ResolvedConfig } from "@/config";
 
 let cfg: ResolvedConfig | null;
 
+export function config(throwOnNull?: true): ResolvedConfig;
+export function config(throwOnNull: false): ResolvedConfig | null;
+
 export function config(throwOnNull = true) {
   if (!cfg && throwOnNull)
     throw new Error(

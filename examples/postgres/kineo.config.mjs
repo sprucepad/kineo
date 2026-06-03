@@ -9,6 +9,6 @@ export default defineConfig({
   }),
   output: "./generated/kineo",
 
-  migrations: "./db/migrations",
-  schema: "./db/schema.ts",
+  migrations: "./src/db/migrations",
+  schema: "./src/db/schema.ts",
 });

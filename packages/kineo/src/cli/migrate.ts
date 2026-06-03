@@ -8,8 +8,6 @@ import path from "node:path";
 import crypto from "node:crypto";
 import childProcess from "node:child_process";
 
-// TODO push command, breaking change detection
-
 export default new Command("migrate")
   .description(
     "Generates and manages migrations. By default, this generates and deploys migrations.",
@@ -55,10 +53,12 @@ export default new Command("migrate")
           : `${statement.command} ${statement.description}`) + "\n";
     }
 
+    const migrationPath = path.resolve(process.cwd(), cfg.migrations.path);
+    if (fs.existsSync(migrationPath))
+      await fs.promises.mkdir(migrationPath, { recursive: true });
     await fs.promises.writeFile(
       path.resolve(
-        process.cwd(),
-        cfg.migrations.path,
+        migrationPath,
         Date.now() + (cfg.adapter.migrationExtension ?? ".txt"),
       ),
       code,
@@ -145,6 +145,8 @@ export default new Command("migrate")
         const cfg = config();
 
         const migrationsDir = path.resolve(process.cwd(), cfg.migrations.path);
+        if (!fs.existsSync(migrationsDir))
+          await fs.promises.mkdir(migrationsDir, { recursive: true });
         const files =
           migrations?.map((file) => path.resolve(migrationsDir, file)) ??
           (await fs.promises.readdir(migrationsDir));
@@ -180,6 +182,8 @@ export default new Command("migrate")
         const cfg = config();
 
         const migrationsDir = path.resolve(process.cwd(), cfg.migrations.path);
+        if (!fs.existsSync(migrationsDir))
+          await fs.promises.mkdir(migrationsDir, { recursive: true });
         const files =
           migrations?.map((file) => path.resolve(migrationsDir, file)) ??
           (await fs.promises.readdir(migrationsDir));

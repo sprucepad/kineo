@@ -26,12 +26,13 @@ export interface ParsedField {
   key: string;
   required: boolean;
   many: boolean;
-  id?: boolean;
+  id: boolean;
   validator?: StandardSchemaV1;
 }
 
 export interface ParsedRelation {
   name: string;
+  key: string;
   from: string;
   to: string;
   many: boolean;
@@ -133,6 +134,7 @@ export function parseSchema(schema: Schema): ParsedSchema {
       const name = relation.$name ?? key;
       relations.set(name, {
         name,
+        key,
         from: modelName,
         to:
           relation.$to.$name ??
@@ -226,6 +228,7 @@ export function parseSchema(schema: Schema): ParsedSchema {
           name: aFieldName,
           key: aFieldName,
           kind: aIdField.kind,
+          id: true,
           many: false,
           required: true,
         });
@@ -234,13 +237,16 @@ export function parseSchema(schema: Schema): ParsedSchema {
           name: bFieldName,
           key: bFieldName,
           kind: bIdField.kind,
+          id: true,
           many: false,
           required: true,
         });
 
         // relations
+        const aRelationName = `mn_${modelAName}_${modelB.name}`;
         relations.set(modelAName, {
-          name: `mn_${modelAName}_${modelB.name}`,
+          name: aRelationName,
+          key: aRelationName,
           from: joinName,
           to: modelAName,
           virtual: false,
@@ -249,8 +255,10 @@ export function parseSchema(schema: Schema): ParsedSchema {
           refs: [aIdField.name],
         });
 
+        const bRelationName = `mn_${modelB.name}_${modelAName}`;
         relations.set(modelB.name, {
-          name: `mn_${modelB.name}_${modelAName}`,
+          name: bRelationName,
+          key: bRelationName,
           from: joinName,
           to: modelB.name,
           virtual: false,

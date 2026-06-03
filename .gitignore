@@ -11,3 +11,6 @@ dist/
 # environment files (just to be safe)
 .env*
 !.env.example
+
+# generated files
+generated/
