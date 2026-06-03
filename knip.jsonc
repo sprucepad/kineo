@@ -13,6 +13,7 @@
     "examples/*": {
       "entry": ["src/{index,main}.ts"],
       "project": ["src/**/*.{js,jsx,ts,tsx}"],
+      "ignore": ["generated/**/*"],
     },
   },
 }

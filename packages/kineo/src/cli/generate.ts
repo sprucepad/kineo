@@ -1,9 +1,12 @@
 import fs from "node:fs";
-import { Command } from "convoker";
+import { Command, theme } from "convoker";
 import { config } from "./_config";
 import path from "node:path";
 import type { EnvMode } from "@/config";
 import { parseSchema, type Schema } from "@/schema";
+
+// TODO 1: fix type errors in generated schema typescript file
+// TODO 2: client generation
 
 export default new Command("generate")
   .description("Generates a client, used in codegen mode.")
@@ -12,6 +15,17 @@ export default new Command("generate")
 
 export async function generateClient() {
   const cfg = config();
+
+  const outputPath = path.resolve(process.cwd(), cfg.output.path);
+  if (!fs.existsSync(outputPath))
+    await fs.promises.mkdir(outputPath, { recursive: true });
+  else {
+    console.log(theme.bold("Cleaning previously generated code..."));
+    await fs.promises.rm(outputPath, { recursive: true, force: true });
+    await fs.promises.mkdir(outputPath);
+  }
+
+  console.log(theme.bold("Generating code..."));
 
   let map: Map<string, string>;
   switch (cfg.output.mode) {
@@ -27,13 +41,13 @@ export async function generateClient() {
     }
   }
 
-  const outputPath = path.resolve(process.cwd(), cfg.output.path);
-  if (!fs.existsSync(outputPath))
-    await fs.promises.mkdir(outputPath, { recursive: true });
   for (const [filename, contents] of map) {
+    console.log(theme.bold(`Writing file ${filename}...`));
     const fullPath = path.resolve(outputPath, filename);
     await fs.promises.writeFile(fullPath, contents, "utf-8");
   }
+
+  console.log(theme.bold(theme.green("Client generated!")));
 }
 
 async function generateTs(schema: Schema, envMode: EnvMode) {
@@ -53,7 +67,7 @@ export default ${serializeSchema(schema)} satisfies ParsedSchema;
 async function generateDts(schema: Schema, envMode: EnvMode) {
   const map = new Map<string, string>();
 
-  map.set("schema.js", `export default ${serializeSchema(schema)}`);
+  map.set("schema.js", `export default ${serializeSchema(schema)};`);
   map.set(
     "schema.d.ts",
     `import type { ParsedSchema } from "kineo/schema";
@@ -149,6 +163,5 @@ function serializeSchema(rawSchema: Schema) {
     )
     .join("\n")}
   ]),
-};
-`;
+}`;
 }
