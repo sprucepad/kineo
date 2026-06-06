@@ -52,7 +52,7 @@ const program = new Command("kineo")
   );
 
 import init from "./cli/init";
-import generate from "./cli/generate";
+import generate from "./cli/gen/+index";
 import migrate from "./cli/migrate";
 import push from "./cli/push";
 program.add(init, generate, migrate, push);

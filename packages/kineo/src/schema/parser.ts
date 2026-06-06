@@ -14,7 +14,7 @@ export interface ParsedSchema {
 
 export interface ParsedModel {
   name: string;
-  key: string;
+  key?: string;
   fields: Map<string, ParsedField>;
   relations: Map<string, ParsedRelation>;
   indexes: Map<string, ParsedIndex>;
@@ -282,7 +282,7 @@ export function parseSchema(schema: Schema): ParsedSchema {
 
         models.set(joinName, {
           name: joinName,
-          key: joinName,
+          // no key, as this shouldn't be generated
           fields,
           relations,
           indexes,

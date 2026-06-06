@@ -5,7 +5,7 @@ import childProcess from "node:child_process";
 import { Command, i, prompt, theme } from "convoker";
 import type { AdapterMeta } from "@/adapter";
 import { jiti, resolveConfig } from "@/config";
-import { generateTSClient } from "./generate";
+import { generateTS } from "./gen/ts";
 import { setConfig } from "./_config";
 
 export default new Command("init")
@@ -295,7 +295,7 @@ export default new Command("init")
           const config = await resolveConfig(["kineo.config.mjs"]);
           setConfig(config);
 
-          await generateTSClient();
+          await generateTS();
           console.log(theme.bold(theme.green("Kineo is ready for use!")));
         } catch (e) {
           console.error(e);

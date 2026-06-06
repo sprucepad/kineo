@@ -28,7 +28,7 @@ export type EnvMode =
 
 export interface OutputConfig {
   path?: string;
-  mode?: "dts" | "ts";
+  mode?: "dts" | "ts" | "min-dts" | "min-ts";
   envMode?: EnvMode;
 }
 
