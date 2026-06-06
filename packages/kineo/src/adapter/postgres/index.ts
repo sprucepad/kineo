@@ -14,13 +14,15 @@ import type {
   ParsedModel,
 } from "@/schema";
 
-export interface PostgresAdapter extends PostgresRuntimeAdapter, Adapter {}
+export interface PostgresAdapter
+  extends PostgresRuntimeAdapter, Adapter<PostgresOptions> {}
 
 export default function postgres(opts: PostgresOptions): PostgresAdapter {
   const runtimeAdapter = postgresRuntime(opts);
 
   return {
     ...runtimeAdapter,
+    opts: opts,
     runtimePath: "kineo/adapter/postgres/runtime",
     migrationExtension: ".sql",
 

@@ -46,7 +46,7 @@ export interface RuntimeAdapter {
 
 export type AsyncRuntimeAdapter = Promise<RuntimeAdapter>;
 
-export interface Adapter extends RuntimeAdapter {
+export interface Adapter<Opts = unknown> extends RuntimeAdapter {
   /**
    * The export path of your runtime adapter. For example, `kineo/adapter/postgres/runtime`.
    */
@@ -59,6 +59,7 @@ export interface Adapter extends RuntimeAdapter {
    * The file extension of migrations. For example, `.sql`.
    */
   migrationExtension?: string;
+  opts: Opts;
 
   /**
    * Pushes a schema to the database.
@@ -96,7 +97,7 @@ export interface AdapterMeta {
   adapterOptions: string | Record<string, any>;
 }
 
-export type AsyncAdapter = Promise<Adapter>;
+export type AsyncAdapter<Opts = unknown> = Promise<Adapter<Opts>>;
 
 export type MigrationEntry = MigrationCommand | MigrationNote;
 

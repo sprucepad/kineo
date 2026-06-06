@@ -1,167 +1,155 @@
 import fs from "node:fs";
-import { Command, theme } from "convoker";
-import { config } from "./_config";
 import path from "node:path";
-import type { EnvMode } from "@/config";
-import { parseSchema, type Schema } from "@/schema";
-
-// TODO 1: fix type errors in generated schema typescript file
-// TODO 2: client generation
+import process from "node:process";
+import { Command } from "convoker";
+import { config } from "./_config";
+import { ENV_SYMBOL, type EnvMode } from "@/config";
 
 export default new Command("generate")
   .description("Generates a client, used in codegen mode.")
   .input({})
-  .action(generateClient);
+  .action(async () => {
+    const cfg = config();
+    switch (cfg.output.mode) {
+      case "dts":
+        return await generateDTSClient();
+      case "ts":
+        return await generateTSClient();
+    }
+  });
 
-export async function generateClient() {
+export async function generateTSClient() {
   const cfg = config();
+  const dir = path.resolve(process.cwd(), cfg.output.path);
+  if (!fs.existsSync(dir)) await fs.promises.mkdir(dir, { recursive: true });
 
-  const outputPath = path.resolve(process.cwd(), cfg.output.path);
-  if (!fs.existsSync(outputPath))
-    await fs.promises.mkdir(outputPath, { recursive: true });
-  else {
-    console.log(theme.bold("Cleaning previously generated code..."));
-    await fs.promises.rm(outputPath, { recursive: true, force: true });
-    await fs.promises.mkdir(outputPath);
-  }
+  // 1. create adapter
+  const adapterPath = path.resolve(dir, "adapter.ts");
+  await fs.promises.writeFile(
+    adapterPath,
+    await createAdapter(
+      cfg.adapter.runtimePath,
+      cfg.adapter.runtimeExport ?? "default",
+      cfg.adapter.opts,
+      cfg.output.envMode,
+    ),
+  );
 
-  console.log(theme.bold("Generating code..."));
+  // 2. create parsed schemas and model instances for each model in the schema
+  // 3. copy client functions (such as direct execution, transactions etc)
+  // 4. create barrel files, exporting models, schemas and client functions
+  // 5. done!
+}
 
-  let map: Map<string, string>;
-  switch (cfg.output.mode) {
-    case "ts":
-      map = await generateTs(cfg.schema, cfg.output.envMode);
+export async function generateDTSClient() {
+  throw new Error("Not supported yet"); // TODO
+
+  // 1. create adapter
+  // 2. create parsed schemas and model instances for each model in the schema
+  // 3. copy client functions (such as direct execution, transactions etc)
+  // 4. create barrel files, exporting models, schemas and client functions
+  // 5. done!
+}
+
+async function createAdapter(
+  runtimePath: string,
+  runtimeExport: string,
+  opts: unknown,
+  envMode: EnvMode,
+) {
+  const imports = new Set([
+    `import { ${runtimeExport} as _adapter } from "${runtimePath}";`,
+  ]);
+  const builder: string[] = ["export default _adapter("];
+
+  buildEnvVars(builder, opts, envMode, imports);
+
+  builder.push(");\n");
+
+  return [...imports, "", ...builder].join("\n");
+}
+
+function buildEnvVars(
+  builder: string[],
+  opts: unknown,
+  envMode: EnvMode,
+  imports: Set<string>,
+  indentLevel = 1,
+  keyName = "",
+) {
+  const indent = "  ".repeat(indentLevel);
+  const key = keyName === "" ? indent : `${indent}${keyName}: `;
+
+  switch (typeof opts) {
+    case "string": {
+      const metadataArr = opts[ENV_SYMBOL]();
+      if (!metadataArr || metadataArr.length === 0)
+        builder.push(`${key}"${opts}",`);
+      else {
+        const meta = metadataArr.shift()!;
+        switch (envMode) {
+          case "node:process":
+            imports.add('import process from "node:process";');
+          // eslint-disable-next-line -- this is on purpose
+          case "global_process":
+            if (meta.loader === "required")
+              builder.push(`${key}process.env["${meta.key}"]!,`);
+            else if (meta.loader === "nullable")
+              builder.push(`${key}process.env["${meta.key}"] ?? null,`);
+            else if (meta.loader === "optional")
+              builder.push(`${key}process.env["${meta.key}"],`);
+            break;
+          case "deno.env":
+            if (meta.loader === "required")
+              builder.push(`${key}Deno.env.get("${meta.key}")!,`);
+            else if (meta.loader === "nullable")
+              builder.push(`${key}Deno.env.get("${meta.key}") ?? null,`);
+            else if (meta.loader === "optional")
+              builder.push(`${key}Deno.env.get("${meta.key}"),`);
+            break;
+          case "cloudflare:workers":
+            imports.add('import { env } from "cloudflare:workers";');
+
+            if (meta.loader === "required")
+              builder.push(`${key}env["${meta.key}"]!,`);
+            else if (meta.loader === "nullable")
+              builder.push(`${key}env["${meta.key}"] ?? null,`);
+            else if (meta.loader === "optional")
+              builder.push(`${key}env["${meta.key}"],`);
+            break;
+          case "import.meta":
+            if (meta.loader === "required")
+              builder.push(`${key}import.meta.env["${meta.key}"]!,`);
+            else if (meta.loader === "nullable")
+              builder.push(`${key}import.meta.env["${meta.key}"] ?? null,`);
+            else if (meta.loader === "optional")
+              builder.push(`${key}import.meta.env["${meta.key}"],`);
+        }
+      }
       break;
-    case "dts":
-      map = await generateDts(cfg.schema, cfg.output.envMode);
+    }
+    case "object": {
+      if (Array.isArray(opts)) {
+        builder.push(`${key}[`);
+        for (const value of opts) {
+          buildEnvVars(builder, value, envMode, imports, indentLevel + 1);
+        }
+        builder.push(`${indent}],`);
+      }
+
+      builder.push(`${key}{`);
+      for (const key in opts) {
+        buildEnvVars(
+          builder,
+          (opts as Record<string, unknown>)[key],
+          envMode,
+          imports,
+          indentLevel + 1,
+          key,
+        );
+      }
+      builder.push(`${indent}},`);
       break;
-    default: {
-      const exhaustive: never = cfg.output.mode;
-      return exhaustive;
     }
   }
-
-  for (const [filename, contents] of map) {
-    console.log(theme.bold(`Writing file ${filename}...`));
-    const fullPath = path.resolve(outputPath, filename);
-    await fs.promises.writeFile(fullPath, contents, "utf-8");
-  }
-
-  console.log(theme.bold(theme.green("Client generated!")));
-}
-
-async function generateTs(schema: Schema, envMode: EnvMode) {
-  const map = new Map<string, string>();
-
-  map.set(
-    "schema.ts",
-    `import type { ParsedSchema } from "kineo/schema";
-
-export default ${serializeSchema(schema)} satisfies ParsedSchema;
-`,
-  );
-
-  return map;
-}
-
-async function generateDts(schema: Schema, envMode: EnvMode) {
-  const map = new Map<string, string>();
-
-  map.set("schema.js", `export default ${serializeSchema(schema)};`);
-  map.set(
-    "schema.d.ts",
-    `import type { ParsedSchema } from "kineo/schema";
-
-declare const s: ParsedSchema;
-export default s;
-`,
-  );
-
-  return map;
-}
-
-function serializeSchema(rawSchema: Schema) {
-  const schema = parseSchema(rawSchema);
-
-  return `{
-  models: new Map([${[...schema.models]
-    .map(
-      ([modelName, model]) => `
-    [${JSON.stringify(modelName)}, {
-      name: ${JSON.stringify(model.name)},
-      key: ${JSON.stringify(model.key)},
-      fields: new Map([${[...model.fields]
-        .map(
-          ([fieldName, field]) => `
-        [${JSON.stringify(fieldName)}, {
-          name: ${JSON.stringify(field.name)},
-          key: ${JSON.stringify(field.key)},
-          id: ${JSON.stringify(field.id)},
-          kind: ${JSON.stringify(field.kind)},
-          many: ${JSON.stringify(field.many)},
-          required: ${JSON.stringify(field.required)},
-        }],`,
-        )
-        .join("\n")}
-      ]),
-      relations: new Map([${[...model.relations]
-        .map(
-          ([relationName, relation]) => `
-        [${JSON.stringify(relationName)}, {
-          name: ${JSON.stringify(relation.name)},
-          key: ${JSON.stringify(relation.key)},
-          from: ${JSON.stringify(relation.from)},
-          to: ${JSON.stringify(relation.to)},
-          ${
-            relation.fields != null
-              ? `fields: ${JSON.stringify(relation.fields)},
-`
-              : ""
-          }${
-            relation.refs != null
-              ? `refs: ${JSON.stringify(relation.refs)},
-`
-              : ""
-          }many: ${JSON.stringify(relation.many)},
-          virtual: ${JSON.stringify(relation.virtual)},
-        }],`,
-        )
-        .join("\n")}
-      ]),
-      indexes: new Map([${[...model.indexes].map(
-        ([indexName, index]) => `
-        [${JSON.stringify(indexName)}, {
-          name: ${JSON.stringify(index.name)},
-          type: ${JSON.stringify(index.type)},
-          unique: ${JSON.stringify(index.unique)},
-          fulltext: ${JSON.stringify(index.fulltext)},
-          ${index.length != null ? `length: ${JSON.stringify(index.length)},` : ""}
-          ${index.cols != null ? `cols: ${JSON.stringify(index.cols)},` : ""}
-          fields: new Map([${[...index.fields]
-            .map(
-              ([indexFieldName, indexFieldConfig]) => `
-            [${JSON.stringify(indexFieldName)}, {
-              name: ${JSON.stringify(indexFieldConfig.name)},
-              sort: ${JSON.stringify(indexFieldConfig.sort)},${
-                indexFieldConfig.ops != null
-                  ? `ops: ${JSON.stringify(indexFieldConfig.ops)},
-`
-                  : ""
-              }${
-                indexFieldConfig.length != null
-                  ? `length: ${JSON.stringify(indexFieldConfig.length)},
-`
-                  : ""
-              }}],`,
-            )
-            .join("\n")}
-          ]),
-        }]`,
-      )}
-      ]),
-    }],`,
-    )
-    .join("\n")}
-  ]),
-}`;
 }

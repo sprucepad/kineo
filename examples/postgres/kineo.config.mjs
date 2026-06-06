@@ -7,10 +7,7 @@ export default defineConfig({
     url: env("DB_URL"),
     database: env("DB_NAME"),
   }),
-  output: {
-    path: "./generated/kineo",
-    mode: "ts",
-  },
+  output: "./src/generated/kineo",
 
   migrations: "./src/db/migrations",
   schema: "./src/db/schema.ts",

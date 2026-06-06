@@ -23,7 +23,7 @@ function register(value: string | null | undefined, meta: EnvMeta) {
   metadata.set(key, arr);
 }
 
-String.prototype[ENV_SYMBOL] = () => {
+String.prototype[ENV_SYMBOL] = function () {
   return metadata.get(String(this));
 };
 

@@ -57,14 +57,14 @@ export async function resolveConfig(
   const resolvedOutput: ResolvedConfig["output"] = {} as any;
   if (typeof cfg.output === "string") {
     resolvedOutput.path = path.resolve(process.cwd(), cfg.output);
-    resolvedOutput.mode = "dts";
+    resolvedOutput.mode = "ts";
     resolvedOutput.envMode = "global_process";
   } else {
     resolvedOutput.path = path.resolve(
       process.cwd(),
       cfg.output?.path ?? "./generated/kineo",
     );
-    resolvedOutput.mode = cfg.output?.mode ?? "dts";
+    resolvedOutput.mode = cfg.output?.mode ?? "ts";
     resolvedOutput.envMode = cfg.output?.envMode ?? "global_process";
   }
 
