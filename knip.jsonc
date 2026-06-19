@@ -8,6 +8,8 @@
       "ignore": [
         // Standard Schema
         "src/schema/standard.ts",
+        // Generated code
+        "**/gen/**/*",
       ],
     },
     "examples/*": {

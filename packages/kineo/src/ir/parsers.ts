@@ -384,7 +384,7 @@ export function parseFindStatement(
     limit: opts?.take,
     offset: opts?.skip,
     distinct: opts?.distinct
-      ? (opts.distinct as string[]).map((column) =>
+      ? (opts?.distinct as string[]).map((column) =>
           parseColumnReference(column),
         )
       : undefined,
@@ -393,9 +393,9 @@ export function parseFindStatement(
 
 export function parseInsertStatement(
   table: string,
-  opts: CreateOpts<any, any, any, any, any>,
+  opts?: CreateOpts<any, any, any, any, any>,
 ): IR.InsertStatement {
-  const rows = Array.isArray(opts.data) ? opts.data : [opts.data];
+  const rows = Array.isArray(opts?.data) ? opts?.data : [opts?.data];
   const columns = Array.from(
     new Set(rows.flatMap((row) => Object.keys(row as Record<string, unknown>))),
   );
@@ -409,46 +409,48 @@ export function parseInsertStatement(
         expression((row as Record<string, unknown>)[column]),
       ),
     ),
-    returning: opts.select
-      ? parseSelect(opts.select as Record<string, true>)
+    returning: opts?.select
+      ? parseSelect(opts?.select as Record<string, true>)
       : undefined,
   };
 }
 
 export function parseUpdateStatement(
   table: string,
-  opts: UpdateOpts<any, any, any, any, any>,
+  opts?: UpdateOpts<any, any, any, any, any>,
 ): IR.UpdateStatement {
   return {
     type: "update",
     table: makeTable(table),
-    set: parseUpdateData(opts.data as Record<string, unknown>),
-    where: parseWhere(opts.where),
-    returning: opts.select
-      ? parseSelect(opts.select as Record<string, true>)
+    set: parseUpdateData(opts?.data as Record<string, unknown>),
+    where: parseWhere(opts?.where),
+    returning: opts?.select
+      ? parseSelect(opts?.select as Record<string, true>)
       : undefined,
   };
 }
 
 export function parseDeleteStatement(
   table: string,
-  opts: DeleteOpts<any, any, any, any, any>,
+  opts?: DeleteOpts<any, any, any, any, any>,
 ): IR.DeleteStatement {
   return {
     type: "delete",
     from: makeTable(table),
-    where: parseWhere(opts.where),
-    returning: opts.select
-      ? parseSelect(opts.select as Record<string, true>)
+    where: parseWhere(opts?.where),
+    returning: opts?.select
+      ? parseSelect(opts?.select as Record<string, true>)
       : undefined,
   };
 }
 
 export function parseUpsertStatement(
   table: string,
-  opts: UpsertOpts<any, any, any, any, any>,
+  opts?: UpsertOpts<any, any, any, any, any>,
 ): IR.InsertStatement {
-  const createRows = Array.isArray(opts.create) ? opts.create : [opts.create];
+  const createRows = Array.isArray(opts?.create)
+    ? opts?.create
+    : [opts?.create];
   const columns = Array.from(
     new Set(
       createRows.flatMap((row) => Object.keys(row as Record<string, unknown>)),
@@ -464,15 +466,15 @@ export function parseUpsertStatement(
         expression((row as Record<string, unknown>)[column]),
       ),
     ),
-    returning: opts.select
-      ? parseSelect(opts.select as Record<string, true>)
+    returning: opts?.select
+      ? parseSelect(opts?.select as Record<string, true>)
       : undefined,
     onConflict: {
-      target: inferConflictTarget(opts.where),
-      where: parseWhere(opts.where),
+      target: inferConflictTarget(opts?.where),
+      where: parseWhere(opts?.where),
       action: {
         type: "doUpdate",
-        set: parseUpdateData(opts.update as Record<string, unknown>),
+        set: parseUpdateData(opts?.update as Record<string, unknown>),
       },
     },
   };
@@ -504,11 +506,11 @@ export function parseCountStatement(
 }
 
 const parseAggregateSelect = (
-  opts: AggregateOpts<any, any, any, any>,
+  opts?: AggregateOpts<any, any, any, any>,
 ): IR.SelectItem[] => {
   const select: IR.SelectItem[] = [];
 
-  if (opts.by) {
+  if (opts?.by) {
     select.push(
       ...opts.by.map((column) =>
         makeExpressionSelect(
@@ -519,7 +521,7 @@ const parseAggregateSelect = (
     );
   }
 
-  if (opts._count) {
+  if (opts?._count) {
     if (opts._count === true) {
       select.push(
         makeExpressionSelect(
@@ -533,7 +535,7 @@ const parseAggregateSelect = (
       );
     } else if (opts._count.select) {
       select.push(
-        ...Object.keys(opts._count.select).map((column) =>
+        ...Object.keys(opts?._count.select).map((column) =>
           makeExpressionSelect(
             {
               type: "function",
@@ -550,7 +552,7 @@ const parseAggregateSelect = (
   const aggregateGroup = ["_min", "_max", "_avg", "_sum"] as const;
 
   for (const key of aggregateGroup) {
-    const property = opts[key];
+    const property = opts?.[key];
     if (!property?.select) continue;
     select.push(
       ...Object.keys(property.select).map((column) =>
@@ -571,19 +573,19 @@ const parseAggregateSelect = (
 
 export function parseAggregateStatement(
   table: string,
-  opts: AggregateOpts<any, any, any, any>,
+  opts?: AggregateOpts<any, any, any, any>,
 ): IR.QueryStatement {
   return {
     type: "query",
     select: parseAggregateSelect(opts),
     from: [makeTable(table)],
-    where: parseWhere(opts.where),
-    groupBy: opts.by
+    where: parseWhere(opts?.where),
+    groupBy: opts?.by
       ? opts.by.map((column) => parseColumnReference(String(column)))
       : undefined,
-    orderBy: parseOrderBy(opts.orderBy),
-    limit: opts.take,
-    offset: opts.skip,
+    orderBy: parseOrderBy(opts?.orderBy),
+    limit: opts?.take,
+    offset: opts?.skip,
   };
 }
 
@@ -669,18 +671,18 @@ const parseGroupByHaving = (
 
 export function parseGroupByStatement(
   table: string,
-  opts: GroupByOpts<any, any, any, any>,
+  opts?: GroupByOpts<any, any, any, any>,
 ): IR.QueryStatement {
   const select: IR.SelectItem[] = [
-    ...opts.by.map((column) =>
+    ...(opts?.by.map((column) =>
       makeExpressionSelect(
         parseColumnReference(String(column)),
         String(column),
       ),
-    ),
+    ) ?? []),
   ];
 
-  if (opts.having) {
+  if (opts?.having) {
     select.push(
       makeExpressionSelect(
         {
@@ -697,11 +699,11 @@ export function parseGroupByStatement(
     type: "query",
     select,
     from: [makeTable(table)],
-    where: parseWhere(opts.where),
-    groupBy: opts.by.map((column) => parseColumnReference(String(column))),
-    having: parseGroupByHaving(opts.having),
-    orderBy: parseOrderBy(opts.orderBy),
-    limit: opts.take,
-    offset: opts.skip,
+    where: parseWhere(opts?.where),
+    groupBy: opts?.by.map((column) => parseColumnReference(String(column))),
+    having: parseGroupByHaving(opts?.having),
+    orderBy: parseOrderBy(opts?.orderBy),
+    limit: opts?.take,
+    offset: opts?.skip,
   };
 }

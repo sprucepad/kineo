@@ -7,6 +7,8 @@ import type { Adapter } from "@/adapter";
 import { ENV_SYMBOL, type EnvMode } from "@/config";
 import { parseSchema, type ParsedModel } from "@/schema";
 
+// TODO inspect tsconfig for file extensions in exports
+
 export async function generateTS() {
   const cfg = config();
   const files = new Map<string, string>();
@@ -15,26 +17,24 @@ export async function generateTS() {
   const schema = parseSchema(cfg.schema);
   for (const [key, model] of schema.models) {
     if (model.key == null) continue;
-    files.set(`models/${key}`, serializeModel(model));
+    files.set(`models/${key}.ts`, serializeModel(model));
   }
 
   // 2. create adapter
   files.set("adapter.ts", generateAdapter(cfg.adapter, cfg.output.envMode));
 
-  // 3. copy client functions (such as direct execution, transactions etc)
+  // 3. create client
   const functionsURL = new URL("./ts/functions.ts", import.meta.url);
-  files.set("functions.ts", await fs.promises.readFile(functionsURL, "utf-8"));
-
-  // 4. create client
+  const functions = await fs.promises.readFile(functionsURL, "utf-8");
   files.set(
     "client.ts",
-    `export * from "./functions.js";\n${Object.keys(cfg.schema)
+    `${functions}\n${Object.keys(cfg.schema)
       .map((key) => `export { default as ${key} } from "./models/${key}.js";`)
       .join("\n")}\n`,
   );
   files.set("index.ts", `export * as db from "./client.js";\n`);
 
-  // 5. write files
+  // 4. write files
   for (const [file, contents] of files) {
     process.stdout.write(theme.bold(`Writing file ${file}...`));
     const fullPath = path.resolve(process.cwd(), cfg.output.path, file);
@@ -142,5 +142,6 @@ function getEnv(key: string, imports: Set<string>, mode: EnvMode) {
 }
 
 function serializeModel(model: ParsedModel) {
-  return ""; // TODO
+  void model; // TODO
+  return "";
 }
