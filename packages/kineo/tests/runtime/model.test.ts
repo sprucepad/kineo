@@ -448,14 +448,14 @@ describe("Model", () => {
 
   describe("delete", () => {
     it("should delete a single record", async () => {
-      const result = await model.delete({
+      const result = await model.deleteFirst({
         where: { id: 1 },
       });
       expect(result).toBeDefined();
     });
 
     it("should delete with select", async () => {
-      const result = await model.delete({
+      const result = await model.deleteFirst({
         where: { email: "user@example.com" },
         select: { id: true, name: true },
       });
@@ -463,7 +463,7 @@ describe("Model", () => {
     });
 
     it("should delete with complex where", async () => {
-      const result = await model.delete({
+      const result = await model.deleteFirst({
         where: {
           OR: [{ age: { lt: 18 } }, { name: { equals: "DeleteMe" } }],
         },

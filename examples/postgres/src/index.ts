@@ -1,4 +1,4 @@
-import db from "./db/client.js";
+import { db } from "#kineo/index.js";
 
 export async function queryExample() {
   return await db.user.findMany({

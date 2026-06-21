@@ -1,11 +1,15 @@
-import type { AsyncRuntimeAdapter, RuntimeAdapter } from "@/adapter";
+import type {
+  AsyncRuntimeAdapter,
+  EmitResult,
+  ExecResult,
+  RuntimeAdapter,
+} from "@/adapter";
 import type {
   InferProps,
   InferRelations,
   ModelBuilder,
   ModelRelationsFn,
   ParsedModel,
-  ParsedSchema,
 } from "@/schema";
 import type {
   AggregateOpts,
@@ -60,155 +64,183 @@ export class Model<
   R = InferRelations<BuilderRelations<Builder>>,
   RO = InferRelations<BuilderRelations<Builder>, true>,
 > {
+  public find: <O extends FindOpts<I, IO, R, RO>>(
+    opts?: O,
+  ) => Promise<FindReturn<I, IO, R, RO, O>>;
+  public findMany: <O extends FindOpts<I, IO, R, RO>>(
+    opts?: O,
+  ) => Promise<FindReturn<I, IO, R, RO, O, true>>;
+  public create: <O extends CreateOpts<I, IO, R, RO>>(
+    opts?: O,
+  ) => Promise<CreateReturn<I, IO, R, RO, O>>;
+  public createMany: <O extends CreateOpts<I, IO, R, RO, true>>(
+    opts?: O,
+  ) => Promise<CreateReturn<I, IO, R, RO, O, true>>;
+  public createReturn: <O extends CreateReturnOpts<I, IO, R, RO>>(
+    opts?: O,
+  ) => Promise<CreateReturnReturn<I, IO, R, RO, O>>;
+  public createManyReturn: <O extends CreateReturnOpts<I, IO, R, RO>>(
+    opts?: O,
+  ) => Promise<CreateReturnReturn<I, IO, R, RO, O, true>>;
+  public update: <O extends UpdateOpts<I, IO, R, RO>>(
+    opts?: O,
+  ) => Promise<UpdateReturn<I, IO, R, RO, O>>;
+  public updateMany: <O extends UpdateOpts<I, IO, R, RO, true>>(
+    opts?: O,
+  ) => Promise<UpdateReturn<I, IO, R, RO, O, true>>;
+  public updateReturn: <O extends UpdateReturnOpts<I, IO, R, RO>>(
+    opts?: O,
+  ) => Promise<UpdateReturnReturn<I, IO, R, RO, O>>;
+  public updateManyReturn: <O extends UpdateReturnOpts<I, IO, R, RO>>(
+    opts?: O,
+  ) => Promise<UpdateReturnReturn<I, IO, R, RO, O, true>>;
+  public upsert: <O extends UpsertOpts<I, IO, R, RO>>(
+    opts?: O,
+  ) => Promise<UpsertReturn<I, IO, R, RO, O>>;
+  public upsertMany: <O extends UpsertOpts<I, IO, R, RO, true>>(
+    opts?: O,
+  ) => Promise<UpsertReturn<I, IO, R, RO, O, true>>;
+  public delete: <O extends DeleteOpts<I, IO, R, RO>>(
+    opts?: O,
+  ) => Promise<DeleteReturn<I, IO, R, RO, O>>;
+  public deleteMany: <O extends DeleteOpts<I, IO, R, RO>>(
+    opts?: O,
+  ) => Promise<DeleteReturn<I, IO, R, RO, O, true>>;
+  public count: <O extends CountOpts<I, IO, R, RO>>(
+    opts?: O,
+  ) => Promise<CountReturn>;
+  public aggregate: <O extends AggregateOpts<I, IO, R, RO>>(
+    opts?: O,
+  ) => Promise<AggregateReturn<I, IO, R, RO, O>>;
+  public groupBy: <O extends GroupByOpts<I, IO, R, RO>>(
+    opts?: O,
+  ) => Promise<GroupByReturn<I, IO, R, RO, O>>;
+
   constructor(
-    public $schema: ParsedSchema,
     public $shape: ParsedModel,
-    public $name: string,
     public $adapter: RuntimeAdapter | AsyncRuntimeAdapter,
-  ) {}
-
-  public async find<O extends FindOpts<I, IO, R, RO>>(
-    opts?: O,
-  ): Promise<FindReturn<I, IO, R, RO, O>> {
-    const ir = parseFindStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows?.[0] as any) ?? null;
-  }
-
-  public async findMany<O extends FindOpts<I, IO, R, RO>>(
-    opts?: O,
-  ): Promise<FindReturn<I, IO, R, RO, O, true>> {
-    const ir = parseFindStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows as any) ?? [];
-  }
-
-  public async create<O extends CreateOpts<I, IO, R, RO>>(
-    opts?: O,
-  ): Promise<CreateReturn<I, IO, R, RO, O>> {
-    const ir = parseInsertStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows?.[0] as any) ?? null;
-  }
-
-  public async createMany<O extends CreateOpts<I, IO, R, RO, true>>(
-    opts?: O,
-  ): Promise<CreateReturn<I, IO, R, RO, O, true>> {
-    const ir = parseInsertStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows as any) ?? [];
-  }
-
-  public async createReturn<O extends CreateReturnOpts<I, IO, R, RO>>(
-    opts?: O,
-  ): Promise<CreateReturnReturn<I, IO, R, RO, O>> {
-    const ir = parseInsertStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows?.[0] as any) ?? null;
-  }
-
-  public async createManyReturn<O extends CreateReturnOpts<I, IO, R, RO>>(
-    opts?: O,
-  ): Promise<CreateReturnReturn<I, IO, R, RO, O, true>> {
-    const ir = parseInsertStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows as any) ?? [];
-  }
-
-  public async update<O extends UpdateOpts<I, IO, R, RO>>(
-    opts?: O,
-  ): Promise<UpdateReturn<I, IO, R, RO, O>> {
-    const ir = parseUpdateStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows?.[0] as any) ?? null;
-  }
-
-  public async updateMany<O extends UpdateOpts<I, IO, R, RO, true>>(
-    opts?: O,
-  ): Promise<UpdateReturn<I, IO, R, RO, O, true>> {
-    const ir = parseUpdateStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows as any) ?? [];
-  }
-
-  public async updateReturn<O extends UpdateReturnOpts<I, IO, R, RO>>(
-    opts?: O,
-  ): Promise<UpdateReturnReturn<I, IO, R, RO, O>> {
-    const ir = parseUpdateStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows?.[0] as any) ?? null;
-  }
-
-  public async updateManyReturn<O extends UpdateReturnOpts<I, IO, R, RO>>(
-    opts?: O,
-  ): Promise<UpdateReturnReturn<I, IO, R, RO, O, true>> {
-    const ir = parseUpdateStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows as any) ?? [];
-  }
-
-  public async upsert<O extends UpsertOpts<I, IO, R, RO>>(
-    opts?: O,
-  ): Promise<UpsertReturn<I, IO, R, RO, O>> {
-    const ir = parseUpsertStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows?.[0] as any) ?? null;
-  }
-
-  public async upsertMany<O extends UpsertOpts<I, IO, R, RO, true>>(
-    opts?: O,
-  ): Promise<UpsertReturn<I, IO, R, RO, O, true>> {
-    const ir = parseUpsertStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows as any) ?? [];
-  }
-
-  public async delete<O extends DeleteOpts<I, IO, R, RO>>(
-    opts?: O,
-  ): Promise<DeleteReturn<I, IO, R, RO, O>> {
-    const ir = parseDeleteStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows?.[0] as any) ?? null;
-  }
-
-  public async deleteMany<O extends DeleteOpts<I, IO, R, RO>>(
-    opts?: O,
-  ): Promise<DeleteReturn<I, IO, R, RO, O, true>> {
-    const ir = parseDeleteStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows as any) ?? [];
-  }
-
-  public async count<O extends CountOpts<I, IO, R, RO>>(
-    opts?: O,
-  ): Promise<CountReturn> {
-    const ir = parseCountStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return result.rowCount ?? 0;
-  }
-
-  public async aggregate<O extends AggregateOpts<I, IO, R, RO>>(
-    opts?: O,
-  ): Promise<AggregateReturn<I, IO, R, RO, O>> {
-    const ir = parseAggregateStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows?.[0] as any) ?? null;
-  }
-
-  public async groupBy<O extends GroupByOpts<I, IO, R, RO>>(
-    opts?: O,
-  ): Promise<GroupByReturn<I, IO, R, RO, O>> {
-    const ir = parseGroupByStatement(this.$name, opts);
-    const result = await exec(this.$adapter, ir);
-    return (result.rows as any) ?? [];
+  ) {
+    this.find = createOperation(
+      $adapter,
+      $shape.name,
+      parseFindStatement,
+      "row",
+    );
+    this.findMany = createOperation(
+      $adapter,
+      $shape.name,
+      parseFindStatement,
+      "rows",
+    );
+    this.create = createOperation(
+      $adapter,
+      $shape.name,
+      parseInsertStatement,
+      "row",
+    );
+    this.createMany = createOperation(
+      $adapter,
+      $shape.name,
+      parseInsertStatement,
+      "rows",
+    );
+    this.createReturn = createOperation(
+      $adapter,
+      $shape.name,
+      parseInsertStatement,
+      "row",
+    );
+    this.createManyReturn = createOperation(
+      $adapter,
+      $shape.name,
+      parseInsertStatement,
+      "rows",
+    );
+    this.update = createOperation(
+      $adapter,
+      $shape.name,
+      parseUpdateStatement,
+      "row",
+    );
+    this.updateMany = createOperation(
+      $adapter,
+      $shape.name,
+      parseUpdateStatement,
+      "rows",
+    );
+    this.updateReturn = createOperation(
+      $adapter,
+      $shape.name,
+      parseUpdateStatement,
+      "row",
+    );
+    this.updateManyReturn = createOperation(
+      $adapter,
+      $shape.name,
+      parseUpdateStatement,
+      "rows",
+    );
+    this.upsert = createOperation(
+      $adapter,
+      $shape.name,
+      parseUpsertStatement,
+      "row",
+    );
+    this.upsertMany = createOperation(
+      $adapter,
+      $shape.name,
+      parseUpsertStatement,
+      "rows",
+    );
+    this.delete = createOperation(
+      $adapter,
+      $shape.name,
+      parseDeleteStatement,
+      "row",
+    );
+    this.deleteMany = createOperation(
+      $adapter,
+      $shape.name,
+      parseDeleteStatement,
+      "rows",
+    );
+    this.count = createOperation(
+      $adapter,
+      $shape.name,
+      parseCountStatement,
+      "rowCount",
+    );
+    this.aggregate = createOperation(
+      $adapter,
+      $shape.name,
+      parseAggregateStatement,
+      "row",
+    );
+    this.groupBy = createOperation(
+      $adapter,
+      $shape.name,
+      parseGroupByStatement,
+      "rows",
+    );
   }
 }
 
-export async function exec(
+export function createOperation(
   $adapter: RuntimeAdapter | AsyncRuntimeAdapter,
-  ir: Statement,
-) {
-  const adapter = await $adapter;
-  const emitResult = await adapter.emit([ir]);
-  return await adapter.exec(emitResult);
+  name: string,
+  op: (name: string, opts?: any) => Statement,
+  fetch: "row" | "rows" | keyof ExecResult,
+): (opts?: any) => Promise<any> {
+  return async (opts) => {
+    const ir = op(name, opts);
+    const adapter = await $adapter;
+    const emitResult = await adapter.emit([ir]);
+    const result = await adapter.exec(emitResult);
+
+    return fetch === "rows"
+      ? ((result.rows as any[]) ?? [])
+      : fetch === "row"
+        ? ((result.rows?.[0] as any) ?? null)
+        : (result[fetch] as any);
+  };
 }

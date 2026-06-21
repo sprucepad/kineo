@@ -5,7 +5,7 @@ import { config } from "../_config";
 import { theme } from "convoker";
 import type { Adapter } from "@/adapter";
 import { ENV_SYMBOL, type EnvMode } from "@/config";
-import { parseSchema, type ParsedModel } from "@/schema";
+import { parseSchema, type ParsedModel, type ParsedSchema } from "@/schema";
 
 // TODO inspect tsconfig for file extensions in exports
 
@@ -14,23 +14,38 @@ export async function generateTS() {
   const files = new Map<string, string>();
 
   // 1. create parsed schemas and model instances for each model in the schema
+  const modelURL = new URL("./ts/model.ts", import.meta.url);
+  const modelContent = await fs.promises.readFile(modelURL, "utf-8");
   const schema = parseSchema(cfg.schema);
+
   for (const [key, model] of schema.models) {
     if (model.key == null) continue;
-    files.set(`models/${key}.ts`, serializeModel(model));
+    files.set(
+      `models/${key}.ts`,
+      render(modelContent, {
+        name: key,
+        shape: generateSchema(model),
+        i: inferProps(model),
+        io: inferProps(model, true),
+        r: inferRelations(schema, model),
+        ro: inferRelations(schema, model, true),
+      }),
+    );
   }
 
   // 2. create adapter
   files.set("adapter.ts", generateAdapter(cfg.adapter, cfg.output.envMode));
 
   // 3. create client
-  const functionsURL = new URL("./ts/functions.ts", import.meta.url);
-  const functions = await fs.promises.readFile(functionsURL, "utf-8");
+  const clientURL = new URL("./ts/client.ts", import.meta.url);
+  const clientContent = await fs.promises.readFile(clientURL, "utf-8");
   files.set(
     "client.ts",
-    `${functions}\n${Object.keys(cfg.schema)
-      .map((key) => `export { default as ${key} } from "./models/${key}.js";`)
-      .join("\n")}\n`,
+    render(clientContent, {
+      models: Object.keys(cfg.schema)
+        .map((key) => `export * as ${key} from "./models/${key}.js"`)
+        .join(";\n"),
+    }),
   );
   files.set("index.ts", `export * as db from "./client.js";\n`);
 
@@ -141,7 +156,35 @@ function getEnv(key: string, imports: Set<string>, mode: EnvMode) {
   }
 }
 
-function serializeModel(model: ParsedModel) {
-  void model; // TODO
-  return "";
+function render(file: string, opts: Record<string, any>) {
+  let result = file;
+  for (const key in opts) {
+    result = result.replace(`\`{{${key}}}\``, opts[key]);
+  }
+  return result.replace(
+    /\/\/\s*@ts-expect-error\s+\{\{REMOVE_ON_GENERATE\}\}\n/g,
+    "",
+  );
+}
+
+function generateSchema(model: ParsedModel) {
+  void model;
+  return '"TODO"'; // TODO
+}
+
+function inferProps(model: ParsedModel, defaultMeansOptional: boolean = false) {
+  void model;
+  void defaultMeansOptional;
+  return '"TODO"'; // TODO
+}
+
+function inferRelations(
+  schema: ParsedSchema,
+  model: ParsedModel,
+  defaultMeansOptional: boolean = false,
+) {
+  void schema;
+  void model;
+  void defaultMeansOptional;
+  return '"TODO"'; // TODO
 }
