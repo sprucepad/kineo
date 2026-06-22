@@ -94,8 +94,8 @@ describe("Model", () => {
   beforeEach(() => {
     adapter = new MockAdapter();
     schema = parseSchema({ user });
-    shape = schema.models.get("user")!;
-    model = new Model(schema, shape, "User", adapter);
+    shape = schema.models.get("User")!;
+    model = new Model(shape, adapter);
   });
 
   describe("find", () => {
@@ -448,14 +448,14 @@ describe("Model", () => {
 
   describe("delete", () => {
     it("should delete a single record", async () => {
-      const result = await model.deleteFirst({
+      const result = await model.delete({
         where: { id: 1 },
       });
       expect(result).toBeDefined();
     });
 
     it("should delete with select", async () => {
-      const result = await model.deleteFirst({
+      const result = await model.delete({
         where: { email: "user@example.com" },
         select: { id: true, name: true },
       });
@@ -463,7 +463,7 @@ describe("Model", () => {
     });
 
     it("should delete with complex where", async () => {
-      const result = await model.deleteFirst({
+      const result = await model.delete({
         where: {
           OR: [{ age: { lt: 18 } }, { name: { equals: "DeleteMe" } }],
         },
@@ -649,20 +649,6 @@ describe("Model", () => {
         having: { age: { gte: 18, lt: 65 } },
       });
       expect(Array.isArray(results)).toBe(true);
-    });
-  });
-
-  describe("Model constructor", () => {
-    it("should initialize with schema, shape, name, and adapter", () => {
-      expect(model.$schema).toBe(schema);
-      expect(model.$shape).toBe(shape);
-      expect(model.$name).toBe("User");
-      expect(model.$adapter).toBe(adapter);
-    });
-
-    it("should be instantiable with different names", () => {
-      const postModel = new Model(schema, shape, "Post", adapter);
-      expect(postModel.$name).toBe("Post");
     });
   });
 });

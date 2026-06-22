@@ -77,16 +77,13 @@ type PostRelsOpt = InferRelations<BuilderRelations<typeof Post>, true>;
 
 describe("Type Tests - Model Inference", () => {
   it("infers correct model types", () => {
-    expectTypeOf<(typeof client.User)["$name"]>().toBeString();
-    expectTypeOf<(typeof client.User)["$schema"]>().toBeObject();
+    expectTypeOf<(typeof client.User)["$shape"]>().toBeObject();
     expectTypeOf<(typeof client.User)["$adapter"]>().toBeObject();
 
-    expectTypeOf<(typeof client.Post)["$name"]>().toBeString();
-    expectTypeOf<(typeof client.Post)["$schema"]>().toBeObject();
+    expectTypeOf<(typeof client.Post)["$shape"]>().toBeObject();
     expectTypeOf<(typeof client.Post)["$adapter"]>().toBeObject();
 
-    expectTypeOf<(typeof client.Comment)["$name"]>().toBeString();
-    expectTypeOf<(typeof client.Comment)["$schema"]>().toBeObject();
+    expectTypeOf<(typeof client.Comment)["$shape"]>().toBeObject();
     expectTypeOf<(typeof client.Comment)["$adapter"]>().toBeObject();
   });
 });

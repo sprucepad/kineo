@@ -60,6 +60,7 @@ describe("sql migration emitter", () => {
                     kind: "string",
                     required: true,
                     many: false,
+                    id: false,
                   },
                 ],
               ]),
@@ -124,6 +125,7 @@ describe("sql migration emitter", () => {
               key: "age",
               name: "age",
               kind: "int",
+              id: false,
               required: false,
               many: false,
             },
@@ -246,6 +248,7 @@ describe("sql migration emitter", () => {
             model: "posts",
             relation: {
               name: "user",
+              key: "user",
               from: "userId",
               to: "users",
               fields: ["userId"],

@@ -36,7 +36,7 @@ describe("resolveConfig", () => {
     expect(result?.adapter).toBe("adapter");
     expect(result?.output).toEqual({
       path: path.resolve(process.cwd(), "./generated/kineo"),
-      mode: "dts",
+      mode: "ts",
       envMode: "global_process",
     });
     expect(result?.migrations).toEqual({
@@ -59,7 +59,7 @@ describe("resolveConfig", () => {
     expect(result).not.toBeNull();
     expect(result?.output).toEqual({
       path: path.resolve(process.cwd(), "./out"),
-      mode: "dts",
+      mode: "ts",
       envMode: "global_process",
     });
 

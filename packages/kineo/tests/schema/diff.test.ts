@@ -37,7 +37,7 @@ function field(partial: Partial<ParsedField> & { name: string }): ParsedField {
     kind: partial.kind ?? "string",
     required: partial.required ?? false,
     many: partial.many ?? false,
-    id: partial.id,
+    id: partial.id ?? false,
     validator: partial.validator,
   };
 }
@@ -50,6 +50,7 @@ function relation(
     name,
     {
       name,
+      key: name,
       from: rel.from!,
       to: rel.to!,
       many: rel.many ?? false,

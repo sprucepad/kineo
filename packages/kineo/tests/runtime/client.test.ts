@@ -112,9 +112,8 @@ describe("kineo client", () => {
     const adapter = new MockAdapter();
     const client = kineo(adapter, schema);
 
-    expect(client.User.$name).toBe("User");
-    expect(client.Post.$name).toBe("Post");
-    expect(client.User.$schema).toBeDefined();
+    expect(client.User.$shape.name).toBe("User");
+    expect(client.Post.$shape.name).toBe("Post");
     expect(client.User.$adapter).toBe(adapter);
   });
 });
