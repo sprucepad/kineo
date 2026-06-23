@@ -30,7 +30,7 @@ export const find: <O extends ModelTypes.FindOpts<I, IO, R, RO>>(
   opts?: O,
 ) => Promise<ModelTypes.FindReturn<I, IO, R, RO, O>> = createOperation(
   $adapter,
-  $shape.name,
+  $shape,
   parseFindStatement,
   "row",
 );
@@ -39,7 +39,7 @@ export const findMany: <O extends ModelTypes.FindOpts<I, IO, R, RO>>(
   opts?: O,
 ) => Promise<ModelTypes.FindReturn<I, IO, R, RO, O, true>> = createOperation(
   $adapter,
-  $shape.name,
+  $shape,
   parseFindStatement,
   "rows",
 );
@@ -48,7 +48,7 @@ export const create: <O extends ModelTypes.CreateOpts<I, IO, R, RO>>(
   opts?: O,
 ) => Promise<ModelTypes.CreateReturn<I, IO, R, RO, O>> = createOperation(
   $adapter,
-  $shape.name,
+  $shape,
   parseInsertStatement,
   "row",
 );
@@ -57,7 +57,7 @@ export const createMany: <O extends ModelTypes.CreateOpts<I, IO, R, RO, true>>(
   opts?: O,
 ) => Promise<ModelTypes.CreateReturn<I, IO, R, RO, O, true>> = createOperation(
   $adapter,
-  $shape.name,
+  $shape,
   parseInsertStatement,
   "rows",
 );
@@ -68,7 +68,7 @@ export const createReturn: <
   opts?: O,
 ) => Promise<ModelTypes.CreateReturnReturn<I, IO, R, RO, O>> = createOperation(
   $adapter,
-  $shape.name,
+  $shape,
   parseInsertStatement,
   "row",
 );
@@ -78,13 +78,13 @@ export const createManyReturn: <
 >(
   opts?: O,
 ) => Promise<ModelTypes.CreateReturnReturn<I, IO, R, RO, O, true>> =
-  createOperation($adapter, $shape.name, parseInsertStatement, "rows");
+  createOperation($adapter, $shape, parseInsertStatement, "rows");
 
 export const update: <O extends ModelTypes.UpdateOpts<I, IO, R, RO>>(
   opts?: O,
 ) => Promise<ModelTypes.UpdateReturn<I, IO, R, RO, O>> = createOperation(
   $adapter,
-  $shape.name,
+  $shape,
   parseUpdateStatement,
   "row",
 );
@@ -93,7 +93,7 @@ export const updateMany: <O extends ModelTypes.UpdateOpts<I, IO, R, RO, true>>(
   opts?: O,
 ) => Promise<ModelTypes.UpdateReturn<I, IO, R, RO, O, true>> = createOperation(
   $adapter,
-  $shape.name,
+  $shape,
   parseUpdateStatement,
   "rows",
 );
@@ -104,7 +104,7 @@ export const updateReturn: <
   opts?: O,
 ) => Promise<ModelTypes.UpdateReturnReturn<I, IO, R, RO, O>> = createOperation(
   $adapter,
-  $shape.name,
+  $shape,
   parseUpdateStatement,
   "row",
 );
@@ -114,13 +114,13 @@ export const updateManyReturn: <
 >(
   opts?: O,
 ) => Promise<ModelTypes.UpdateReturnReturn<I, IO, R, RO, O, true>> =
-  createOperation($adapter, $shape.name, parseUpdateStatement, "rows");
+  createOperation($adapter, $shape, parseUpdateStatement, "rows");
 
 export const upsert: <O extends ModelTypes.UpsertOpts<I, IO, R, RO>>(
   opts?: O,
 ) => Promise<ModelTypes.UpsertReturn<I, IO, R, RO, O>> = createOperation(
   $adapter,
-  $shape.name,
+  $shape,
   parseUpsertStatement,
   "row",
 );
@@ -129,7 +129,7 @@ export const upsertMany: <O extends ModelTypes.UpsertOpts<I, IO, R, RO, true>>(
   opts?: O,
 ) => Promise<ModelTypes.UpsertReturn<I, IO, R, RO, O, true>> = createOperation(
   $adapter,
-  $shape.name,
+  $shape,
   parseUpsertStatement,
   "rows",
 );
@@ -138,7 +138,7 @@ const _delete: <O extends ModelTypes.DeleteOpts<I, IO, R, RO>>(
   opts?: O,
 ) => Promise<ModelTypes.DeleteReturn<I, IO, R, RO, O>> = createOperation(
   $adapter,
-  $shape.name,
+  $shape,
   parseDeleteStatement,
   "row",
 );
@@ -148,7 +148,7 @@ export const deleteMany: <O extends ModelTypes.DeleteOpts<I, IO, R, RO>>(
   opts?: O,
 ) => Promise<ModelTypes.DeleteReturn<I, IO, R, RO, O, true>> = createOperation(
   $adapter,
-  $shape.name,
+  $shape,
   parseDeleteStatement,
   "rows",
 );
@@ -157,7 +157,7 @@ export const count: <O extends ModelTypes.CountOpts<I, IO, R, RO>>(
   opts?: O,
 ) => Promise<ModelTypes.CountReturn> = createOperation(
   $adapter,
-  $shape.name,
+  $shape,
   parseCountStatement,
   "rowCount",
 );
@@ -166,7 +166,7 @@ export const aggregate: <O extends ModelTypes.AggregateOpts<I, IO, R, RO>>(
   opts?: O,
 ) => Promise<ModelTypes.AggregateReturn<I, IO, R, RO, O>> = createOperation(
   $adapter,
-  $shape.name,
+  $shape,
   parseAggregateStatement,
   "row",
 );
@@ -175,7 +175,7 @@ export const groupBy: <O extends ModelTypes.GroupByOpts<I, IO, R, RO>>(
   opts?: O,
 ) => Promise<ModelTypes.GroupByReturn<I, IO, R, RO, O>> = createOperation(
   $adapter,
-  $shape.name,
+  $shape,
   parseGroupByStatement,
   "rows",
 );

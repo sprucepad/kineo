@@ -24,7 +24,7 @@ export async function generateTS() {
       `models/${key}.ts`,
       render(modelContent, {
         name: key,
-        shape: generateSchema(model),
+        shape: serialize(model),
         i: inferProps(model),
         io: inferProps(model, true),
         r: inferRelations(schema, model),
@@ -167,11 +167,6 @@ function render(file: string, opts: Record<string, any>) {
   );
 }
 
-function generateSchema(model: ParsedModel) {
-  void model;
-  return '"TODO"'; // TODO
-}
-
 function inferProps(model: ParsedModel, defaultMeansOptional: boolean = false) {
   void model;
   void defaultMeansOptional;
@@ -187,4 +182,45 @@ function inferRelations(
   void model;
   void defaultMeansOptional;
   return '"TODO"'; // TODO
+}
+
+function serialize(value: any, indent = 0): string {
+  const pad = " ".repeat(indent);
+  const next = " ".repeat(indent + 2);
+
+  if (value === undefined) return "undefined";
+  if (value === null) return "null";
+
+  if (value instanceof Map) {
+    const entries = [...value.entries()]
+      .map(
+        ([k, v]) =>
+          `${next}[${serialize(k, indent + 2)}, ${serialize(v, indent + 2)}]`,
+      )
+      .join(",\n");
+
+    return `new Map([\n${entries}\n${pad}])`;
+  }
+
+  if (Array.isArray(value)) {
+    if (!value.length) return "[]";
+
+    return `[\n${value
+      .map((v) => `${next}${serialize(v, indent + 2)}`)
+      .join(",\n")}\n${pad}]`;
+  }
+
+  if (typeof value === "object") {
+    const entries = Object.entries(value);
+
+    if (!entries.length) return "{}";
+
+    return `{\n${entries
+      .map(
+        ([k, v]) => `${next}${JSON.stringify(k)}: ${serialize(v, indent + 2)}`,
+      )
+      .join(",\n")}\n${pad}}`;
+  }
+
+  return JSON.stringify(value);
 }

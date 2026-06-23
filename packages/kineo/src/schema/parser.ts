@@ -107,11 +107,12 @@ export function parseSchema(schema: Schema): ParsedSchema {
             [
               name,
               {
+                name,
                 sort: "asc",
               },
             ],
           ]),
-        };
+        } satisfies Partial<ParsedIndex>;
         const indexName =
           typeof prop.$index === "object"
             ? (prop.$index.name ?? defaultIndexName)

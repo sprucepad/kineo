@@ -1,6 +1,5 @@
 import type {
   AsyncRuntimeAdapter,
-  EmitResult,
   ExecResult,
   RuntimeAdapter,
 } from "@/adapter";
@@ -120,105 +119,100 @@ export class Model<
     public $shape: ParsedModel,
     public $adapter: RuntimeAdapter | AsyncRuntimeAdapter,
   ) {
-    this.find = createOperation(
-      $adapter,
-      $shape.name,
-      parseFindStatement,
-      "row",
-    );
+    this.find = createOperation($adapter, $shape, parseFindStatement, "row");
     this.findMany = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseFindStatement,
       "rows",
     );
     this.create = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseInsertStatement,
       "row",
     );
     this.createMany = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseInsertStatement,
       "rows",
     );
     this.createReturn = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseInsertStatement,
       "row",
     );
     this.createManyReturn = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseInsertStatement,
       "rows",
     );
     this.update = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseUpdateStatement,
       "row",
     );
     this.updateMany = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseUpdateStatement,
       "rows",
     );
     this.updateReturn = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseUpdateStatement,
       "row",
     );
     this.updateManyReturn = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseUpdateStatement,
       "rows",
     );
     this.upsert = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseUpsertStatement,
       "row",
     );
     this.upsertMany = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseUpsertStatement,
       "rows",
     );
     this.delete = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseDeleteStatement,
       "row",
     );
     this.deleteMany = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseDeleteStatement,
       "rows",
     );
     this.count = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseCountStatement,
       "rowCount",
     );
     this.aggregate = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseAggregateStatement,
       "row",
     );
     this.groupBy = createOperation(
       $adapter,
-      $shape.name,
+      $shape,
       parseGroupByStatement,
       "rows",
     );
@@ -227,15 +221,17 @@ export class Model<
 
 export function createOperation(
   $adapter: RuntimeAdapter | AsyncRuntimeAdapter,
-  name: string,
+  shape: ParsedModel,
   op: (name: string, opts?: any) => Statement,
   fetch: "row" | "rows" | keyof ExecResult,
 ): (opts?: any) => Promise<any> {
   return async (opts) => {
-    const ir = op(name, opts);
+    const ir = op(shape.name, opts);
     const adapter = await $adapter;
     const emitResult = await adapter.emit([ir]);
     const result = await adapter.exec(emitResult);
+
+    // TODO apply defaults
 
     return fetch === "rows"
       ? ((result.rows as any[]) ?? [])
