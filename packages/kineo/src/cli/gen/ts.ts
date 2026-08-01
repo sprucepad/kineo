@@ -5,7 +5,7 @@ import { config } from "../_config";
 import { theme } from "convoker";
 import type { Adapter } from "@/adapter";
 import { ENV_SYMBOL, type EnvMode } from "@/config";
-import { parseSchema, type ParsedModel, type ParsedSchema } from "@/schema";
+import { parseSchema, type ParsedModel } from "@/schema";
 
 // TODO inspect tsconfig for file extensions in exports
 
@@ -18,17 +18,22 @@ export async function generateTS() {
   const modelContent = await fs.promises.readFile(modelURL, "utf-8");
   const schema = parseSchema(cfg.schema);
 
+  const ctx: EmitterContext = {
+    imports: new Set(),
+  };
+
   for (const [key, model] of schema.models) {
     if (model.key == null) continue;
     files.set(
-      `models/${key}.ts`,
+      `models/${model.name}.ts`,
       render(modelContent, {
         name: key,
         shape: serialize(model),
-        i: inferProps(model),
-        io: inferProps(model, true),
-        r: inferRelations(schema, model),
-        ro: inferRelations(schema, model, true),
+        i: emitProps(model, false, ctx),
+        io: emitProps(model, true, ctx),
+        r: emitRelations(model, false, ctx),
+        ro: emitRelations(model, true, ctx),
+        extraImports: [...ctx.imports].join("\n"),
       }),
     );
   }
@@ -42,8 +47,11 @@ export async function generateTS() {
   files.set(
     "client.ts",
     render(clientContent, {
-      models: Object.keys(cfg.schema)
-        .map((key) => `export * as ${key} from "./models/${key}.js"`)
+      models: [...schema.models]
+        .map(
+          ([key, value]) =>
+            `export * as ${key} from "./models/${value.name}.js"`,
+        )
         .join(";\n"),
     }),
   );
@@ -167,23 +175,6 @@ function render(file: string, opts: Record<string, any>) {
   );
 }
 
-function inferProps(model: ParsedModel, defaultMeansOptional: boolean = false) {
-  void model;
-  void defaultMeansOptional;
-  return '"TODO"'; // TODO
-}
-
-function inferRelations(
-  schema: ParsedSchema,
-  model: ParsedModel,
-  defaultMeansOptional: boolean = false,
-) {
-  void schema;
-  void model;
-  void defaultMeansOptional;
-  return '"TODO"'; // TODO
-}
-
 function serialize(value: any, indent = 0): string {
   const pad = " ".repeat(indent);
   const next = " ".repeat(indent + 2);
@@ -223,4 +214,30 @@ function serialize(value: any, indent = 0): string {
   }
 
   return JSON.stringify(value);
+}
+
+interface EmitterContext {
+  imports: Set<string>;
+}
+
+function emitProps(
+  model: ParsedModel,
+  defaultMeansOptional: boolean,
+  ctx: EmitterContext,
+) {
+  void model;
+  void defaultMeansOptional;
+  void ctx;
+  return '"TODO"'; // TODO
+}
+
+function emitRelations(
+  model: ParsedModel,
+  defaultMeansOptional: boolean,
+  ctx: EmitterContext,
+) {
+  void model;
+  void defaultMeansOptional;
+  void ctx;
+  return '"TODO"'; // TODO
 }

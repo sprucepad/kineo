@@ -17,14 +17,16 @@ import {
 } from "kineo/ir";
 import type { ParsedModel } from "kineo/schema";
 
+`{{extraImports}}`;
+
 // @ts-expect-error {{REMOVE_ON_GENERATE}}
 export const $shape: ParsedModel = `{{shape}}`;
 export const $adapter = adapter;
 
-type I = `{{i}}`;
-type IO = `{{io}}`;
-type R = `{{r}}`;
-type RO = `{{ro}}`;
+export type I = `{{i}}`;
+export type IO = `{{io}}`;
+export type R = `{{r}}`;
+export type RO = `{{ro}}`;
 
 export const find: <O extends ModelTypes.FindOpts<I, IO, R, RO>>(
   opts?: O,
