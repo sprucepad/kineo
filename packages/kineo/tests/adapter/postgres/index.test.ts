@@ -22,7 +22,7 @@ describe("PostgreSQL adapter", () => {
 
   // connect to database
   beforeAll(async () => {
-    container = await new PostgreSqlContainer("postgres:latest").start();
+    container = await new PostgreSqlContainer("postgres:18").start();
     adapter = postgres({ url: container.getConnectionUri(), max: 1 });
   }, 300_000); // 5 minutes
 
@@ -108,6 +108,7 @@ describe("PostgreSQL adapter", () => {
 
       expect(posts?.relations.get("user")).toEqual({
         name: "user",
+        key: "user",
         from: "posts",
         to: "users",
         many: false,
@@ -118,6 +119,7 @@ describe("PostgreSQL adapter", () => {
 
       expect(users?.relations.get("postses")).toEqual({
         name: "postses",
+        key: "postses",
         from: "users",
         to: "posts",
         many: true,

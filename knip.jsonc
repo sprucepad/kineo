@@ -8,11 +8,14 @@
       "ignore": [
         // Standard Schema
         "src/schema/standard.ts",
+        // Generated code
+        "**/gen/**/*",
       ],
     },
     "examples/*": {
       "entry": ["src/{index,main}.ts"],
       "project": ["src/**/*.{js,jsx,ts,tsx}"],
+      "ignore": ["generated/**/*"],
     },
   },
 }

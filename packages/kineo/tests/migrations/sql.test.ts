@@ -60,6 +60,7 @@ describe("sql migration emitter", () => {
                     kind: "string",
                     required: true,
                     many: false,
+                    id: false,
                   },
                 ],
               ]),
@@ -78,8 +79,8 @@ describe("sql migration emitter", () => {
         command: `CREATE TABLE "users" (
   "id" INTEGER NOT NULL PRIMARY KEY,
   "email" TEXT NOT NULL
-)`,
-        description: "Create table users",
+);`,
+        description: "-- Create table users",
       },
     ]);
   });
@@ -105,8 +106,8 @@ describe("sql migration emitter", () => {
     expect(result.statements).toEqual([
       {
         type: "command",
-        command: 'DROP TABLE IF EXISTS "users" CASCADE',
-        description: "Drop table users",
+        command: 'DROP TABLE IF EXISTS "users" CASCADE;',
+        description: "-- Drop table users",
       },
     ]);
   });
@@ -124,6 +125,7 @@ describe("sql migration emitter", () => {
               key: "age",
               name: "age",
               kind: "int",
+              id: false,
               required: false,
               many: false,
             },
@@ -136,8 +138,8 @@ describe("sql migration emitter", () => {
     expect(result.statements).toEqual([
       {
         type: "command",
-        command: 'ALTER TABLE "users" ADD COLUMN "age" INTEGER',
-        description: "Add column age to users",
+        command: 'ALTER TABLE "users" ADD COLUMN "age" INTEGER;',
+        description: "-- Add column age to users",
       },
     ]);
   });
@@ -161,8 +163,8 @@ describe("sql migration emitter", () => {
     expect(result.statements).toEqual([
       {
         type: "command",
-        command: 'ALTER TABLE "users" DROP COLUMN "age"',
-        description: "Drop column age on users",
+        command: 'ALTER TABLE "users" DROP COLUMN "age";',
+        description: "-- Drop column age on users",
       },
     ]);
   });
@@ -193,8 +195,8 @@ describe("sql migration emitter", () => {
     expect(result.statements).toEqual([
       {
         type: "command",
-        command: 'ALTER TABLE "users" ALTER COLUMN "email" SET NOT NULL',
-        description: "Alter field email (changes: required)",
+        command: 'ALTER TABLE "users" ALTER COLUMN "email" SET NOT NULL;',
+        description: "-- Alter field email (changes: required)",
       },
     ]);
   });
@@ -227,8 +229,8 @@ describe("sql migration emitter", () => {
     expect(result.statements).toEqual([
       {
         type: "command",
-        command: "CUSTOM FIELD CHANGE",
-        description: "Alter field email (changes: required)",
+        command: "CUSTOM FIELD CHANGE;",
+        description: "-- Alter field email (changes: required)",
       },
     ]);
   });
@@ -246,6 +248,7 @@ describe("sql migration emitter", () => {
             model: "posts",
             relation: {
               name: "user",
+              key: "user",
               from: "userId",
               to: "users",
               fields: ["userId"],
@@ -262,8 +265,8 @@ describe("sql migration emitter", () => {
     expect(result.statements).toEqual([
       {
         type: "command",
-        command: "ADD RELATION",
-        description: "Add relationship userId -> users",
+        command: "ADD RELATION;",
+        description: "-- Add relationship userId -> users",
       },
     ]);
   });
@@ -289,8 +292,8 @@ describe("sql migration emitter", () => {
     expect(result.statements).toEqual([
       {
         type: "command",
-        command: "DROP RELATION",
-        description: "Drop relationship user",
+        command: "DROP RELATION;",
+        description: "-- Drop relationship user",
       },
     ]);
   });
@@ -332,8 +335,8 @@ describe("sql migration emitter", () => {
       {
         type: "command",
         command:
-          'CREATE UNIQUE INDEX "users_email_idx" ON "users" USING BTREE ("email" DESC)',
-        description: "Create unique index users_email_idx",
+          'CREATE UNIQUE INDEX "users_email_idx" ON "users" USING BTREE ("email" DESC);',
+        description: "-- Create unique index users_email_idx",
       },
     ]);
   });
@@ -359,8 +362,8 @@ describe("sql migration emitter", () => {
     expect(result.statements).toEqual([
       {
         type: "command",
-        command: 'DROP INDEX IF EXISTS "users_email_idx"',
-        description: "Drop index users_email_idx",
+        command: 'DROP INDEX IF EXISTS "users_email_idx";',
+        description: "-- Drop index users_email_idx",
       },
     ]);
   });
@@ -395,13 +398,13 @@ describe("sql migration emitter", () => {
     expect(result.statements).toEqual([
       {
         type: "command",
-        command: "ALTER INDEX 1",
-        description: "Alter index users_email_idx",
+        command: "ALTER INDEX 1;",
+        description: "-- Alter index users_email_idx",
       },
       {
         type: "command",
-        command: "ALTER INDEX 2",
-        description: "Alter index users_email_idx",
+        command: "ALTER INDEX 2;",
+        description: "-- Alter index users_email_idx",
       },
     ]);
   });
@@ -425,7 +428,7 @@ describe("sql migration emitter", () => {
 
     expect(result.statements[0]?.type).toBe("command");
     expect((result.statements[0] as MigrationCommand).command).toBe(
-      "DROP TABLE public.users",
+      "DROP TABLE public.users;",
     );
   });
 });

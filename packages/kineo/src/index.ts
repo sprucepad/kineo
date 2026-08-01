@@ -1,5 +1,5 @@
 export { kineo, type Kineo } from "./runtime";
-export { defineConfig, env, loadEnv, type KineoConfig } from "./config";
+export { defineConfig, env, type KineoConfig } from "./config";
 export {
   model,
   defineSchema,

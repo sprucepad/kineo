@@ -105,6 +105,17 @@ describe("kineo client", () => {
     expect(client.User).toBeInstanceOf(Model);
     expect(client.$adapter).toBeInstanceOf(Promise);
   });
+
+  it("has correct schema and name properties", () => {
+    const { User, Post } = createMockSchemas();
+    const schema = { User, Post };
+    const adapter = new MockAdapter();
+    const client = kineo(adapter, schema);
+
+    expect(client.User.$shape.name).toBe("User");
+    expect(client.Post.$shape.name).toBe("Post");
+    expect(client.User.$adapter).toBe(adapter);
+  });
 });
 
 describe("templateToParams", () => {
@@ -147,53 +158,5 @@ describe("templateToParams", () => {
       "2": "active",
       "3": "pending",
     });
-  });
-});
-
-describe("Model class", () => {
-  it("throws NotImplementedError for all methods", async () => {
-    const { User } = createMockSchemas();
-    const schema = { User };
-    const adapter = new MockAdapter();
-    const client = kineo(adapter, schema);
-    const userModel = client.User;
-
-    await expect(userModel.find()).rejects.toThrow("Not implemented");
-    await expect(userModel.findMany()).rejects.toThrow("Not implemented");
-    await expect(
-      userModel.create({ data: { name: "John", email: "john@example.com" } }),
-    ).rejects.toThrow("Not implemented");
-    await expect(userModel.createMany({ data: [] })).rejects.toThrow(
-      "Not implemented",
-    );
-    await expect(
-      userModel.update({ where: { id: 1 }, data: { name: "Jane" } }),
-    ).rejects.toThrow("Not implemented");
-    await expect(userModel.updateMany({ where: {}, data: {} })).rejects.toThrow(
-      "Not implemented",
-    );
-    await expect(userModel.delete({ where: { id: 1 } })).rejects.toThrow(
-      "Not implemented",
-    );
-    await expect(userModel.deleteMany({ where: {} })).rejects.toThrow(
-      "Not implemented",
-    );
-    await expect(userModel.count()).rejects.toThrow("Not implemented");
-    await expect(userModel.aggregate({})).rejects.toThrow("Not implemented");
-    await expect(userModel.groupBy({ by: ["id"] })).rejects.toThrow(
-      "Not implemented",
-    );
-  });
-
-  it("has correct schema and name properties", () => {
-    const { User, Post } = createMockSchemas();
-    const schema = { User, Post };
-    const adapter = new MockAdapter();
-    const client = kineo(adapter, schema);
-
-    expect(client.User.$name).toBe("User");
-    expect(client.Post.$name).toBe("Post");
-    expect(client.User.$schema).toBeDefined();
-    expect(client.User.$adapter).toBe(adapter);
   });
 });

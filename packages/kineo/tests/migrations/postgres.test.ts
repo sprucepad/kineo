@@ -8,7 +8,9 @@ describe("postgresMigrationDialect", () => {
       expect(
         postgresMigrationDialect.mapType("string", {
           name: "value",
+          key: "value",
           kind: "string",
+          id: false,
           many: false,
           required: false,
         }),
@@ -17,7 +19,9 @@ describe("postgresMigrationDialect", () => {
       expect(
         postgresMigrationDialect.mapType("float", {
           name: "value",
+          key: "value",
           kind: "float",
+          id: false,
           many: false,
           required: false,
         }),
@@ -26,7 +30,9 @@ describe("postgresMigrationDialect", () => {
       expect(
         postgresMigrationDialect.mapType("json", {
           name: "value",
+          key: "value",
           kind: "json",
+          id: false,
           many: false,
           required: false,
         }),
@@ -37,7 +43,9 @@ describe("postgresMigrationDialect", () => {
       expect(
         postgresMigrationDialect.mapType("custom" as never, {
           name: "tags",
+          key: "value",
           kind: "custom" as never,
+          id: false,
           many: true,
           required: false,
         }),
@@ -48,7 +56,9 @@ describe("postgresMigrationDialect", () => {
       expect(
         postgresMigrationDialect.mapType("custom" as never, {
           name: "value",
+          key: "value",
           kind: "custom" as never,
+          id: false,
           many: false,
           required: false,
         }),
@@ -64,6 +74,7 @@ describe("postgresMigrationDialect", () => {
         {
           kind: "type",
           to: "int",
+          from: "bigint",
         },
         {} as never,
       );
@@ -78,6 +89,7 @@ describe("postgresMigrationDialect", () => {
         {
           kind: "required",
           to: true,
+          from: false,
         },
         {} as never,
       );
@@ -92,6 +104,7 @@ describe("postgresMigrationDialect", () => {
         {
           kind: "required",
           to: false,
+          from: true,
         },
         {} as never,
       );
@@ -137,6 +150,7 @@ describe("postgresMigrationDialect", () => {
           {
             kind: "many",
             to: true,
+            from: false,
           },
           {} as never,
         ),
@@ -150,11 +164,13 @@ describe("postgresMigrationDialect", () => {
         "posts",
         {
           name: "user",
+          key: "user",
           from: "userId",
           to: "users",
           virtual: false,
-          fields: new Map([["userId", "user_id"]]),
-          refs: new Map([["id", "id"]]),
+          many: false,
+          fields: ["user_id"],
+          refs: ["id"],
         },
         {} as never,
       );
@@ -169,11 +185,13 @@ describe("postgresMigrationDialect", () => {
         "posts",
         {
           name: "user",
+          key: "user",
           from: "userId",
           to: "users",
           virtual: true,
-          fields: new Map(),
-          refs: new Map(),
+          many: false,
+          fields: [],
+          refs: [],
         },
         {} as never,
       );
@@ -202,6 +220,7 @@ describe("postgresMigrationDialect", () => {
         {
           kind: "virtual",
           to: true,
+          from: false,
         },
         {} as never,
       );
@@ -216,6 +235,7 @@ describe("postgresMigrationDialect", () => {
         {
           kind: "virtual",
           to: false,
+          from: false,
         },
         {} as never,
       );
@@ -255,9 +275,10 @@ describe("postgresMigrationDialect", () => {
     it("renders fields without sort", () => {
       const sql = postgresMigrationDialect.renderIndexField?.({
         name: "email",
+        sort: "asc",
       });
 
-      expect(sql).toBe('"email"');
+      expect(sql).toBe('"email" ASC');
     });
   });
 
@@ -269,6 +290,7 @@ describe("postgresMigrationDialect", () => {
         {
           kind: "unique",
           to: true,
+          from: false,
         },
         {} as never,
       );

@@ -54,14 +54,6 @@
       "types": "./dist/adapter/sqlite3/runtime.d.mts",
       "import": "./dist/adapter/sqlite3/runtime.mjs"
     },
-    "./adapter/libsql": {
-      "types": "./dist/adapter/libsql/index.d.mts",
-      "import": "./dist/adapter/libsql/index.mjs"
-    },
-    "./adapter/libsql/runtime": {
-      "types": "./dist/adapter/libsql/runtime.d.mts",
-      "import": "./dist/adapter/libsql/runtime.mjs"
-    },
     "./adapter/mysql2": {
       "types": "./dist/adapter/mysql2/index.d.mts",
       "import": "./dist/adapter/mysql2/index.mjs"
@@ -69,14 +61,6 @@
     "./adapter/mysql2/runtime": {
       "types": "./dist/adapter/mysql2/runtime.d.mts",
       "import": "./dist/adapter/mysql2/runtime.mjs"
-    },
-    "./adapter/mssql": {
-      "types": "./dist/adapter/mssql/index.d.mts",
-      "import": "./dist/adapter/mssql/index.mjs"
-    },
-    "./adapter/mssql/runtime": {
-      "types": "./dist/adapter/mssql/runtime.d.mts",
-      "import": "./dist/adapter/mssql/runtime.mjs"
     },
     "./emitter/sql": {
       "types": "./dist/emitter/sql/index.d.mts",
@@ -88,7 +72,6 @@
     }
   },
   "scripts": {
-    "dev": "tsdown --watch",
     "prepare": "tsdown",
     "lint": "eslint",
     "check": "tsc"
@@ -109,20 +92,12 @@
     "jiti": "^2.7.0"
   },
   "peerDependencies": {
-    "@libsql/client": "^0.17.3",
     "better-sqlite3": "^12.10.0",
-    "mssql": "^12.5.3",
     "mysql2": "^3.22.3",
     "postgres": "^3.4.9"
   },
   "peerDependenciesMeta": {
-    "@libsql/client": {
-      "optional": true
-    },
     "better-sqlite3": {
-      "optional": true
-    },
-    "mssql": {
       "optional": true
     },
     "mysql2": {
@@ -134,14 +109,11 @@
   },
   "devDependencies": {
     "@dev/configs": "workspace:*",
-    "@libsql/client": "^0.17.3",
-    "@testcontainers/mssqlserver": "^11.14.0",
     "@testcontainers/mysql": "^11.14.0",
     "@testcontainers/postgresql": "^11.14.0",
     "@types/node": "^22.15.22",
     "better-sqlite3": "^12.10.0",
     "eslint": "^10.3.0",
-    "mssql": "^12.5.3",
     "mysql2": "^3.22.3",
     "postgres": "^3.4.9",
     "tsdown": "^0.22.0",

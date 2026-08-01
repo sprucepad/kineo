@@ -37,7 +37,7 @@ function field(partial: Partial<ParsedField> & { name: string }): ParsedField {
     kind: partial.kind ?? "string",
     required: partial.required ?? false,
     many: partial.many ?? false,
-    id: partial.id,
+    id: partial.id ?? false,
     validator: partial.validator,
   };
 }
@@ -50,6 +50,7 @@ function relation(
     name,
     {
       name,
+      key: name,
       from: rel.from!,
       to: rel.to!,
       many: rel.many ?? false,
@@ -90,6 +91,45 @@ describe("schema diff", () => {
       expect.objectContaining({
         kind: "create_model",
         model: expect.objectContaining({ name: "User" }),
+      }),
+    ]);
+  });
+
+  it("emits add_relation for non-virtual relations when a model is created", () => {
+    const a = schema([]);
+    const b = schema([
+      model({
+        name: "Post",
+        relations: new Map([
+          relation("author", {
+            from: "Post",
+            to: "User",
+            virtual: false,
+            many: false,
+            fields: ["authorId"],
+            refs: ["id"],
+          }),
+        ]),
+      }),
+    ]);
+
+    const result = diff(a, b);
+
+    expect(result.operations).toEqual([
+      expect.objectContaining({
+        kind: "create_model",
+        model: expect.objectContaining({ name: "Post" }),
+      }),
+      expect.objectContaining({
+        kind: "add_relation",
+        model: "Post",
+        relation: expect.objectContaining({
+          name: "author",
+          from: "Post",
+          to: "User",
+          fields: ["authorId"],
+          refs: ["id"],
+        }),
       }),
     ]);
   });

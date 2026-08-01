@@ -14,14 +14,17 @@ import type {
   ParsedModel,
 } from "@/schema";
 
-export interface PostgresAdapter extends PostgresRuntimeAdapter, Adapter {}
+export interface PostgresAdapter
+  extends PostgresRuntimeAdapter, Adapter<PostgresOptions> {}
 
 export default function postgres(opts: PostgresOptions): PostgresAdapter {
   const runtimeAdapter = postgresRuntime(opts);
 
   return {
     ...runtimeAdapter,
+    opts: opts,
     runtimePath: "kineo/adapter/postgres/runtime",
+    migrationExtension: ".sql",
 
     generate(prev, cur) {
       return emit(diff(prev, cur), postgresMigrationDialect);
@@ -142,6 +145,7 @@ export default function postgres(opts: PostgresOptions): PostgresAdapter {
 
         from.relations.set(relationName, {
           name: relationName,
+          key: relationName,
           from: fk.table_name,
           to: fk.foreign_table_name,
           many: false,
@@ -156,6 +160,7 @@ export default function postgres(opts: PostgresOptions): PostgresAdapter {
         if (!to.relations.has(reverseName)) {
           to.relations.set(reverseName, {
             name: reverseName,
+            key: reverseName,
             from: fk.foreign_table_name,
             to: fk.table_name,
             many: true,

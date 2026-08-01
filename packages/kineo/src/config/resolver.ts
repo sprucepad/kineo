@@ -1,4 +1,6 @@
 import process from "node:process";
+import path from "node:path";
+
 import type { Adapter } from "@/adapter";
 import type {
   KineoConfig,
@@ -18,35 +20,53 @@ export interface ResolvedConfig {
   schemaConfig: Partial<SchemaConfig>;
 }
 
-export const jiti = createJiti(process.cwd());
+export const jiti = createJiti(path.resolve(process.cwd(), "package.json"));
 
-export async function resolveConfig(files: string[]): Promise<ResolvedConfig> {
+export async function resolveConfig(
+  files: string[],
+): Promise<ResolvedConfig | null> {
   let cfg: KineoConfig | undefined;
   for (const file of files) {
-    cfg = await jiti.import(file, { default: true, try: true });
+    cfg = await jiti.import(path.resolve(process.cwd(), file), {
+      default: true,
+      try: true,
+    });
     if (cfg) break;
   }
-  if (!cfg) throw new UnresolvedConfigError(files);
+
+  if (!cfg) return null;
+
+  const resolvedSchema = await resolveSchema(cfg.schema);
+  if (!resolvedSchema) return null;
 
   const resolvedMigrations: ResolvedConfig["migrations"] = {} as any;
   if (typeof cfg.migrations === "string") {
-    resolvedMigrations.path = cfg.migrations;
-    resolvedMigrations.seed = "./db/seed.ts";
+    resolvedMigrations.path = path.resolve(process.cwd(), cfg.migrations);
+    resolvedMigrations.seed = path.resolve(process.cwd(), "./db/seed.ts");
   } else {
-    resolvedMigrations.path = cfg.migrations?.path ?? "./db/migrations";
-    resolvedMigrations.seed = cfg.migrations?.seed ?? "./db/seed.ts";
+    resolvedMigrations.path = path.resolve(
+      process.cwd(),
+      cfg.migrations?.path ?? "./db/migrations",
+    );
+    resolvedMigrations.seed = path.resolve(
+      process.cwd(),
+      cfg.migrations?.seed ?? "./db/seed.ts",
+    );
   }
 
   const resolvedOutput: ResolvedConfig["output"] = {} as any;
   if (typeof cfg.output === "string") {
-    resolvedOutput.path = cfg.output;
-    resolvedOutput.mode = "dts";
+    resolvedOutput.path = path.resolve(process.cwd(), cfg.output);
+    resolvedOutput.mode = "ts";
+    resolvedOutput.envMode = "global_process";
   } else {
-    resolvedOutput.path = cfg.output?.path ?? "./generated/kineo";
-    resolvedOutput.mode = cfg.output?.mode ?? "dts";
+    resolvedOutput.path = path.resolve(
+      process.cwd(),
+      cfg.output?.path ?? "./generated/kineo",
+    );
+    resolvedOutput.mode = cfg.output?.mode ?? "ts";
+    resolvedOutput.envMode = cfg.output?.envMode ?? "global_process";
   }
-
-  const resolvedSchema = await resolveSchema(cfg.schema);
 
   return {
     adapter: await cfg.adapter,
@@ -61,11 +81,11 @@ export async function resolveConfig(files: string[]): Promise<ResolvedConfig> {
 
 export async function resolveSchema(
   cfg: KineoConfig["schema"],
-): Promise<Pick<ResolvedConfig, "schema" | "schemaConfig">> {
+): Promise<Pick<ResolvedConfig, "schema" | "schemaConfig"> | null> {
   if (!cfg) {
     const path = "./db/schema.ts";
     const schema = await jiti.import(path, { try: true });
-    if (!schema) throw new UnresolvedConfigError([path]);
+    if (!schema) return null;
 
     return {
       schema: schema as Schema,
@@ -86,14 +106,14 @@ export async function resolveSchema(
         },
       };
     } else if ("path" in awaited && !(awaited.path instanceof ModelBuilder)) {
-      const path = awaited.path;
+      const path = awaited.path ?? "./db/schema.ts";
       const exportName =
         awaited.export instanceof ModelBuilder
           ? "all"
           : (awaited.export ?? "all");
 
       const mod = (await jiti.import(path, { try: true })) as any;
-      if (!mod) throw new UnresolvedConfigError([path]);
+      if (!mod) return null;
 
       let schema: Schema;
       if (exportName === "all") schema = mod as Schema;
@@ -114,7 +134,7 @@ export async function resolveSchema(
     }
   } else {
     const schema = await jiti.import(awaited, { try: true });
-    if (!schema) throw new UnresolvedConfigError([awaited]);
+    if (!schema) return null;
 
     return {
       schema: schema as Schema,
@@ -123,13 +143,5 @@ export async function resolveSchema(
         export: "all",
       },
     };
-  }
-}
-
-export class UnresolvedConfigError extends Error {
-  constructor(files: string[]) {
-    super(
-      `Could not resolve Kineo configuration. Files attempted: ${files.join(", ")}`,
-    );
   }
 }

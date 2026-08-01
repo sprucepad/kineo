@@ -85,6 +85,17 @@ function diffModels(a: ParsedSchema, b: ParsedSchema, ops: MigrationOp[]) {
 
     if (!aModel) {
       ops.push({ kind: "create_model", model: bModel });
+
+      // When a model is newly created, also emit add_relation operations
+      // for any non-virtual relations so that foreign key constraints
+      // are created (as ALTER TABLE ... ADD CONSTRAINT) after the table
+      // itself is created.
+      for (const [, rel] of bModel.relations) {
+        if (!rel.virtual) {
+          ops.push({ kind: "add_relation", model: bModel.name, relation: rel });
+        }
+      }
+
       continue;
     }
 

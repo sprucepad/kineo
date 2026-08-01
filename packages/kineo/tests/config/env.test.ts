@@ -1,6 +1,6 @@
 import process from "node:process";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { env, UndefinedEnvError, loadEnv } from "./env";
+import { env, UndefinedEnvError } from "./env";
 
 describe("env", () => {
   beforeEach(() => {
@@ -22,7 +22,7 @@ describe("loadEnv", () => {
   it("should call process.loadEnvFile for each file", () => {
     const spy = vi.spyOn(process, "loadEnvFile").mockImplementation(() => {});
 
-    loadEnv(".env", ".env.local");
+    env.load(".env", ".env.local");
 
     expect(spy).toHaveBeenCalledTimes(2);
     expect(spy).toHaveBeenCalledWith(".env");
@@ -34,7 +34,7 @@ describe("loadEnv", () => {
       throw new Error("fail");
     });
 
-    expect(() => loadEnv(".env")).not.toThrow();
+    expect(() => env.load(".env")).not.toThrow();
     expect(spy).toHaveBeenCalled();
   });
 });

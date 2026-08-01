@@ -1,10 +1,12 @@
 import type {
   AsyncRuntimeAdapter,
   EmitResult,
+  Resolvable,
   RuntimeAdapter,
 } from "@/adapter";
 import { parseSchema, type Schema } from "@/schema";
 import { Model } from "./model";
+import { Transaction } from "./transaction";
 
 export type Kineo<T extends Schema> = {
   $adapter: RuntimeAdapter | AsyncRuntimeAdapter;
@@ -14,7 +16,7 @@ export type Kineo<T extends Schema> = {
     ...values: any[]
   ): Promise<{ rows: T[]; rowCount: number }>;
   $close(): Promise<void>;
-  // TODO transactions
+  $transaction<T>(fn: (tx: Transaction) => T): Promise<T>;
 } & ModelsForSchema<T>;
 
 export type ModelsForSchema<T extends Schema> = {
@@ -32,31 +34,16 @@ export function kineo<T extends Schema>(
 
   const modelsForSchema: Record<string, Model<any>> = {};
   for (const [modelName, parsedModel] of parsedSchema.models) {
-    modelsForSchema[modelName] = new Model(
-      parsedSchema,
-      parsedModel,
-      modelName,
-      adapter,
-    );
+    modelsForSchema[modelName] = new Model(parsedModel, adapter);
   }
 
   return {
     ...(modelsForSchema as ModelsForSchema<T>),
     $adapter: adapter,
 
-    async $exec(strings, ...values) {
-      const result = await (
-        await adapter
-      ).exec(templateToParams(strings, values));
-      return {
-        rows: (result.rows as any[]) ?? [],
-        rowCount: result.rowCount ?? 0,
-      };
-    },
-
-    async $close() {
-      return await (await adapter).close();
-    },
+    $exec: createExec(adapter),
+    $close: createClose(adapter),
+    $transaction: createTransaction(adapter),
   };
 }
 
@@ -93,4 +80,32 @@ export function templateToParams(
   }
 
   return { statements: [{ command, params: { ...params } }] };
+}
+
+export function createExec(adapter: RuntimeAdapter | AsyncRuntimeAdapter) {
+  return async (strings: TemplateStringsArray, ...values: any[]) => {
+    const result = await (
+      await adapter
+    ).exec(templateToParams(strings, values));
+    return {
+      rows: (result.rows as any[]) ?? [],
+      rowCount: result.rowCount ?? 0,
+    };
+  };
+}
+
+export function createClose(adapter: RuntimeAdapter | AsyncRuntimeAdapter) {
+  return async () => await (await adapter).close();
+}
+
+export function createTransaction(
+  adapter: RuntimeAdapter | AsyncRuntimeAdapter,
+) {
+  return async (fn: (tx: Transaction) => Resolvable<any>) => {
+    const tx = new Transaction(await adapter);
+    const result = await fn(tx);
+    await tx.commit();
+
+    return result;
+  };
 }
