@@ -1,21 +1,11 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
   "tags": ["-lintignore"],
+
   "workspaces": {
-    "packages/!(configs)": {
-      "entry": ["src/{index,main}.ts", "tests/**/*.test.ts"],
-      "project": ["src/**/*.{js,ts,tsx}", "tests/**/*.{js,ts,tsx}"],
-      "ignore": [
-        // Standard Schema
-        "src/schema/standard.ts",
-        // Generated code
-        "**/gen/**/*",
-      ],
-    },
-    "examples/*": {
-      "entry": ["src/{index,main}.ts"],
-      "project": ["src/**/*.{js,jsx,ts,tsx}"],
-      "ignore": ["generated/**/*"],
+    "packages/dev/*": {},
+    "packages/**/*": {
+      "entry": ["**/*.test.ts"],
     },
   },
 }

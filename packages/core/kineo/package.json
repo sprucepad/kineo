@@ -1,0 +1,49 @@
+{
+  "name": "kineo",
+  "version": "0.12.0-alpha",
+  "description": "Experimental declarative TypeScript ORM",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sprucepad/"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "bin": {
+    "kineo": "./dist/main.mjs",
+    "kineokit": "./dist/main.mjs"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "prepare": "tsdown",
+    "check": "tsc"
+  },
+  "keywords": [
+    "experimental",
+    "orm",
+    "object-relation-mapper"
+  ],
+  "files": [
+    "src",
+    "dist"
+  ],
+  "author": "sprucepad",
+  "license": "MIT",
+  "type": "module",
+  "devDependencies": {
+    "@dev/configs": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.7.0",
+    "convoker": "^0.6.2",
+    "esbuild": "^0.28.1"
+  }
+}

@@ -2,7 +2,7 @@
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
   "tasks": {
-    // packages
+    // shared
     "prepare": {
       "dependsOn": ["^prepare"],
       "outputs": ["dist/**/*"]
@@ -11,10 +11,14 @@
       "dependsOn": ["^prepare", "^check"]
     },
     "lint": {
-      "dependsOn": ["^prepare", "^lint"]
+      "dependsOn": ["^lint"]
+    },
+    "lint:fix": {
+      "dependsOn": ["^lint:fix"]
     },
     // apps / examples
     "dev": {
+      "dependsOn": ["^prepare"],
       "persistent": true,
       "cache": false
     },
@@ -23,7 +27,7 @@
       "outputs": ["dist/**/*"]
     },
     "serve": {
-      "dependsOn": ["^prepare", "build"],
+      "dependsOn": ["build"],
       "persistent": true,
       "cache": false
     }

@@ -1,0 +1,23 @@
+{
+  "name": "@dev/configs",
+  "private": true,
+  "version": "0.0.0",
+  "exports": {
+    "./eslint/*": "./eslint/*.js",
+    "./typescript/*": "./typescript/*.json"
+  },
+  "type": "module",
+  "devDependencies": {
+    "eslint": "catalog:",
+    "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "eslint": "catalog:",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "@eslint/js": "^10.0.1",
+    "globals": "^17.8.0",
+    "typescript-eslint": "^8.65.0"
+  }
+}

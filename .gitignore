@@ -1,5 +1,6 @@
-# node modules
+# dependencies
 node_modules/
+.pnpm-store/
 
 # turborepo
 .turbo/
@@ -13,4 +14,4 @@ dist/
 !.env.example
 
 # generated files
-generated/
+# generated/

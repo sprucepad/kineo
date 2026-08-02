@@ -1,0 +1,10 @@
+{
+  "extends": "@dev/configs/typescript/lib",
+  "compilerOptions": {
+    "rootDirs": ["src", "tests"],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@tests/*": ["./tests/*"]
+    }
+  }
+}
