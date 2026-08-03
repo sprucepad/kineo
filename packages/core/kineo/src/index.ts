@@ -3,3 +3,5 @@ export function greet(...names: string[]) {
     console.log(`Hello, ${name}!`);
   }
 }
+
+export * from "./config";

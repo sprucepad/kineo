@@ -9,7 +9,19 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",
-      "default": "./dist/index.mjs"
+      "import": "./dist/index.mjs"
+    },
+    "./adapter": {
+      "types": "./dist/adapter/index.d.mts",
+      "import": "./dist/adapter/index.mjs"
+    },
+    "./plugin": {
+      "types": "./dist/plugin/index.d.mts",
+      "import": "./dist/plugin/index.mjs"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.mts",
+      "import": "./dist/client/index.mjs"
     }
   },
   "bin": {
@@ -44,6 +56,8 @@
   "dependencies": {
     "@clack/prompts": "^1.7.0",
     "convoker": "^0.6.2",
-    "esbuild": "^0.28.1"
+    "oxc-parser": "^0.142.0",
+    "oxc-resolver": "^11.24.2",
+    "oxc-transform": "^0.142.0"
   }
 }

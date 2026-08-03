@@ -2,8 +2,11 @@ import { Command, i } from "convoker";
 import { greet } from ".";
 
 // To make Knip ignore this for now
+// -- Will be used in CLI
 import { text as _text } from "@clack/prompts";
-import { build as _build } from "esbuild";
+// -- Will be used in schema parsers
+import { parse as _parse } from "oxc-parser";
+import _resolve from "oxc-resolver";
 
 new Command(
   "kineo",
