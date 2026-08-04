@@ -1,5 +1,5 @@
 export interface ClientAdapter {
-  // TODO
+  // TODO client adapters
 }
 
 export type AsyncClientAdapter = Promise<ClientAdapter>;

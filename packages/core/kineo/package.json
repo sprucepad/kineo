@@ -22,6 +22,10 @@
     "./client": {
       "types": "./dist/client/index.d.mts",
       "import": "./dist/client/index.mjs"
+    },
+    "./schema": {
+      "types": "./dist/schema/index.d.mts",
+      "import": "./dist/schema/index.mjs"
     }
   },
   "bin": {
@@ -59,6 +63,7 @@
     "convoker": "^0.6.2",
     "oxc-parser": "^0.142.0",
     "oxc-resolver": "^11.24.2",
+    "oxc-transform": "^0.143.0",
     "oxc-walker": "^1.1.1"
   }
 }

@@ -1,13 +1,6 @@
-// To make Knip ignore this for now
-// -- Will be used in CLI
-import { text as _text } from "@clack/prompts";
-// -- Will be used for schema parsing
-import _resolver from "oxc-resolver";
-import { parse as _parse } from "oxc-parser";
-import { walk as _walk } from "oxc-walker";
-
-import process from "node:process";
+import fs from "node:fs";
 import path from "node:path";
+import process from "node:process";
 import { Command, i } from "convoker";
 
 import { greet } from ".";
@@ -19,18 +12,40 @@ new Command(
   "0.12.0-alpha",
 )
   .input({
-    envFiles: i.option("string", "-e", "--env-files").list().optional(),
-    configs: i.option("string", "-c", "--configs").list().optional(),
+    envFiles: i
+      .option("string", "-e", "--env-files", "--env", "--envs", "--env-file")
+      .description("The environment file(s) to load.")
+      .list()
+      .optional(),
+    configFiles: i
+      .option("string", "-c", "--configs", "--config")
+      .description("The configuration file(s) to load.")
+      .list()
+      .optional(),
   })
   .use(
     async ({
       envFiles = [".env", ".env.local", ".env.production"],
-      configs = [],
+      configFiles = [
+        "kineo.config.ts",
+        ".config/kineo.ts",
+        "kineo.config.js",
+        ".config/kineo.js",
+        "kineo.config.mjs",
+        ".config/kineo.mjs",
+        "kineo.config.cjs",
+        ".config/kineo.cjs",
+        "kineo.config.mts",
+        ".config/kineo.mts",
+        "kineo.config.cts",
+        ".config/kineo.cts",
+      ],
     }) => {
       for (const envFile of envFiles) {
+        if (!fs.existsSync(envFile)) continue;
         process.loadEnvFile(path.resolve(process.cwd(), envFile));
       }
-      loadConfigs(configs);
+      loadConfigs(configFiles);
     },
   )
   .subCommand("greet", (c) =>

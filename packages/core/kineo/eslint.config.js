@@ -1,1 +1,1 @@
-export { default } from "@dev/configs/eslint/lib";
+export { default } from "@dev/configs/eslint/base";

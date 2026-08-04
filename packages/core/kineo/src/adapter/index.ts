@@ -1,7 +1,9 @@
-import type { ClientAdapter } from "@/client";
-
-export interface ServerAdapter extends ClientAdapter {
-  // TODO
+export interface ServerAdapter {
+  clientEntrypoint?: {
+    path: string;
+    export: string;
+    props?: unknown[];
+  };
 }
 
 export type AsyncServerAdapter = Promise<ServerAdapter>;

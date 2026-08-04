@@ -13,33 +13,28 @@ interface Config {
   plugins?: AnyServerPlugin[];
 }
 
-export interface Database {
+export interface DatabaseConfig {
   out?: string;
   migrationOut?: string;
-  seed?: string;
+  seed?: string | string[];
   outMode?: OutMode;
   envMode?: EnvMode;
 
   adapter: AnyServerAdapter;
-  schema:
-    | string
-    | {
-        path: string;
-        export?: "all" | "default" | (string & {});
-      };
+  schema: string;
 }
 
 export interface MultiConfig extends Config {
   out?: string;
   migrationOut?: string;
-  schemaRoot?: string;
+  schema?: string;
   outMode?: OutMode;
   envMode?: EnvMode;
 
-  databases: Record<string, Database>;
+  databases: Record<string, DatabaseConfig>;
 }
 
-export interface SingleConfig extends Database, Config {}
+export interface SingleConfig extends DatabaseConfig, Config {}
 
 export type AnyConfig = SingleConfig | MultiConfig;
 
