@@ -23,7 +23,8 @@ export interface Capabilities {
     date?: DateTimeCapability | false;
     json?: JSONCapability | false;
     bytes?: BytesCapability | false;
-    custom?: Record<string, TypeCapability | false> | false;
+    custom?:
+      Record<string, TypeCapability<BuilderCapabilityOpts> | false> | false;
   };
 
   relations?: {
@@ -34,8 +35,10 @@ export interface Capabilities {
   builders?: {
     model?: ModelCapability | false;
     index?: IndexCapability | false;
+    compositeIndex?: IndexCapability | false;
     enumType?: EnumCapability | false;
-    custom?: Record<string, ImportedBuilderCapability | false> | false;
+    custom?:
+      Record<string, BuilderCapability<BuilderCapabilityOpts> | false> | false;
   };
 
   defaults?: {
@@ -67,40 +70,71 @@ interface BuilderCapabilityOpts {
     Exclude?: string;
     Include?: string;
   };
-}
 
-export interface BuilderCapability<T extends BuilderCapabilityOpts = object> {
-  functions?: {
-    [
-      K in Exclude<
-        ExtractConfigValue<T, "Functions", "Include"> | "updatedAt",
-        ExtractConfigValue<T, "Functions", "Exclude">
-      >
-    ]?: FunctionCapability | false;
-  } & {
-    [key: string]: FunctionCapability | false;
+  BuiltIns?: {
+    Functions?: string;
   };
 }
 
-export interface FunctionCapability {
-  args: Array<
-    | "bigint"
-    | "boolean"
-    | "function"
-    | "number"
-    | "object"
-    | "string"
-    | "symbol"
-    | "undefined"
-    | (string & {})
-  >;
+type Arg =
+  | "bigint"
+  | "boolean"
+  | "function"
+  | "number"
+  | "object"
+  | "string"
+  | "symbol"
+  | "undefined"
+  | (string & {});
+
+export interface CreatorFunction {
+  args: Arg[];
+  returnType: Arg;
+  imports: [string[], string][];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- this allows you to set any value
+  create(...args: any[]): unknown;
+}
+
+export interface ApplierFunction {
+  args: Arg[];
+  imports: [string[], string][];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- this allows you to set any value
   apply(ctx: any, ...args: any[]): unknown;
 }
 
+export interface BuilderCapability<
+  T extends BuilderCapabilityOpts = object,
+> extends CreatorFunction {
+  functions?: {
+    [
+      K in Exclude<
+        | ExtractConfigValue<T, "Functions", "Include">
+        | ExtractConfigValue<T, "BuiltIns", "Functions">,
+        ExtractConfigValue<T, "Functions", "Exclude">
+      >
+    ]?: ApplierFunction | false;
+  } & {
+    [key: string]: ApplierFunction | false;
+  };
+}
+
 export interface TypeCapability<
   T extends BuilderCapabilityOpts = object,
-> extends BuilderCapability<T> {
+> extends BuilderCapability<
+  T & {
+    BuiltIns: {
+      Functions:
+        | "id"
+        | "required"
+        | "optional"
+        | "many"
+        | "single"
+        | "default"
+        | "index"
+        | "validator";
+    };
+  }
+> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- this allows you to set any value
   infer?: (ctx: any) => string;
 }
@@ -120,3 +154,36 @@ export type JSONCapability = TypeCapability<{ Functions: { Include: "type" } }>;
 export type BytesCapability = TypeCapability<{
   Functions: { Include: "buffer" | "arrayBuffer" | "uint8Array" };
 }>;
+
+export type RelationCapability<T extends BuilderCapabilityOpts = object> =
+  BuilderCapability<
+    T & { BuiltIns: { Functions: "from" | "to" | "required" | "optional" } }
+  >;
+
+export type OneRelationCapability = RelationCapability;
+export type ManyRelationCapability = RelationCapability;
+
+export type ModelCapability = BuilderCapability<{
+  BuiltIns: {
+    Functions: "relations" | "indexes";
+  };
+}>;
+export type EnumCapability = BuilderCapability;
+export type IndexCapability = BuilderCapability;
+
+export interface DefaultCapability extends CreatorFunction {
+  functions: Record<string, ApplierFunction>;
+}
+
+export type UUIDDefaultCapability = DefaultCapability;
+export type CUIDDefaultCapability = DefaultCapability;
+export type AutoIncrementDefaultCapability = DefaultCapability;
+export type NowDefaultCapability = DefaultCapability;
+
+export interface DirectCommandCapability {
+  imports: [string, string[]][];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- this allows you to set any value
+  apply(ctx: any, strings: TemplateStringsArray, ...arrays: any[]): unknown;
+}
+
+export type SQLCapability = DirectCommandCapability;
